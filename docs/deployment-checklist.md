@@ -10,27 +10,16 @@ Open Supabase Dashboard, go to SQL Editor, then run migrations in order:
 4. `supabase/migrations/0004_gamification.sql`
 5. `supabase/migrations/0005_rls_core.sql`
 6. `supabase/migrations/0006_rls_user_history.sql`
-7. `supabase/migrations/0007_ai_chat.sql`
 
 ## 2. Supabase Storage
 
-Create these buckets:
+Create a private bucket:
 
 ```txt
-digital-products  private
-product-images    public
+digital-products
 ```
 
-Use `digital-products` for paid files and store the path in `products.file_path`.
-Use `product-images` for product cover images and store the public URL in `products.image_url`.
-
-Admin signed upload endpoint:
-
-```txt
-POST /api/admin/upload-url
-```
-
-It accepts `bucket` and `fileName`, then returns a signed upload token. Allowed buckets are `digital-products` and `product-images`.
+Product files should be uploaded there. Put the file path into `products.file_path`.
 
 ## 3. Supabase Auth
 
@@ -73,7 +62,6 @@ After deploy, test these routes:
 - `/`
 - `/login`
 - `/profile`
-- `/premium`
 - `/checkin`
 - `/gift`
 - `/cart`
@@ -81,9 +69,7 @@ After deploy, test these routes:
 - `/orders`
 - `/download`
 - `/ai`
-- `/ai/history`
 - `/admin`
-- `/admin/products`
 - `/admin/orders`
 - `/admin/users`
 - `/admin/coupons`
@@ -97,13 +83,11 @@ After deploy, test these routes:
 
 ## 8. Product Setup
 
-1. Upload product image to `product-images`.
-2. Upload digital file to `digital-products`.
-3. Open `/admin`.
-4. Create product.
-5. Fill `image_url` with the public product image URL.
-6. Fill `file_path` with the private digital file path.
-7. Set product as published.
+1. Upload digital file to Supabase Storage bucket `digital-products`.
+2. Open `/admin`.
+3. Create product.
+4. Fill `file_path` with the file path inside the bucket.
+5. Set product as published.
 
 ## 9. Order Fulfillment
 
@@ -118,4 +102,4 @@ After deploy, test these routes:
 - Add email receipt.
 - Add automatic download email after fulfillment.
 - Add product edit/delete UI.
-- Add fully wired admin upload UI.
+- Add real-time live chat.
