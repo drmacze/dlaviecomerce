@@ -1,6 +1,0 @@
-{
-  "name": "Lumina E-Commerce V1",
-  "description": "A modern MVP E-commerce platform with minimal design, high conversion layout, and seamless WhatsApp checkout flow.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
