@@ -1,11 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { bearerToken, verifySupabaseUser } from '@/lib/auth-server';
 import { createSupabaseServiceClient } from '@/lib/supabase-server';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   try {
-    const { userId } = req.body || {};
-    if (!userId) return res.status(400).json({ error: 'userId is required' });
+    const user = await verifySupabaseUser(bearerToken(req.headers.authorization));
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+    const userId = user.id;
     const supabase = createSupabaseServiceClient();
     const today = new Date().toISOString().slice(0, 10);
     const existing = await supabase.from('daily_checkins').select('id').eq('user_id', userId).eq('checkin_date', today).maybeSingle();
