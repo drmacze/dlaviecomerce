@@ -21,3 +21,20 @@ export type Product = {
   is_published: boolean;
   created_at: string;
 };
+
+export type Order = {
+  id: string;
+  buyer_email: string;
+  total_amount: number;
+  status: 'pending' | 'paid' | 'fulfilled' | 'cancelled';
+  created_at: string;
+};
+
+export type OrderItem = {
+  id: string;
+  order_id: string;
+  product_id: string;
+  qty: number;
+  price: number;
+  created_at: string;
+};
