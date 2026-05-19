@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html { scroll-behavior: smooth; }
+body { margin: 0; background: #f8fafc; color: #0f172a; }
+* { box-sizing: border-box; }
+.shadow-brutal { box-shadow: 6px 6px 0 #0f172a; }
+.shadow-brutal-sm { box-shadow: 3px 3px 0 #0f172a; }
