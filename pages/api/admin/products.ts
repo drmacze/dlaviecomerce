@@ -10,6 +10,18 @@ function slugify(value: string) {
   return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }
 
+function productPayload(body: Record<string, unknown>) {
+  return {
+    name: String(body.name || '').trim(),
+    description: body.description ? String(body.description) : null,
+    price: Number(body.price || 0),
+    category: String(body.category || 'digital').trim() || 'digital',
+    image_url: body.image_url ? String(body.image_url) : null,
+    file_path: body.file_path ? String(body.file_path) : null,
+    is_published: Boolean(body.is_published)
+  };
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const user = await verifySupabaseUser(bearerToken(req.headers.authorization));
   if (!user || !admin(user.email)) return res.status(403).json({ error: 'Forbidden' });
@@ -22,24 +34,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'POST') {
-    const payload = req.body || {};
-    const slug = slugify(String(payload.name || ''));
-    const { data, error } = await supabase.from('products').insert({ ...payload, slug }).select('*').single();
+    const payload = productPayload((req.body || {}) as Record<string, unknown>);
+    if (!payload.name) return res.status(400).json({ error: 'Product name is required' });
+    const { data, error } = await supabase.from('products').insert({ ...payload, slug: slugify(payload.name) }).select('*').single();
     if (error) return res.status(500).json({ error: error.message });
     return res.status(200).json({ product: data });
   }
 
   if (req.method === 'PATCH') {
-    const { id, ...payload } = req.body || {};
+    const body = (req.body || {}) as Record<string, unknown>;
+    const id = String(body.id || '');
     if (!id) return res.status(400).json({ error: 'Product id is required' });
-    const next = payload.name ? { ...payload, slug: slugify(String(payload.name)) } : payload;
-    const { data, error } = await supabase.from('products').update(next).eq('id', id).select('*').single();
+    const payload = productPayload(body);
+    if (!payload.name) return res.status(400).json({ error: 'Product name is required' });
+    const { data, error } = await supabase.from('products').update({ ...payload, slug: slugify(payload.name) }).eq('id', id).select('*').single();
     if (error) return res.status(500).json({ error: error.message });
     return res.status(200).json({ product: data });
   }
 
   if (req.method === 'DELETE') {
-    const id = String(req.query.id || req.body?.id || '');
+    const id = String(req.query.id || (req.body as { id?: string } | undefined)?.id || '');
     if (!id) return res.status(400).json({ error: 'Product id is required' });
     const { error } = await supabase.from('products').delete().eq('id', id);
     if (error) return res.status(500).json({ error: error.message });
