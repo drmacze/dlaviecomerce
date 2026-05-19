@@ -10,22 +10,28 @@ LUMINA adalah e-commerce produk digital berbasis Next.js, Supabase, Gemini AI, T
 - Supabase Auth, Database, Storage, RPC
 - Gemini AI via `@google/genai`
 - Zustand cart store
+- GitHub Actions CI
 
 ## Main Routes
 
 - `/` catalog produk digital
+- `/product/[slug]` detail produk digital
 - `/login` auth Supabase
-- `/profile` profil user, VIP, L-Points
+- `/profile` profil user, Premium/VIP, L-Points
+- `/premium` premium center
 - `/orders` riwayat pembelian
 - `/cart` cart lokal
 - `/checkout` checkout order
 - `/download` akses download produk digital
 - `/checkin` daily check-in L-Points
 - `/gift` kirim L-Points
-- `/ai` customer service AI
+- `/ai` persistent AI chat
+- `/ai/history` riwayat AI chat
 - `/admin` admin product creator
+- `/admin/products` admin product manager
+- `/admin/products/[id]` admin product editor
 - `/admin/orders` order management
-- `/admin/users` user/VIP management
+- `/admin/users` user/Premium management
 - `/admin/coupons` coupon creator
 
 ## Required Environment Variables
@@ -58,10 +64,38 @@ npm run build
 
 ## Supabase Setup
 
-Run migrations in `supabase/migrations` in order, then create a private Storage bucket named:
+Run migrations in `supabase/migrations` in order, then create Storage buckets:
 
 ```txt
-digital-products
+digital-products  private
+product-images    public
+```
+
+`digital-products` stores paid files. `product-images` stores public cover images.
+
+## Buyer Flow
+
+```txt
+Homepage → Product Detail → Cart → Checkout → Orders → Download
+```
+
+Checkout creates the order through `/api/orders/create`. Coupon usage is tracked only inside the order creation flow.
+
+## Admin Flow
+
+```txt
+Login as owner → /admin → create product → /admin/products → edit/publish product → /admin/orders → mark fulfilled
+```
+
+## CI
+
+The repository includes `.github/workflows/ci.yml` for:
+
+```txt
+npm install
+npm run typecheck
+npm run lint
+npm run build
 ```
 
 See `docs/deployment-checklist.md` for the full deployment checklist.
