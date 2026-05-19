@@ -10,7 +10,7 @@ function slugify(value: string) {
   return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }
 
-function productPayload(body: Record<string, unknown>) {
+function createPayload(body: Record<string, unknown>) {
   return {
     name: String(body.name || '').trim(),
     description: body.description ? String(body.description) : null,
@@ -20,6 +20,19 @@ function productPayload(body: Record<string, unknown>) {
     file_path: body.file_path ? String(body.file_path) : null,
     is_published: Boolean(body.is_published)
   };
+}
+
+function updatePayload(body: Record<string, unknown>) {
+  const payload: Record<string, string | number | boolean | null> = {};
+  if ('name' in body) payload.name = String(body.name || '').trim();
+  if ('description' in body) payload.description = body.description ? String(body.description) : null;
+  if ('price' in body) payload.price = Number(body.price || 0);
+  if ('category' in body) payload.category = String(body.category || 'digital').trim() || 'digital';
+  if ('image_url' in body) payload.image_url = body.image_url ? String(body.image_url) : null;
+  if ('file_path' in body) payload.file_path = body.file_path ? String(body.file_path) : null;
+  if ('is_published' in body) payload.is_published = Boolean(body.is_published);
+  if (typeof payload.name === 'string' && payload.name) payload.slug = slugify(payload.name);
+  return payload;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -34,7 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'POST') {
-    const payload = productPayload((req.body || {}) as Record<string, unknown>);
+    const payload = createPayload((req.body || {}) as Record<string, unknown>);
     if (!payload.name) return res.status(400).json({ error: 'Product name is required' });
     const { data, error } = await supabase.from('products').insert({ ...payload, slug: slugify(payload.name) }).select('*').single();
     if (error) return res.status(500).json({ error: error.message });
@@ -45,9 +58,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const body = (req.body || {}) as Record<string, unknown>;
     const id = String(body.id || '');
     if (!id) return res.status(400).json({ error: 'Product id is required' });
-    const payload = productPayload(body);
-    if (!payload.name) return res.status(400).json({ error: 'Product name is required' });
-    const { data, error } = await supabase.from('products').update({ ...payload, slug: slugify(payload.name) }).eq('id', id).select('*').single();
+    const payload = updatePayload(body);
+    if (!Object.keys(payload).length) return res.status(400).json({ error: 'No valid fields to update' });
+    const { data, error } = await supabase.from('products').update(payload).eq('id', id).select('*').single();
     if (error) return res.status(500).json({ error: error.message });
     return res.status(200).json({ product: data });
   }
