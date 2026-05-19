@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import type { GetServerSideProps } from 'next';
+import { AudioSensor } from '@/components/audio-sensor';
 import { SecretLogoGate } from '@/components/secret-logo-gate';
 import { VipBanner } from '@/components/vip-banner';
 import type { Product } from '@/lib/types';
@@ -12,6 +13,7 @@ export default function Home({ products }: Props) {
       <nav className="mx-auto mb-6 flex max-w-6xl flex-wrap items-center justify-between gap-3">
         <SecretLogoGate />
         <div className="flex flex-wrap gap-3">
+          <AudioSensor />
           <a className="rounded-xl border-2 border-slate-900 bg-white px-4 py-2 font-black shadow-brutal-sm" href="/login">Login</a>
           <a className="rounded-xl border-2 border-slate-900 bg-white px-4 py-2 font-black shadow-brutal-sm" href="/ai">AI Chat</a>
         </div>
