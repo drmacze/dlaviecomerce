@@ -16,6 +16,6 @@ export function VipStatusBanner() {
     });
   }, []);
 
-  const vip = profile?.is_vip;
-  return <section className={`mx-auto mt-8 max-w-6xl rounded-[2rem] border-2 border-slate-900 p-8 shadow-brutal ${vip ? 'bg-amber-300 text-slate-950' : 'bg-slate-950 text-white'}`}><p className="font-black uppercase tracking-[0.3em]">{vip ? 'VIP ACTIVE' : 'LUMINA VIP'}</p><h2 className="mt-3 text-4xl font-black">{vip ? 'Sultan Mode Aktif' : 'Unlock Sultan Mode'}</h2><p className="mt-3 max-w-2xl font-semibold">{vip ? 'Kamu mendapat akses benefit VIP, booster, dan tema premium.' : 'Login dan aktifkan VIP untuk benefit eksklusif LUMINA.'}</p><a className="mt-5 inline-block rounded-xl border-2 border-slate-900 bg-emerald-400 px-5 py-3 font-black text-slate-950 shadow-brutal-sm" href="/premium">Premium Center</a></section>;
+  const active = profile?.is_vip;
+  return <section className={`mx-auto mt-8 max-w-6xl rounded-[2rem] border-2 border-slate-900 p-8 shadow-brutal ${active ? 'bg-amber-300 text-slate-950' : 'bg-slate-950 text-white'}`}><p className="font-black uppercase tracking-[0.3em]">{active ? 'PREMIUM ACTIVE' : 'LUMINA PREMIUM'}</p><h2 className="mt-3 text-4xl font-black">{active ? 'Premium Mode Aktif' : 'Unlock Premium Mode'}</h2><p className="mt-3 max-w-2xl font-semibold">{active ? 'Kamu mendapat akses benefit premium, booster, dan tema eksklusif.' : 'Buka Premium Center untuk melihat status dan benefit akun LUMINA.'}</p><a className={`mt-5 inline-block rounded-xl border-2 border-slate-900 px-5 py-3 font-black shadow-brutal-sm ${active ? 'bg-white text-slate-950' : 'bg-emerald-400 text-slate-950'}`} href="/premium">Buka Premium Center</a></section>;
 }
