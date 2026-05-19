@@ -1,12 +1,17 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createSupabaseServiceClient } from '@/lib/supabase-server';
 
+function validEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   try {
-    const { orderId, productId, buyerEmail } = req.body || {};
-    const email = String(buyerEmail || '').trim().toLowerCase();
-    if (!orderId || !productId || !email) return res.status(400).json({ error: 'orderId, productId, and buyerEmail are required' });
+    const orderId = String(req.body?.orderId || '').trim();
+    const productId = String(req.body?.productId || '').trim();
+    const email = String(req.body?.buyerEmail || '').trim().toLowerCase();
+    if (!orderId || !productId || !validEmail(email)) return res.status(400).json({ error: 'orderId, productId, and valid buyerEmail are required' });
 
     const supabase = createSupabaseServiceClient();
     const { data: order, error: orderError } = await supabase.from('orders').select('id, status, buyer_email').eq('id', orderId).single();
