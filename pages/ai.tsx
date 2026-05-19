@@ -3,6 +3,11 @@ import { useEffect, useState } from 'react';
 import { createSupabaseBrowserClient } from '@/lib/supabase-client';
 
 type ChatMessage = { role: 'user' | 'assistant'; content: string };
+type StoredChatMessage = { role?: string; content?: string };
+
+function normalizeMessage(message: StoredChatMessage): ChatMessage {
+  return { role: message.role === 'assistant' ? 'assistant' : 'user', content: String(message.content || '') };
+}
 
 export default function AI() {
   const router = useRouter();
@@ -23,7 +28,8 @@ export default function AI() {
       const json = await res.json();
       if (res.ok) {
         setSessionId(targetSession);
-        setMessages((json.messages || []).map((m: ChatMessage) => ({ role: m.role, content: m.content })));
+        const loaded = Array.isArray(json.messages) ? json.messages.map(normalizeMessage) : [];
+        setMessages(loaded);
       }
       setBusy(false);
     });
