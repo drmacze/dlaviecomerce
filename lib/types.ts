@@ -38,3 +38,19 @@ export type OrderItem = {
   price: number;
   created_at: string;
 };
+
+export type LPointLedger = {
+  id: string;
+  user_id: string;
+  amount: number;
+  reason: string;
+  created_at: string;
+};
+
+export type DailyCheckIn = {
+  id: string;
+  user_id: string;
+  checkin_date: string;
+  points_awarded: number;
+  created_at: string;
+};
