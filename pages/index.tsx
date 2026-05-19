@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import type { GetServerSideProps } from 'next';
 import { SecretLogoGate } from '@/components/secret-logo-gate';
+import { VipBanner } from '@/components/vip-banner';
 import type { Product } from '@/lib/types';
 
 type Props = { products: Product[] };
@@ -20,6 +21,7 @@ export default function Home({ products }: Props) {
         <h1 className="mt-4 max-w-4xl text-5xl font-black tracking-tight">Digital commerce premium untuk produk digital.</h1>
         <p className="mt-5 max-w-2xl text-lg font-semibold text-slate-600">Catalog membaca data langsung dari Supabase products.</p>
       </section>
+      <VipBanner />
       <section className="mx-auto mt-8 grid max-w-6xl gap-5 md:grid-cols-3">
         {products.map((p) => <article key={p.id} className="rounded-3xl border-2 border-slate-900 bg-white p-5 shadow-brutal-sm"><h2 className="text-2xl font-black">{p.name}</h2><p className="mt-3 font-semibold text-slate-600">{p.description || 'Produk digital premium LUMINA.'}</p><p className="mt-5 text-xl font-black">Rp {p.price.toLocaleString('id-ID')}</p></article>)}
         {!products.length && <div className="rounded-3xl border-2 border-dashed border-slate-400 bg-white p-8 font-bold text-slate-500 md:col-span-3">Belum ada produk published di Supabase.</div>}
