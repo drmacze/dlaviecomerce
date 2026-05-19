@@ -12,20 +12,16 @@ export default function OrdersPage() {
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
-    supabase.auth.getUser().then(async ({ data }) => {
-      const userEmail = data.user?.email || '';
-      if (!userEmail) return;
-      setEmail(userEmail);
+    supabase.auth.getSession().then(async ({ data }) => {
+      const token = data.session?.access_token;
+      if (!token) return;
       setStatus('Memuat orders...');
-      const orderResult = await supabase.from('orders').select('*').eq('buyer_email', userEmail).order('created_at', { ascending: false });
-      if (orderResult.error) return setStatus(orderResult.error.message);
-      const loadedOrders = (orderResult.data || []) as Order[];
-      setOrders(loadedOrders);
-      const ids = loadedOrders.map((order) => order.id);
-      if (ids.length) {
-        const itemResult = await supabase.from('order_items').select('*').in('order_id', ids);
-        if (!itemResult.error) setItems((itemResult.data || []) as Item[]);
-      }
+      const res = await fetch('/api/orders/my', { headers: { Authorization: `Bearer ${token}` } });
+      const json = await res.json();
+      if (!res.ok) return setStatus(json.error || 'Gagal memuat orders.');
+      setEmail(json.email || '');
+      setOrders((json.orders || []) as Order[]);
+      setItems((json.items || []) as Item[]);
       setStatus('');
     });
   }, []);
