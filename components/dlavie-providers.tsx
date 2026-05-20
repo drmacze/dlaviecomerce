@@ -1,21 +1,28 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import Lenis from 'lenis';
 import { ReactNode, useEffect, useState } from 'react';
 import { Toaster } from 'sonner';
 
 function useDlavieSmoothScroll() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const lenis = new Lenis({ duration: 1.08, smoothWheel: true, touchMultiplier: 1.15 });
     let frame = 0;
-    function raf(time: number) {
-      lenis.raf(time);
+    let destroyed = false;
+    let instance: { raf: (time: number) => void; destroy: () => void } | null = null;
+
+    import('lenis').then(({ default: Lenis }) => {
+      if (destroyed) return;
+      instance = new Lenis({ duration: 1.08, smoothWheel: true, touchMultiplier: 1.15 });
+      function raf(time: number) {
+        instance?.raf(time);
+        frame = requestAnimationFrame(raf);
+      }
       frame = requestAnimationFrame(raf);
-    }
-    frame = requestAnimationFrame(raf);
+    });
+
     return () => {
-      cancelAnimationFrame(frame);
-      lenis.destroy();
+      destroyed = true;
+      if (frame) cancelAnimationFrame(frame);
+      instance?.destroy();
     };
   }, []);
 }
