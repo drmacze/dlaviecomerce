@@ -1,8 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { bearerToken, verifySupabaseUser } from '@/lib/auth-server';
 import { createSupabaseServiceClient } from '@/lib/supabase-server';
 
 type OrderItemInput = { product_id?: string; qty?: number };
 type CouponRow = { id: string; discount_type: string; amount: number; min_amount: number; usage_limit: number | null; redeemed_count: number; expires_at: string | null };
+
+type ProfileWallet = { id: string; d_balance: number; d_points: number; vip_level: string | null };
 
 function validEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -25,11 +28,20 @@ function couponDiscount(coupon: CouponRow, subtotal: number) {
   return Math.min(subtotal, Math.max(0, raw));
 }
 
+function pointsMultiplier(level?: string | null) {
+  if (level === 'black') return 3;
+  if (level === 'platinum') return 2;
+  if (level === 'gold') return 1.5;
+  if (level === 'silver') return 1.2;
+  return 1;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   try {
     const email = String(req.body?.buyer_email || '').trim().toLowerCase();
     const orderItems = normalizeItems(req.body?.items);
+    const paymentMethod = String(req.body?.payment_method || 'manual');
     if (!validEmail(email) || !orderItems.length) return res.status(400).json({ error: 'Email valid dan items wajib diisi.' });
 
     const supabase = createSupabaseServiceClient();
@@ -57,16 +69,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const total = Math.max(0, subtotal - discount);
-    const { data: order, error } = await supabase.from('orders').insert({ buyer_email: email, total_amount: total, status: 'pending' }).select('id').single();
+    let userProfile: ProfileWallet | null = null;
+    if (paymentMethod === 'd_balance') {
+      const user = await verifySupabaseUser(bearerToken(req.headers.authorization));
+      if (!user) return res.status(401).json({ error: 'Login diperlukan untuk membayar dengan D-Balance.' });
+      const { data: profile, error: profileError } = await supabase.from('profiles').select('id, d_balance, d_points, vip_level').eq('id', user.id).single();
+      if (profileError || !profile) return res.status(401).json({ error: 'Profile wallet tidak ditemukan.' });
+      userProfile = profile as ProfileWallet;
+      if (Number(userProfile.d_balance || 0) < total) return res.status(400).json({ error: 'D-Balance tidak cukup. Silakan topup dulu.' });
+    }
+
+    const orderStatus = paymentMethod === 'd_balance' ? 'paid' : 'pending';
+    const { data: order, error } = await supabase.from('orders').insert({ buyer_email: email, total_amount: total, status: orderStatus }).select('id').single();
     if (error || !order) return res.status(500).json({ error: error?.message || 'Order gagal dibuat.' });
 
     const itemResult = await supabase.from('order_items').insert(mapped.map((item) => ({ ...item, order_id: order.id })));
     if (itemResult.error) return res.status(500).json({ error: itemResult.error.message });
+
+    let pointsEarned = 0;
+    if (paymentMethod === 'd_balance' && userProfile) {
+      pointsEarned = Math.floor((total / 10000) * pointsMultiplier(userProfile.vip_level));
+      const nextBalance = Number(userProfile.d_balance || 0) - total;
+      const nextPoints = Number(userProfile.d_points || 0) + pointsEarned;
+      const walletUpdate = await supabase.from('profiles').update({ d_balance: nextBalance, d_points: nextPoints, l_points: nextPoints }).eq('id', userProfile.id);
+      if (walletUpdate.error) return res.status(500).json({ error: walletUpdate.error.message });
+      await supabase.from('wallet_transactions').insert({ user_id: userProfile.id, type: 'purchase', amount: -total, status: 'success', provider: 'd_balance', reference: order.id, metadata: { order_id: order.id, points_earned: pointsEarned } });
+      if (pointsEarned > 0) await supabase.from('wallet_transactions').insert({ user_id: userProfile.id, type: 'reward', amount: pointsEarned, status: 'success', provider: 'd_points', reference: order.id, metadata: { order_id: order.id } });
+    }
+
     if (couponId && discount > 0) {
       const { data: coupon } = await supabase.from('coupons').select('redeemed_count').eq('id', couponId).maybeSingle();
       await supabase.from('coupons').update({ redeemed_count: Number(coupon?.redeemed_count || 0) + 1 }).eq('id', couponId);
     }
-    return res.status(200).json({ orderId: order.id, subtotal, discount, total });
+
+    return res.status(200).json({ orderId: order.id, subtotal, discount, total, paymentMethod, status: orderStatus, pointsEarned });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Create order failed';
     return res.status(500).json({ error: message });
