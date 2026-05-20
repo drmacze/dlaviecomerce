@@ -2,8 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --dlavie-bg: #dfe8e2;
+  --dlavie-soft: #eef4ee;
+  --dlavie-panel: #f8faf6;
+  --dlavie-card: rgba(255, 255, 255, 0.76);
+  --dlavie-text: #101315;
+  --dlavie-muted: #6f7975;
+  --dlavie-blue: #2467c9;
+  --dlavie-lime: #dfff4f;
+  --dlavie-orange: #ff9f43;
+  --dlavie-green: #35cf72;
+  --dlavie-red: #ff5f68;
+  --dlavie-border: rgba(16, 19, 21, 0.08);
+  --dlavie-shadow: 0 28px 85px rgba(65, 78, 74, 0.18);
+  --dlavie-soft-shadow: 0 14px 38px rgba(65, 78, 74, 0.12);
+}
+
 html { scroll-behavior: smooth; }
-body { margin: 0; background: #f8fafc; color: #0f172a; }
 * { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--dlavie-text);
+  background: radial-gradient(circle at 12% 8%, rgba(117, 179, 229, 0.26), transparent 28rem), radial-gradient(circle at 86% 18%, rgba(223, 255, 79, 0.34), transparent 22rem), linear-gradient(135deg, #eef4ee 0%, #dfe8e2 52%, #f7f5e9 100%);
+}
+a { color: inherit; text-decoration: none; }
+button, a { -webkit-tap-highlight-color: transparent; }
+::selection { background: var(--dlavie-lime); color: var(--dlavie-text); }
 .shadow-brutal { box-shadow: 6px 6px 0 #0f172a; }
 .shadow-brutal-sm { box-shadow: 3px 3px 0 #0f172a; }
+.dlavie-glass { background: var(--dlavie-card); border: 1px solid var(--dlavie-border); box-shadow: var(--dlavie-shadow); backdrop-filter: blur(22px); }
+.dlavie-soft-card { background: rgba(255,255,255,.9); border: 1px solid var(--dlavie-border); box-shadow: var(--dlavie-soft-shadow); }
+.dlavie-grid-bg { background-image: linear-gradient(rgba(16,19,21,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(16,19,21,.04) 1px, transparent 1px); background-size: 34px 34px; }
