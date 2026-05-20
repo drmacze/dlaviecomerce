@@ -1,7 +1,31 @@
+import Image from 'next/image';
+import { useState } from 'react';
 import type { Product } from '@/lib/types';
 import { useCartStore } from '@/stores/cart-store';
 
-export function ProductCard({ product }: { product: Product }) {
+type EnhancedProduct = Product & { release_date?: string | null; stock?: number | null; badge?: string | null };
+
+function price(value: number) {
+  return `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
+}
+
+function release(value?: string | null) {
+  if (!value) return 'Soon';
+  return new Date(value).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+export function ProductCard({ product }: { product: EnhancedProduct }) {
+  const [flipped, setFlipped] = useState(false);
+  const [added, setAdded] = useState(false);
   const add = useCartStore((s) => s.add);
-  return <article className="rounded-3xl border-2 border-slate-900 bg-white p-5 shadow-brutal-sm"><h2 className="text-2xl font-black">{product.name}</h2><p className="mt-3 font-semibold text-slate-600">{product.description || 'Produk digital premium LUMINA.'}</p><p className="mt-5 text-xl font-black">Rp {product.price.toLocaleString('id-ID')}</p><div className="mt-5 grid gap-2"><a href={`/product/${product.slug}`} className="w-full rounded-xl border-2 border-slate-900 bg-white px-4 py-3 text-center font-black shadow-brutal-sm">Detail Produk</a><button onClick={() => add(product)} className="w-full rounded-xl border-2 border-slate-900 bg-emerald-400 px-4 py-3 font-black shadow-brutal-sm">Tambah ke Cart</button></div></article>;
+  const stock = product.stock ?? 99;
+  const points = Math.max(5, Math.floor(Number(product.price || 0) / 10000));
+
+  function buy() {
+    add(product);
+    setAdded(true);
+    window.setTimeout(() => setAdded(false), 1200);
+  }
+
+  return <article className="group relative h-[410px] w-full [perspective:1200px]"><div className={`relative h-full w-full transition-transform duration-700 [transform-style:preserve-3d] ${flipped ? '[transform:rotateY(180deg)]' : ''}`}><div className="absolute inset-0 overflow-hidden rounded-[2rem] bg-white/75 p-4 shadow-[0_18px_50px_rgba(69,82,74,0.16)] ring-1 ring-black/5 backdrop-blur-xl [backface-visibility:hidden]"><div className="absolute left-4 top-4 z-20 rounded-full bg-white/80 px-3 py-1 text-xs font-black text-slate-700 shadow-sm backdrop-blur">{product.badge || 'DLAVIE'}</div><button type="button" onClick={() => setFlipped(true)} className="absolute right-4 top-4 z-20 rounded-full bg-[#dfff4f] px-4 py-2 text-xs font-black text-slate-950 shadow-[0_8px_20px_rgba(120,150,45,0.25)] transition hover:scale-105 active:scale-95">Detail</button><div className="relative flex h-[292px] items-center justify-center overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-[#f8fbf2] via-[#eef5ec] to-[#dde8e0]">{product.image_url ? <Image src={product.image_url} alt={product.name} width={700} height={700} unoptimized className="h-full w-full object-cover transition duration-700 group-hover:scale-110" /> : <div className="flex h-full w-full items-center justify-center text-5xl font-black text-slate-300">DLAVIE</div>}<div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-blue-400/20 blur-2xl" /><div className="pointer-events-none absolute -bottom-8 -left-8 h-28 w-28 rounded-full bg-lime-300/40 blur-2xl" /></div><div className="mt-4 flex items-end justify-between gap-3"><div className="min-w-0"><p className="truncate text-xl font-black text-slate-950">{product.name}</p><p className="mt-1 text-sm font-semibold text-slate-500">Digital product</p></div><div className="rounded-full bg-slate-950 px-3 py-2 text-xs font-black text-white">{price(product.price)}</div></div></div><div className="absolute inset-0 overflow-hidden rounded-[2rem] bg-[#f8faf4]/95 p-5 shadow-[0_18px_50px_rgba(69,82,74,0.16)] ring-1 ring-black/5 backdrop-blur-xl [backface-visibility:hidden] [transform:rotateY(180deg)]"><div className="pointer-events-none absolute bottom-4 right-4 text-6xl font-black tracking-tight text-slate-900/[0.04]">DLAVIE</div><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-[0.25em] text-lime-700">Product Detail</p><h3 className="mt-2 line-clamp-2 text-2xl font-black text-slate-950">{product.name}</h3></div><button type="button" onClick={() => setFlipped(false)} className="rounded-full bg-white px-3 py-2 text-xs font-black text-slate-700 shadow-sm transition hover:scale-105 active:scale-95">Back</button></div><p className="mt-4 line-clamp-4 text-sm font-semibold leading-6 text-slate-600">{product.description || 'Produk digital premium DLAVIE dengan akses cepat, aman, dan siap digunakan setelah order fulfilled.'}</p><div className="mt-5 grid grid-cols-2 gap-3"><div className="rounded-2xl bg-white/80 p-3 shadow-sm"><p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Harga</p><p className="mt-1 text-sm font-black text-slate-950">{price(product.price)}</p></div><div className="rounded-2xl bg-white/80 p-3 shadow-sm"><p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Rilis</p><p className="mt-1 text-sm font-black text-slate-950">{release(product.release_date)}</p></div><div className="rounded-2xl bg-white/80 p-3 shadow-sm"><p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Stok</p><p className={`mt-1 text-sm font-black ${stock <= 5 ? 'text-red-500' : 'text-slate-950'}`}>{stock} tersedia</p></div><div className="rounded-2xl bg-white/80 p-3 shadow-sm"><p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Reward</p><p className="mt-1 text-sm font-black text-slate-950">+{points} D-Points</p></div></div><div className="mt-5 flex gap-2"><button type="button" onClick={buy} className={`flex-1 rounded-full px-5 py-3 text-sm font-black text-slate-950 transition active:scale-95 ${added ? 'bg-green-300 shadow-[0_0_0_6px_rgba(74,222,128,0.20)]' : 'bg-[#dfff4f] shadow-[0_12px_25px_rgba(120,150,45,0.22)] hover:scale-[1.02]'}`}>{added ? 'Added ✓' : 'Buy Now'}</button><a href={`/product/${product.slug}`} className="rounded-full bg-slate-950 px-5 py-3 text-sm font-black text-white transition hover:scale-105 active:scale-95">Open</a></div></div></div></article>;
 }
