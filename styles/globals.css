@@ -41,6 +41,11 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .dlavie-shimmer { background-size: 220% 220%; animation: dlavieShimmer 7s ease infinite; }
 .dlavie-hover-lift { transition: transform .28s ease, box-shadow .28s ease, background .28s ease; }
 .dlavie-hover-lift:hover { transform: translateY(-5px); box-shadow: 0 24px 70px rgba(65,78,74,.18); }
+.dlavie-greeting-pill { animation: dlavieGreetingBounce 11s ease-in-out infinite alternate; }
+.dlavie-corner-dot { animation: dlavieCornerPulse 3.8s ease-in-out infinite; }
+.dlavie-sparkle { animation: dlavieSparkle 4.8s ease-in-out infinite; }
+.dlavie-orbit { animation: dlavieOrbit 12s linear infinite; transform-origin: center; }
+.dlavie-text-glow { text-shadow: 0 12px 42px rgba(117,179,229,.22); }
 
 @keyframes dlavieAurora {
   0% { transform: translate3d(0,0,0) scale(1); filter: hue-rotate(0deg); }
@@ -58,6 +63,22 @@ button, a { -webkit-tap-highlight-color: transparent; }
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
+}
+@keyframes dlavieGreetingBounce {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(min(42vw, 260px)); }
+}
+@keyframes dlavieCornerPulse {
+  0%, 100% { opacity: .48; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.22); }
+}
+@keyframes dlavieSparkle {
+  0%, 100% { opacity: .35; transform: translateY(0) rotate(0deg) scale(.9); }
+  50% { opacity: 1; transform: translateY(-8px) rotate(18deg) scale(1.12); }
+}
+@keyframes dlavieOrbit {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
