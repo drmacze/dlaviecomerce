@@ -18,7 +18,11 @@ function createPayload(body: Record<string, unknown>) {
     category: String(body.category || 'digital').trim() || 'digital',
     image_url: body.image_url ? String(body.image_url) : null,
     file_path: body.file_path ? String(body.file_path) : null,
-    is_published: Boolean(body.is_published)
+    is_published: Boolean(body.is_published),
+    release_date: body.release_date ? String(body.release_date) : null,
+    stock: Number.isFinite(Number(body.stock)) ? Number(body.stock) : 99,
+    badge: body.badge ? String(body.badge) : 'DLAVIE',
+    mood_color: body.mood_color ? String(body.mood_color) : '#2467c9'
   };
 }
 
@@ -31,6 +35,10 @@ function updatePayload(body: Record<string, unknown>) {
   if ('image_url' in body) payload.image_url = body.image_url ? String(body.image_url) : null;
   if ('file_path' in body) payload.file_path = body.file_path ? String(body.file_path) : null;
   if ('is_published' in body) payload.is_published = Boolean(body.is_published);
+  if ('release_date' in body) payload.release_date = body.release_date ? String(body.release_date) : null;
+  if ('stock' in body) payload.stock = Number.isFinite(Number(body.stock)) ? Number(body.stock) : 99;
+  if ('badge' in body) payload.badge = body.badge ? String(body.badge) : 'DLAVIE';
+  if ('mood_color' in body) payload.mood_color = body.mood_color ? String(body.mood_color) : '#2467c9';
   if (typeof payload.name === 'string' && payload.name) payload.slug = slugify(payload.name);
   return payload;
 }
