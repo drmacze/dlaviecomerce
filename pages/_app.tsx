@@ -1,6 +1,7 @@
 import type { AppProps } from 'next/app';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
+import { DlavieProviders } from '@/components/dlavie-providers';
 import '../styles/globals.css';
 
 function DlavieLoader({ active }: { active: boolean }) {
@@ -25,5 +26,5 @@ export default function App({ Component, pageProps }: AppProps) {
     };
   }, [router.events]);
 
-  return <><DlavieLoader active={loading} /><div className="transition-opacity duration-300"><Component {...pageProps} /></div></>;
+  return <DlavieProviders><DlavieLoader active={loading} /><div className="transition-opacity duration-300"><Component {...pageProps} /></div></DlavieProviders>;
 }
