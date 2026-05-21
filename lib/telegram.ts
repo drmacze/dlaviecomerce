@@ -3,6 +3,7 @@ type TelegramParseMode = 'HTML' | 'MarkdownV2' | 'Markdown';
 type SendTelegramOptions = {
   parseMode?: TelegramParseMode;
   disableWebPagePreview?: boolean;
+  replyMarkup?: unknown;
 };
 
 export type NotifyNewOrderInput = {
@@ -33,7 +34,7 @@ export function escapeTelegramHtml(value: unknown) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/\"/g, '&quot;');
 }
 
 export function formatRupiah(value: number) {
@@ -58,6 +59,7 @@ export async function sendTelegramMessage(
       text,
       parse_mode: options.parseMode,
       disable_web_page_preview: options.disableWebPagePreview ?? true,
+      reply_markup: options.replyMarkup,
     }),
   });
 
