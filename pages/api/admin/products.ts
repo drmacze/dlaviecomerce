@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { bearerToken, verifySupabaseUser } from '@/lib/auth-server';
+import { writeAuditLog } from '@/lib/observability';
 import { createSupabaseServiceClient } from '@/lib/supabase-server';
 
 function admin(email?: string | null) {
@@ -59,6 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!payload.name) return res.status(400).json({ error: 'Product name is required' });
     const { data, error } = await supabase.from('products').insert({ ...payload, slug: slugify(payload.name) }).select('*').single();
     if (error) return res.status(500).json({ error: error.message });
+    await writeAuditLog({ adminEmail: user.email || undefined, action: 'product.create', targetType: 'product', targetId: data.id, metadata: { name: data.name, price: data.price }, req });
     return res.status(200).json({ product: data });
   }
 
@@ -70,6 +72,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!Object.keys(payload).length) return res.status(400).json({ error: 'No valid fields to update' });
     const { data, error } = await supabase.from('products').update(payload).eq('id', id).select('*').single();
     if (error) return res.status(500).json({ error: error.message });
+    await writeAuditLog({ adminEmail: user.email || undefined, action: 'product.update', targetType: 'product', targetId: id, metadata: { fields: Object.keys(payload) }, req });
     return res.status(200).json({ product: data });
   }
 
@@ -78,6 +81,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!id) return res.status(400).json({ error: 'Product id is required' });
     const { error } = await supabase.from('products').delete().eq('id', id);
     if (error) return res.status(500).json({ error: error.message });
+    await writeAuditLog({ adminEmail: user.email || undefined, action: 'product.delete', targetType: 'product', targetId: id, req });
     return res.status(200).json({ success: true });
   }
 
