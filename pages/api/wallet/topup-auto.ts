@@ -9,7 +9,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!user?.email) return res.status(401).json({ error: 'Unauthorized' });
 
   const amount = Number(req.body?.amount || 0);
-  if (!Number.isFinite(amount) || amount < 5000) return res.status(400).json({ error: 'Minimum topup Rp 5.000' });
+  if (!Number.isFinite(amount) || amount < 10000) return res.status(400).json({ error: 'Minimum topup Rp 10.000' });
 
   const supabase = createSupabaseServiceClient();
   const topupId = `DLV-TOPUP-${Date.now()}-${user.id.slice(0, 6)}`;
@@ -25,6 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (inserted.error) return res.status(500).json({ error: inserted.error.message });
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || req.headers.origin || 'https://dlaviecomerce.vercel.app';
   const response = await fetch(`${midtransBaseUrl()}/snap/v1/transactions`, {
     method: 'POST',
     headers: {
@@ -36,7 +37,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       transaction_details: { order_id: topupId, gross_amount: amount },
       customer_details: { email: user.email },
       item_details: [{ id: 'DLAVIE_TOPUP', price: amount, quantity: 1, name: `DLAVIE Topup ${amount}` }],
-      callbacks: { finish: `${process.env.NEXT_PUBLIC_SITE_URL || req.headers.origin || ''}/wallet` }
+      callbacks: { finish: `${siteUrl}/wallet/finish?order_id=${encodeURIComponent(topupId)}&amount=${amount}` }
     })
   });
 
