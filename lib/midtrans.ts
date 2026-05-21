@@ -4,6 +4,18 @@ export function midtransServerKey() {
   return process.env.MIDTRANS_SERVER_KEY || '';
 }
 
+export function midtransBaseUrl() {
+  return process.env.MIDTRANS_IS_PRODUCTION === 'true'
+    ? 'https://app.midtrans.com'
+    : 'https://app.sandbox.midtrans.com';
+}
+
+export function midtransAuthHeader() {
+  const key = midtransServerKey();
+  if (!key) throw new Error('MIDTRANS_SERVER_KEY is not configured');
+  return `Basic ${Buffer.from(`${key}:`).toString('base64')}`;
+}
+
 export function verifyMidtransSignature(payload: { order_id?: string; status_code?: string; gross_amount?: string; signature_key?: string }) {
   const key = midtransServerKey();
   if (!key) return false;
