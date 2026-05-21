@@ -1,0 +1,13 @@
+import { useRouter } from 'next/router';
+
+const rupiah = (value = 0) => `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
+
+export default function WalletFinishPage() {
+  const router = useRouter();
+  const orderId = String(router.query.order_id || router.query.orderId || '');
+  const amount = Number(router.query.amount || 0);
+  const status = String(router.query.transaction_status || router.query.status || 'processing');
+  const isSuccess = ['settlement', 'capture', 'success', 'paid'].includes(status);
+
+  return <main className="min-h-screen bg-[#f4f8ed] p-5 text-slate-950"><section className="mx-auto flex min-h-[88vh] max-w-4xl items-center"><div className="relative w-full overflow-hidden rounded-[2.8rem] bg-slate-950 p-7 text-white shadow-[0_35px_110px_rgba(15,23,42,.28)] md:p-10"><div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-[#dfff4f]/25 blur-3xl" /><div className="pointer-events-none absolute -bottom-20 left-10 h-56 w-56 rounded-full bg-cyan-300/15 blur-3xl" /><div className="relative"><p className="text-xs font-black uppercase tracking-[0.3em] text-[#dfff4f]">DLAVIE PAYMENT</p><h1 className="mt-4 text-5xl font-black leading-none tracking-tight md:text-6xl">Pembayaran sedang diverifikasi.</h1><p className="mt-5 max-w-2xl text-lg font-bold leading-8 text-white/55">Midtrans sudah mengembalikan kamu ke DLAVIE. Webhook akan menyinkronkan saldo D-Balance otomatis. Jika belum berubah, tunggu beberapa detik lalu refresh Wallet.</p><div className="mt-7 grid gap-3 md:grid-cols-3"><div className="rounded-[1.5rem] bg-white/10 p-5 ring-1 ring-white/10"><p className="text-xs font-black uppercase tracking-widest text-white/35">Status</p><p className="mt-2 text-2xl font-black text-[#dfff4f]">{isSuccess ? 'SUCCESS' : status.toUpperCase()}</p></div><div className="rounded-[1.5rem] bg-white/10 p-5 ring-1 ring-white/10"><p className="text-xs font-black uppercase tracking-widest text-white/35">Amount</p><p className="mt-2 text-2xl font-black">{amount ? rupiah(amount) : '-'}</p></div><div className="rounded-[1.5rem] bg-white/10 p-5 ring-1 ring-white/10"><p className="text-xs font-black uppercase tracking-widest text-white/35">Order</p><p className="mt-2 break-all text-sm font-black">{orderId || 'Waiting data'}</p></div></div><div className="mt-7 grid gap-3 sm:grid-cols-2"><a href="/wallet" className="rounded-full bg-[#dfff4f] px-5 py-4 text-center font-black text-slate-950 shadow-[0_18px_45px_rgba(223,255,79,.2)]">Refresh Wallet</a><a href="/dashboard" className="rounded-full bg-white/10 px-5 py-4 text-center font-black text-white ring-1 ring-white/10">Dashboard</a></div></div></div></section></main>;
+}
