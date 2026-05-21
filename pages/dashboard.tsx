@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import { AccountSystemCard } from '@/components/account-system-card';
 import { DlavieEcosystemPage } from '@/components/dlavie-ecosystem-page';
 import { createSupabaseBrowserClient } from '@/lib/supabase-client';
 
@@ -8,7 +9,6 @@ type Profile = {
   display_name?: string | null;
   l_points?: number | null;
   is_vip?: boolean | null;
-  last_seen_at?: string | null;
 };
 
 type SecurityData = {
@@ -70,11 +70,17 @@ export default function DashboardPage() {
         setDevices(deviceJson.devices || []);
       }
 
-      setStatus('Dashboard akun tersinkron dengan data Supabase.');
+      setStatus('Dashboard akun tersinkron dengan Supabase.');
     }
 
     load();
   }, [router]);
+
+  async function logout() {
+    const supabase = createSupabaseBrowserClient();
+    await supabase.auth.signOut();
+    router.push('/login');
+  }
 
   const email = profile?.email || security?.user?.email || 'Akun Dlavie';
   const name = profile?.display_name || email.split('@')[0] || 'Dlavier';
@@ -86,7 +92,7 @@ export default function DashboardPage() {
     <DlavieEcosystemPage
       eyebrow="DLAVIE MEMBER DASHBOARD"
       title={`${greeting()}, ${name}`}
-      description="Pusat akun untuk membuka wallet, order, reward, premium, AI, dan Security Center dengan visual redesign DLAVIE terbaru."
+      description="Pusat akun untuk wallet, order, reward, premium, AI, dan Security Center dengan visual redesign DLAVIE terbaru."
       accent="#dfff4f"
       metrics={[
         { label: 'D-Points', value: String(profile?.l_points ?? 0), hint: 'Reward balance' },
@@ -106,19 +112,19 @@ export default function DashboardPage() {
           <h2 className="mt-4 break-all text-3xl font-black tracking-tight">{email}</h2>
           <p className="mt-3 text-sm font-semibold leading-6 text-white/55">{status}</p>
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            <a href="/security" className="rounded-[1.4rem] bg-[#dfff4f] p-5 font-black text-slate-950">Open Security Center</a>
-            <a href="/orders" className="rounded-[1.4rem] bg-white/10 p-5 font-black text-white ring-1 ring-white/10">View Orders</a>
-            <a href="/wallet" className="rounded-[1.4rem] bg-white/10 p-5 font-black text-white ring-1 ring-white/10">Wallet</a>
-            <a href="/ai" className="rounded-[1.4rem] bg-white/10 p-5 font-black text-white ring-1 ring-white/10">DLAVIE AI</a>
+            <a href="/security" className="rounded-[1.4rem] bg-[#dfff4f] p-5 font-black text-slate-950 transition hover:-translate-y-1">Open Security Center</a>
+            <a href="/orders" className="rounded-[1.4rem] bg-white/10 p-5 font-black text-white ring-1 ring-white/10 transition hover:-translate-y-1">View Orders</a>
+            <a href="/wallet" className="rounded-[1.4rem] bg-white/10 p-5 font-black text-white ring-1 ring-white/10 transition hover:-translate-y-1">Wallet</a>
+            <a href="/ai" className="rounded-[1.4rem] bg-white/10 p-5 font-black text-white ring-1 ring-white/10 transition hover:-translate-y-1">DLAVIE AI</a>
           </div>
+          <button onClick={logout} className="mt-4 rounded-full bg-white/10 px-5 py-3 text-sm font-black text-white ring-1 ring-white/10 transition hover:bg-white/15">Logout</button>
         </section>
 
         <section className="grid gap-4">
+          <AccountSystemCard status={status} verified={verified} trustedCount={devices.length} eventCount={events.length} />
           <div className="dlavie-soft-card rounded-[1.6rem] p-5">
             <p className="text-xs font-black uppercase tracking-widest text-slate-400">Security Snapshot</p>
             <div className="mt-4 grid gap-3">
-              <div className="flex items-center justify-between rounded-[1.2rem] bg-white/75 p-4 font-bold ring-1 ring-black/5"><span>Email</span><span>{verified ? 'Verified' : 'Need check'}</span></div>
-              <div className="flex items-center justify-between rounded-[1.2rem] bg-white/75 p-4 font-bold ring-1 ring-black/5"><span>Login events</span><span>{events.length}</span></div>
               <div className="flex items-center justify-between rounded-[1.2rem] bg-white/75 p-4 font-bold ring-1 ring-black/5"><span>Risk events</span><span>{riskEvents}</span></div>
               <div className="flex items-center justify-between rounded-[1.2rem] bg-white/75 p-4 font-bold ring-1 ring-black/5"><span>Last sign in</span><span className="text-right text-xs">{formatDate(security?.user?.last_sign_in_at)}</span></div>
             </div>
