@@ -28,7 +28,7 @@ export function LoginAccessPanel({ open, onToggle }: LoginAccessPanelProps) {
       <button
         type="button"
         onClick={onToggle}
-        className="absolute -bottom-7 left-1/2 z-20 flex h-14 w-14 -translate-x-1/2 items-center justify-center rounded-full bg-[#dfff4f] text-2xl font-black text-slate-950 shadow-[0_18px_45px_rgba(120,150,45,.28)] ring-8 ring-[#f6f2e9]/80 transition hover:-translate-y-1 active:scale-95"
+        className={`absolute -bottom-7 left-1/2 z-20 flex h-14 w-14 -translate-x-1/2 items-center justify-center rounded-full bg-[#dfff4f] text-2xl font-black text-slate-950 shadow-[0_18px_45px_rgba(120,150,45,.28)] ring-8 ring-[#f6f2e9]/80 transition hover:-translate-y-1 active:scale-95 ${open ? '' : 'dlavie-login-pulse'}`}
         aria-expanded={open}
         aria-label={open ? 'Tutup form login' : 'Buka form login'}
       >
