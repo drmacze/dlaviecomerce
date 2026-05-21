@@ -101,53 +101,60 @@ export default function Login() {
   }
 
   return (
-    <main className="min-h-screen overflow-hidden px-4 py-5 text-slate-950 md:p-6">
+    <main className="min-h-screen overflow-hidden px-4 py-4 text-slate-950 md:p-6">
       <div className="pointer-events-none fixed inset-0 -z-10">
-        <div className="absolute -left-24 -top-24 h-96 w-96 rounded-full bg-[#dfff4f]/25 blur-3xl" />
-        <div className="absolute -right-24 top-40 h-[28rem] w-[28rem] rounded-full bg-[#75b3e5]/25 blur-3xl" />
-        <div className="absolute inset-0 dlavie-grid-bg opacity-40" />
+        <div className="absolute -left-24 -top-24 h-80 w-80 rounded-full bg-[#dfff4f]/25 blur-3xl" />
+        <div className="absolute -right-24 top-32 h-96 w-96 rounded-full bg-[#75b3e5]/20 blur-3xl" />
+        <div className="absolute inset-0 dlavie-grid-bg opacity-35" />
       </div>
 
-      <section className="mx-auto max-w-3xl pt-2 md:pt-8">
+      <section className="mx-auto max-w-3xl pt-1 md:pt-6">
         <LoginAccessPanel open={drawerOpen} onToggle={() => setDrawerOpen((open) => !open)} />
 
-        <div className={`overflow-hidden transition-all duration-700 ease-out ${drawerOpen ? 'max-h-[850px] opacity-100' : 'max-h-0 opacity-0'}`}>
-          <section className={`dlavie-glass dlavie-edge-flow mx-auto mt-10 rounded-[2rem] p-4 shadow-[0_28px_80px_rgba(65,78,74,.16)] transition-all duration-700 md:p-6 ${drawerOpen ? 'translate-y-0 scale-100' : '-translate-y-8 scale-[.98]'}`}>
+        <div className={`overflow-hidden transition-all duration-700 ease-out ${drawerOpen ? 'max-h-[760px] opacity-100' : 'max-h-0 opacity-0'}`}>
+          <section className={`dlavie-glass dlavie-edge-flow mx-auto mt-8 rounded-[1.7rem] p-4 shadow-[0_22px_65px_rgba(65,78,74,.14)] transition-all duration-700 md:rounded-[2rem] md:p-6 ${drawerOpen ? 'translate-y-0 scale-100' : '-translate-y-6 scale-[.98]'}`}>
             <div className="flex rounded-full bg-white/70 p-1 shadow-sm ring-1 ring-black/5">
               {(['login', 'signup', 'reset'] as Mode[]).map((item) => (
-                <button key={item} type="button" onClick={() => setMode(item)} className={`flex-1 rounded-full px-4 py-3 text-sm font-black capitalize transition ${mode === item ? 'bg-slate-950 text-white shadow-sm' : 'text-slate-500 hover:text-slate-950'}`}>{item === 'signup' ? 'Register' : item}</button>
+                <button key={item} type="button" onClick={() => setMode(item)} className={`flex-1 rounded-full px-3 py-2.5 text-xs font-black capitalize transition md:text-sm ${mode === item ? 'bg-slate-950 text-white shadow-sm' : 'text-slate-500 hover:text-slate-950'}`}>{item === 'signup' ? 'Register' : item}</button>
               ))}
             </div>
 
-            <h2 className="mt-6 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
-              {mode === 'login' ? 'Welcome back' : mode === 'signup' ? 'Create secure account' : 'Recover access'}
-            </h2>
-            <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">
-              {mode === 'login' ? 'Masuk untuk membuka dashboard, wallet, order, security, dan fitur akun.' : mode === 'signup' ? 'Gunakan email aktif agar konfirmasi bisa diterima.' : 'Masukkan email akun untuk menerima link reset password.'}
-            </p>
+            <div className="mt-5 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h2 className="text-2xl font-black tracking-tight text-slate-950 md:text-4xl">
+                  {mode === 'login' ? 'Welcome back' : mode === 'signup' ? 'Create account' : 'Recover access'}
+                </h2>
+                <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">
+                  {mode === 'login' ? 'Masuk untuk membuka fitur akun.' : mode === 'signup' ? 'Email aktif diperlukan untuk konfirmasi.' : 'Kirim link reset ke email akun.'}
+                </p>
+              </div>
+              <a href="/security" className="rounded-full bg-white/75 px-4 py-2 text-xs font-black text-slate-500 ring-1 ring-black/5">Security</a>
+            </div>
 
-            <form onSubmit={submit} className="mt-6 space-y-4">
-              <input value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-full border border-black/5 bg-white/80 p-4 font-semibold outline-none transition focus:ring-4 focus:ring-[#dfff4f]/40" placeholder="Email" type="email" autoComplete="email" required />
+            <form onSubmit={submit} className="mt-5 space-y-3">
+              <input value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-full border border-black/5 bg-white/80 p-3.5 font-semibold outline-none transition focus:ring-4 focus:ring-[#dfff4f]/40 md:p-4" placeholder="Email" type="email" autoComplete="email" required />
               {mode !== 'reset' && (
                 <div>
                   <div className="flex rounded-full border border-black/5 bg-white/80 pr-2 focus-within:ring-4 focus-within:ring-[#dfff4f]/40">
-                    <input value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-full bg-transparent p-4 font-semibold outline-none" placeholder="Password" type={showPassword ? 'text' : 'password'} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} required />
-                    <button type="button" onClick={() => setShowPassword((v) => !v)} className="px-4 text-sm font-black text-slate-500">{showPassword ? 'Hide' : 'Show'}</button>
+                    <input value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-full bg-transparent p-3.5 font-semibold outline-none md:p-4" placeholder="Password" type={showPassword ? 'text' : 'password'} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} required />
+                    <button type="button" onClick={() => setShowPassword((v) => !v)} className="px-3 text-xs font-black text-slate-500 md:px-4 md:text-sm">{showPassword ? 'Hide' : 'Show'}</button>
                   </div>
-                  <div className="mt-3 flex items-center gap-2">
-                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-200"><div className="h-full rounded-full bg-[#dfff4f] transition-all" style={{ width: `${(score / 5) * 100}%` }} /></div>
-                    <span className="text-xs font-black uppercase tracking-widest text-slate-500">{passwordLabel(score)}</span>
+                  <div className="mt-2 flex items-center gap-2">
+                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200"><div className="h-full rounded-full bg-[#dfff4f] transition-all" style={{ width: `${(score / 5) * 100}%` }} /></div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{passwordLabel(score)}</span>
                   </div>
                 </div>
               )}
-              <button disabled={loading} className="w-full rounded-full bg-[#dfff4f] px-5 py-4 font-black text-slate-950 shadow-[0_16px_35px_rgba(120,150,45,.22)] transition hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-60">
+              <button disabled={loading} className="w-full rounded-full bg-[#dfff4f] px-5 py-3.5 font-black text-slate-950 shadow-[0_14px_30px_rgba(120,150,45,.2)] transition hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-60 md:py-4">
                 {loading ? 'Processing...' : mode === 'login' ? 'Secure Login' : mode === 'signup' ? 'Create Account' : 'Send Reset Link'}
               </button>
             </form>
 
-            {mode === 'signup' && <button onClick={resendConfirmation} disabled={loading} className="mt-3 w-full rounded-full bg-white/75 px-4 py-3 font-black shadow-sm ring-1 ring-black/5 transition hover:bg-white disabled:opacity-60">Resend confirmation email</button>}
-            {status && <p className="mt-4 rounded-[1.4rem] bg-white/75 p-4 text-sm font-bold leading-6 text-slate-700 ring-1 ring-black/5">{status}</p>}
-            <div className="mt-5 grid gap-2 text-xs font-bold text-slate-400"><p>Login success: /dashboard</p><p>Confirmation redirect: /auth/confirmed</p><p>Reset redirect: /reset-password</p></div>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {mode === 'signup' && <button onClick={resendConfirmation} disabled={loading} className="rounded-full bg-white/75 px-4 py-3 text-xs font-black shadow-sm ring-1 ring-black/5 transition hover:bg-white disabled:opacity-60">Resend email</button>}
+              <button onClick={() => setDrawerOpen(false)} className="rounded-full bg-slate-950 px-4 py-3 text-xs font-black text-white shadow-sm">Minimize</button>
+            </div>
+            {status && <p className="mt-3 rounded-[1.2rem] bg-white/75 p-3 text-xs font-bold leading-5 text-slate-700 ring-1 ring-black/5 md:text-sm">{status}</p>}
           </section>
         </div>
       </section>
