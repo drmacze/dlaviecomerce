@@ -47,8 +47,8 @@ export default function OrdersPage() {
       ]}
       actions={[
         { label: 'Dashboard', href: '/dashboard' },
-        { label: 'Wallet', href: '/wallet' },
-        { label: 'Download', href: '/download', primary: true }
+        { label: 'Downloads', href: '/downloads' },
+        { label: 'Vault', href: '/download', primary: true }
       ]}
     >
       <div className="grid gap-5 lg:grid-cols-[.9fr_1.1fr]">
@@ -58,7 +58,7 @@ export default function OrdersPage() {
           <p className="mt-3 text-sm font-semibold leading-6 text-white/55">{status}</p>
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
             <a href="/#products" className="rounded-[1.4rem] bg-[#dfff4f] p-5 font-black text-slate-950 transition hover:-translate-y-1">Explore Products</a>
-            <a href="/download" className="rounded-[1.4rem] bg-white/10 p-5 font-black text-white ring-1 ring-white/10 transition hover:-translate-y-1">Download Center</a>
+            <a href="/downloads" className="rounded-[1.4rem] bg-white/10 p-5 font-black text-white ring-1 ring-white/10 transition hover:-translate-y-1">Download Library</a>
             <a href="/wallet" className="rounded-[1.4rem] bg-white/10 p-5 font-black text-white ring-1 ring-white/10 transition hover:-translate-y-1">Wallet</a>
             <a href="/security" className="rounded-[1.4rem] bg-white/10 p-5 font-black text-white ring-1 ring-white/10 transition hover:-translate-y-1">Security</a>
           </div>
@@ -77,7 +77,7 @@ export default function OrdersPage() {
                 <div className="mt-4 grid gap-2">
                   {orderItems.map((item) => <div key={item.id} className="rounded-[1.15rem] bg-white/75 p-4 font-bold ring-1 ring-black/5"><p className="break-all text-sm text-slate-950">Product ID: {item.product_id}</p><p className="mt-1 text-sm text-slate-500">Qty {item.qty} · {rupiah(item.price)}</p></div>)}
                 </div>
-                {order.status === 'fulfilled' && <a className="mt-4 inline-flex rounded-full bg-[#dfff4f] px-4 py-3 font-black text-slate-950 shadow-sm" href="/download">Ambil Download</a>}
+                {order.status === 'fulfilled' && <a className="mt-4 inline-flex rounded-full bg-[#dfff4f] px-4 py-3 font-black text-slate-950 shadow-sm" href="/downloads">Open Download Library</a>}
               </article>
             );
           }) : <OrdersEmptyState />}
