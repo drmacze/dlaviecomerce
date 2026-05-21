@@ -9,7 +9,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!user?.email) return res.status(401).json({ error: 'Unauthorized. Login dulu.' });
 
   const amount = Number(req.body?.amount || 0);
-  if (!Number.isFinite(amount) || amount < 5000) return res.status(400).json({ error: 'Minimum topup Rp 5.000' });
+  if (!Number.isFinite(amount) || amount < 10000) return res.status(400).json({ error: 'Minimum topup Rp 10.000' });
 
   const supabase = createSupabaseServiceClient();
   const reference = `DLV-TOPUP-${Date.now()}-${user.id.slice(0, 6)}`;
@@ -20,11 +20,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     status: 'pending',
     provider: 'midtrans',
     reference,
-    metadata: { gateway: 'midtrans', source: 'production-wallet-test', order_id: reference }
+    metadata: { gateway: 'midtrans', source: 'production-wallet', order_id: reference }
   }).select('*').single();
 
   if (inserted.error) return res.status(500).json({ error: inserted.error.message });
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || req.headers.origin || 'https://dlaviecomerce.vercel.app';
   const response = await fetch(`${midtransBaseUrl()}/snap/v1/transactions`, {
     method: 'POST',
     headers: {
@@ -36,13 +37,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       transaction_details: { order_id: reference, gross_amount: amount },
       customer_details: { email: user.email },
       item_details: [{ id: 'DLAVIE_TOPUP', price: amount, quantity: 1, name: `DLAVIE Topup ${amount}` }],
-      callbacks: { finish: `${process.env.NEXT_PUBLIC_SITE_URL || req.headers.origin || 'https://dlaviecomerce.vercel.app'}/wallet` }
+      callbacks: { finish: `${siteUrl}/wallet/finish?order_id=${encodeURIComponent(reference)}&amount=${amount}` }
     })
   });
 
   const data = await response.json();
   if (!response.ok) return res.status(response.status).json({ error: data.error_messages?.[0] || data.message || 'Midtrans transaction failed' });
 
-  await supabase.from('wallet_transactions').update({ metadata: { gateway: 'midtrans', source: 'production-wallet-test', order_id: reference, snap_token: data.token, redirect_url: data.redirect_url } }).eq('id', inserted.data.id);
+  await supabase.from('wallet_transactions').update({ metadata: { gateway: 'midtrans', source: 'production-wallet', order_id: reference, snap_token: data.token, redirect_url: data.redirect_url } }).eq('id', inserted.data.id);
   return res.status(200).json({ transaction: inserted.data, token: data.token, redirect_url: data.redirect_url });
 }
