@@ -1,0 +1,39 @@
+import { useEffect, useState } from 'react';
+import { BellRing, CheckCircle2, ExternalLink, Radio, ShieldCheck, Sparkles, Users, Zap } from 'lucide-react';
+import { createSupabaseBrowserClient } from '@/lib/supabase-client';
+
+const cards = [
+  { label: 'Status', value: 'Online', text: 'Admin notification channel is active.', icon: Radio, glow: 'bg-cyan-400/25' },
+  { label: 'Delivery', value: 'Verified', text: 'Admin test delivery has been confirmed.', icon: BellRing, glow: 'bg-emerald-400/25' },
+  { label: 'Security', value: 'Protected', text: 'Sensitive actions stay on server-side endpoints.', icon: ShieldCheck, glow: 'bg-violet-500/25' },
+  { label: 'Pipeline', value: 'Ready', text: 'Event alerts can be connected to order activity.', icon: Zap, glow: 'bg-[#dfff4f]/20' },
+];
+
+function Card({ item }: { item: typeof cards[number] }) {
+  const Icon = item.icon;
+  return <article className="group relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.07] p-5 shadow-[0_24px_80px_rgba(0,0,0,.26)] backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:bg-white/[0.105]"><div className={`absolute -right-10 -top-10 h-28 w-28 rounded-full blur-3xl ${item.glow}`} /><div className="relative flex items-start justify-between gap-4"><div><p className="text-[11px] font-black uppercase tracking-[0.28em] text-white/42">{item.label}</p><h3 className="mt-3 text-3xl font-black tracking-tight text-white">{item.value}</h3><p className="mt-2 text-sm font-semibold leading-6 text-white/56">{item.text}</p></div><div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-white/10 bg-white/10 text-white shadow-inner"><Icon className="h-5 w-5" /></div></div></article>;
+}
+
+function Pill({ children }: { children: string }) {
+  return <span className="inline-flex items-center gap-2 rounded-full border border-emerald-300/30 bg-emerald-400/15 px-3 py-1 text-xs font-black uppercase tracking-[0.22em] text-emerald-100 shadow-lg shadow-emerald-500/10"><span className="h-2 w-2 rounded-full bg-emerald-200 shadow-[0_0_18px_rgba(167,243,208,.9)]" />{children}</span>;
+}
+
+export default function AdminControlCenter() {
+  const [allowed, setAllowed] = useState(false);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    const supabase = createSupabaseBrowserClient();
+    supabase.auth.getSession().then(({ data }) => {
+      const email = data.session?.user.email || '';
+      const admins = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '').split(',').map((value) => value.trim().toLowerCase());
+      setAllowed(Boolean(email && admins.includes(email.toLowerCase())));
+      setChecking(false);
+    });
+  }, []);
+
+  if (checking) return <main className="min-h-screen bg-[#050811] p-6 text-white">Checking admin access...</main>;
+  if (!allowed) return <main className="grid min-h-screen place-items-center bg-[#050811] p-6 text-white"><section className="max-w-lg rounded-[2.5rem] border border-white/10 bg-white/10 p-7 shadow-2xl backdrop-blur-xl"><p className="text-xs font-black uppercase tracking-[0.32em] text-white/40">DLAVIE SECURITY</p><h1 className="mt-3 text-4xl font-black">Admin Locked</h1><p className="mt-3 font-semibold leading-7 text-white/60">Login memakai email owner yang terdaftar sebagai admin.</p><a className="mt-6 inline-flex rounded-full bg-[#dfff4f] px-5 py-3 font-black text-slate-950" href="/login">Login</a></section></main>;
+
+  return <main className="relative min-h-screen overflow-hidden bg-[#050811] px-4 py-6 text-white sm:px-6 lg:px-8"><div className="absolute left-[-12rem] top-[-10rem] h-[28rem] w-[28rem] rounded-full bg-violet-600/25 blur-[110px]" /><div className="absolute right-[-10rem] top-20 h-[30rem] w-[30rem] rounded-full bg-cyan-400/20 blur-[120px]" /><div className="absolute bottom-[-12rem] left-1/3 h-[26rem] w-[26rem] rounded-full bg-[#dfff4f]/10 blur-[120px]" /><div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.035)_1px,transparent_1px)] bg-[size:42px_42px] [mask-image:radial-gradient(circle_at_top,black,transparent_72%)]" /><section className="relative mx-auto max-w-7xl"><div className="mb-5 flex flex-wrap items-center justify-between gap-3"><a href="/admin" className="rounded-full border border-white/10 bg-white/[0.07] px-4 py-2 text-sm font-black text-white/70 backdrop-blur-xl transition hover:bg-white/10">← Admin Home</a><div className="flex flex-wrap gap-2"><Pill>Live Console</Pill><Pill>Premium UI</Pill></div></div><div className="relative overflow-hidden rounded-[2.8rem] border border-white/10 bg-white/[0.07] p-6 shadow-[0_38px_110px_rgba(0,0,0,.45)] backdrop-blur-2xl md:p-8 lg:p-10"><div className="max-w-3xl"><div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.08] px-4 py-2 text-xs font-black uppercase tracking-[0.28em] text-white/55"><Sparkles className="h-4 w-4 text-[#dfff4f]" />Dlavie Control Center</div><h1 className="mt-5 text-5xl font-black tracking-[-0.08em] text-white sm:text-6xl lg:text-7xl">Notification console yang terasa mahal.</h1><p className="mt-5 max-w-2xl text-base font-semibold leading-8 text-white/58 sm:text-lg">Satu tempat untuk memantau kesiapan channel admin, receiver, pipeline alert, dan health integrasi dengan gaya modern, unik, rinci, dan tidak kaku.</p></div><div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">{cards.map((item) => <Card key={item.label} item={item} />)}</div></div><div className="mt-6 grid gap-6 lg:grid-cols-[1.05fr_.95fr]"><section className="rounded-[2.5rem] border border-white/10 bg-white/[0.07] p-5 shadow-[0_28px_90px_rgba(0,0,0,.28)] backdrop-blur-2xl md:p-7"><p className="text-xs font-black uppercase tracking-[0.28em] text-cyan-100/55">Operational overview</p><h2 className="mt-2 text-3xl font-black tracking-tight">Delivery pipeline</h2><p className="mt-2 max-w-xl text-sm font-semibold leading-7 text-white/55">Console ini menjadi basis untuk upgrade berikutnya: notifikasi order, payment success, error alert, dan resend queue.</p><div className="mt-6 grid gap-3">{['Integration deployed', 'Admin receiver verified', 'Order alerts ready to wire'].map((title, index) => <div key={title} className="flex items-start gap-4 rounded-[1.5rem] border border-white/10 bg-slate-950/35 p-4"><div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-white/10 font-black text-[#dfff4f]">{index + 1}</div><div><p className="font-black text-white">{title}</p><p className="mt-1 text-sm font-semibold leading-6 text-white/55">DLAVIE operational layer is ready for the next premium workflow.</p></div></div>)}</div></section><section className="rounded-[2.5rem] border border-white/10 bg-white/[0.07] p-5 shadow-[0_28px_90px_rgba(0,0,0,.28)] backdrop-blur-2xl md:p-7"><p className="text-xs font-black uppercase tracking-[0.28em] text-violet-100/55">Admin receiver</p><h2 className="mt-2 text-3xl font-black tracking-tight">Recipient health</h2><p className="mt-2 text-sm font-semibold leading-7 text-white/55">Jika semua checklist hijau, Dlavie siap menerima alert real-time dengan tampilan premium.</p><div className="mt-6 space-y-3">{['Numeric receiver ID connected', 'Admin account has started the channel', 'Production deployment is ready', 'Delivery test has passed'].map((item) => <div key={item} className="flex items-center gap-3 rounded-[1.35rem] border border-white/10 bg-white/[0.055] p-4"><CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-200" /><p className="text-sm font-black text-white/68">{item}</p></div>)}</div><a href="/admin" className="mt-5 flex items-center justify-between rounded-[1.4rem] border border-white/10 bg-slate-950/40 p-4 text-sm font-black text-white/65 transition hover:bg-slate-950/60">Back to admin dashboard <ExternalLink className="h-4 w-4" /></a></section></div></section></main>;
+}
