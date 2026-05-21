@@ -48,8 +48,8 @@ export default function Login() {
       return;
     }
 
-    setStatus('Login berhasil. Mengalihkan ke Security Center...');
-    router.push('/security');
+    setStatus('Login berhasil. Mengalihkan ke Dashboard...');
+    router.push('/dashboard');
   }
 
   async function sendRecoveryLink() {
@@ -93,7 +93,7 @@ export default function Login() {
         </h1>
         <p className="mx-auto mt-3 max-w-sm text-center text-sm font-semibold text-slate-500">
           {mode === 'login'
-            ? 'Masuk untuk membuka Security Center dan perangkat terpercaya.'
+            ? 'Masuk untuk membuka Dashboard, Security Center, dan benefit akun Dlavie.'
             : 'Daftar akun baru dan konfirmasi email sebelum menggunakan fitur Dlavie.'}
         </p>
 
