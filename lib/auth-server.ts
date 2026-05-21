@@ -15,3 +15,17 @@ export function bearerToken(header?: string | string[]) {
   if (!raw?.startsWith('Bearer ')) return undefined;
   return raw.slice('Bearer '.length);
 }
+
+export function isAdminEmail(email?: string | null) {
+  return (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '')
+    .split(',')
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean)
+    .includes(String(email || '').toLowerCase());
+}
+
+export async function requireAdminFromAuthHeader(header?: string | string[]) {
+  const user = await verifySupabaseUser(bearerToken(header));
+  if (!user || !isAdminEmail(user.email)) return null;
+  return user;
+}
