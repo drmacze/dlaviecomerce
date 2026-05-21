@@ -1,40 +1,51 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { createSupabaseBrowserClient } from '@/lib/supabase-client';
-import type { Order } from '@/lib/types';
+import type { Order, OrderItem } from '@/lib/types';
+
+type OrderStatus = Order['status'];
+const rupiah = (value = 0) => `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
 
 export default function AdminOrders() {
-  const [allowed, setAllowed] = useState(false);
-  const [checking, setChecking] = useState(true);
+  const [token, setToken] = useState('');
   const [orders, setOrders] = useState<Order[]>([]);
-  const [status, setStatus] = useState('');
+  const [items, setItems] = useState<OrderItem[]>([]);
+  const [status, setStatus] = useState('Checking admin...');
 
-  async function load() {
-    const supabase = createSupabaseBrowserClient();
-    const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(50);
-    if (error) setStatus(error.message);
-    setOrders((data || []) as Order[]);
+  async function load(nextToken = token) {
+    const res = await fetch('/api/admin/orders', { headers: { Authorization: `Bearer ${nextToken}` } });
+    const json = await res.json();
+    if (!res.ok) return setStatus(json.error || 'Gagal memuat orders.');
+    setOrders(json.orders || []);
+    setItems(json.items || []);
+    setStatus('');
   }
 
-  async function mark(id: string, next: Order['status']) {
-    const supabase = createSupabaseBrowserClient();
-    const { error } = await supabase.from('orders').update({ status: next }).eq('id', id);
-    setStatus(error ? error.message : 'Order diperbarui.');
+  async function mark(id: string, next: OrderStatus) {
+    setStatus(`Updating order to ${next}...`);
+    const res = await fetch('/api/admin/order-status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ orderId: id, status: next })
+    });
+    const json = await res.json();
+    setStatus(res.ok ? 'Order status updated.' : json.error || 'Update gagal.');
     await load();
   }
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
-    supabase.auth.getUser().then(({ data }) => {
-      const admins = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '').split(',').map((v) => v.trim().toLowerCase());
-      setAllowed(Boolean(data.user?.email && admins.includes(data.user.email.toLowerCase())));
-      setChecking(false);
+    supabase.auth.getSession().then(({ data }) => {
+      const nextToken = data.session?.access_token || '';
+      setToken(nextToken);
+      if (!nextToken) return setStatus('Login sebagai admin dulu.');
+      load(nextToken);
     });
   }, []);
 
-  useEffect(() => { if (allowed) load(); }, [allowed]);
+  const revenue = useMemo(() => orders.reduce((sum, order) => sum + Number(order.total_amount || 0), 0), [orders]);
+  const paid = orders.filter((order) => order.status === 'paid').length;
+  const pending = orders.filter((order) => order.status === 'pending').length;
+  const fulfilled = orders.filter((order) => order.status === 'fulfilled').length;
 
-  if (checking) return <main className="min-h-screen p-6 font-black">Checking admin...</main>;
-  if (!allowed) return <main className="min-h-screen p-6 font-black">Admin locked.</main>;
-
-  return <main className="min-h-screen p-6"><section className="dlavie-glass mx-auto max-w-5xl rounded-[2.5rem] p-6 md:p-8"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-black uppercase tracking-[0.3em] text-slate-400">DLAVIE ADMIN</p><h1 className="mt-2 text-4xl font-black tracking-tight">Orders</h1></div><a className="rounded-full bg-white/75 px-4 py-3 font-black shadow-sm ring-1 ring-black/5" href="/admin">Produk</a></div>{status && <p className="mt-4 font-semibold">{status}</p>}<div className="mt-6 space-y-4">{orders.map((order) => <div key={order.id} className="rounded-[1.7rem] bg-white/70 p-4 shadow-sm ring-1 ring-black/5"><p className="font-black">{order.buyer_email}</p><p className="font-semibold text-slate-600">Rp {order.total_amount.toLocaleString('id-ID')} · {order.status}</p><div className="mt-3 flex flex-wrap gap-2"><button onClick={() => mark(order.id, 'paid')} className="rounded-full bg-[#dfff4f] px-4 py-3 font-black text-slate-950">Paid</button><button onClick={() => mark(order.id, 'fulfilled')} className="rounded-full bg-slate-950 px-4 py-3 font-black text-white">Fulfilled</button><button onClick={() => mark(order.id, 'cancelled')} className="rounded-full bg-white px-4 py-3 font-black shadow-sm ring-1 ring-black/5">Cancel</button></div></div>)}{!orders.length && <p className="rounded-[1.5rem] border border-dashed border-slate-300 bg-white/50 p-6 font-bold text-slate-500">Belum ada order.</p>}</div></section></main>;
+  return <main className="min-h-screen p-6"><section className="dlavie-glass mx-auto max-w-6xl rounded-[2.5rem] p-6 md:p-8"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-black uppercase tracking-[0.3em] text-slate-400">DLAVIE ADMIN</p><h1 className="mt-2 text-4xl font-black tracking-tight">Orders Monitor</h1><p className="mt-2 font-semibold text-slate-500">Kelola paid, fulfilled, dan cancelled order lewat protected admin API.</p></div><div className="flex flex-wrap gap-2"><a className="rounded-full bg-white/75 px-4 py-3 font-black ring-1 ring-black/5" href="/admin">Hub</a><a className="rounded-full bg-[#dfff4f] px-4 py-3 font-black text-slate-950" href="/admin/topups">Topups</a><a className="rounded-full bg-white/75 px-4 py-3 font-black ring-1 ring-black/5" href="/admin/users">Users</a></div></div><div className="mt-6 grid gap-3 md:grid-cols-5"><div className="rounded-[1.5rem] bg-slate-950 p-5 text-white"><p className="text-xs font-black uppercase tracking-widest text-white/40">Orders</p><p className="mt-2 text-3xl font-black">{orders.length}</p></div><div className="rounded-[1.5rem] bg-[#dfff4f] p-5 text-slate-950"><p className="text-xs font-black uppercase tracking-widest text-slate-500">Revenue</p><p className="mt-2 text-2xl font-black">{rupiah(revenue)}</p></div><div className="rounded-[1.5rem] bg-white/75 p-5 ring-1 ring-black/5"><p className="text-xs font-black uppercase tracking-widest text-slate-400">Pending</p><p className="mt-2 text-3xl font-black">{pending}</p></div><div className="rounded-[1.5rem] bg-white/75 p-5 ring-1 ring-black/5"><p className="text-xs font-black uppercase tracking-widest text-slate-400">Paid</p><p className="mt-2 text-3xl font-black">{paid}</p></div><div className="rounded-[1.5rem] bg-white/75 p-5 ring-1 ring-black/5"><p className="text-xs font-black uppercase tracking-widest text-slate-400">Fulfilled</p><p className="mt-2 text-3xl font-black">{fulfilled}</p></div></div>{status && <p className="mt-4 font-semibold text-slate-600">{status}</p>}<div className="mt-6 grid gap-4">{orders.map((order) => { const orderItems = items.filter((item) => item.order_id === order.id); return <article key={order.id} className="rounded-[1.8rem] bg-white/75 p-5 shadow-sm ring-1 ring-black/5"><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="break-all text-lg font-black">{order.id}</p><p className="mt-1 font-semibold text-slate-600">{order.buyer_email} · {rupiah(order.total_amount)}</p><p className="mt-1 text-sm font-bold text-slate-400">{new Date(order.created_at).toLocaleString('id-ID')} · {orderItems.length} item</p></div><span className="rounded-full bg-slate-950 px-4 py-2 text-xs font-black text-white">{order.status}</span></div><div className="mt-4 flex flex-wrap gap-2"><button onClick={() => mark(order.id, 'paid')} className="rounded-full bg-[#dfff4f] px-4 py-3 font-black text-slate-950">Paid</button><button onClick={() => mark(order.id, 'fulfilled')} className="rounded-full bg-slate-950 px-4 py-3 font-black text-white">Fulfill</button><button onClick={() => mark(order.id, 'cancelled')} className="rounded-full bg-white px-4 py-3 font-black shadow-sm ring-1 ring-black/5">Cancel</button></div></article>; })}{!orders.length && <div className="rounded-[2rem] bg-white/75 p-8 font-bold text-slate-500 ring-1 ring-black/5">Belum ada order.</div>}</div></section></main>;
 }
