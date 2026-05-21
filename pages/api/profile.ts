@@ -29,7 +29,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       display_name: user.user_metadata?.display_name || null,
       referral_code: referralCode(user.email, user.id),
       vip_level: 'free',
-      vip_tier: 'free',
       affiliate_rank: 'starter'
     }).select('*').single();
     if (created.error) return res.status(500).json({ error: created.error.message });
