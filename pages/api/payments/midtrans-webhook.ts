@@ -18,15 +18,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const payload = req.body as MidtransPayload;
-  const isDashboardTest = !payload.signature_key && !payload.order_id;
-  if (isDashboardTest) return res.status(200).json({ ok: true, test: true });
+  const orderId = String(payload.order_id || '');
+
+  // Midtrans dashboard URL tests can send empty/dummy payloads. Keep this public health path 200 OK
+  // while still requiring signature for real DLAVIE topup notifications.
+  if (!orderId || !orderId.startsWith('DLV-TOPUP-')) {
+    return res.status(200).json({ ok: true, ignored: true, reason: 'dashboard-test-or-non-dlavie-order' });
+  }
+
   if (!verifyMidtransSignature(payload)) return res.status(401).json({ error: 'Invalid signature' });
 
   const supabase = createSupabaseServiceClient();
-  const orderId = String(payload.order_id || '');
   const tx = await supabase.from('wallet_transactions').select('*').eq('reference', orderId).eq('type', 'topup').maybeSingle();
   if (tx.error) return res.status(500).json({ error: tx.error.message });
-  if (!tx.data) return res.status(404).json({ error: 'Topup transaction not found' });
+  if (!tx.data) return res.status(200).json({ ok: true, ignored: true, reason: 'topup-not-found' });
 
   const metadata = { ...(tx.data.metadata || {}), midtrans: payload };
   const gatewayStatus = payload.transaction_status;
