@@ -1,0 +1,90 @@
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { notifyNewOrder } from '@/lib/telegram';
+import { createSupabaseServiceClient } from '@/lib/supabase-server';
+
+type OrderItemInput = { product_id?: string; qty?: number };
+type CouponRow = { id: string; discount_type: string; amount: number; min_amount: number; usage_limit: number | null; redeemed_count: number; expires_at: string | null };
+
+function validEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function normalizeItems(items: unknown) {
+  const rows = Array.isArray(items) ? (items as OrderItemInput[]) : [];
+  const grouped = new Map<string, number>();
+  for (const item of rows) {
+    const id = String(item.product_id || '').trim();
+    const qty = Math.min(99, Math.max(1, Math.floor(Number(item.qty || 1))));
+    if (id) grouped.set(id, (grouped.get(id) || 0) + qty);
+  }
+  return Array.from(grouped.entries()).map(([product_id, qty]) => ({ product_id, qty }));
+}
+
+function couponDiscount(coupon: CouponRow, subtotal: number) {
+  const amount = Number(coupon.amount || 0);
+  const raw = coupon.discount_type === 'percent' ? Math.floor(subtotal * amount / 100) : amount;
+  return Math.min(subtotal, Math.max(0, raw));
+}
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  try {
+    const email = String(req.body?.buyer_email || '').trim().toLowerCase();
+    const orderItems = normalizeItems(req.body?.items);
+    if (!validEmail(email) || !orderItems.length) return res.status(400).json({ error: 'Email valid dan items wajib diisi.' });
+
+    const supabase = createSupabaseServiceClient();
+    const ids = orderItems.map((item) => item.product_id);
+    const { data: products, error: productsError } = await supabase.from('products').select('id, price').in('id', ids).eq('is_published', true);
+    if (productsError || !products || products.length !== ids.length) return res.status(400).json({ error: 'Produk tidak valid.' });
+
+    const priceMap = new Map(products.map((p) => [String(p.id), Number(p.price || 0)]));
+    const mapped = orderItems.map((item) => ({ product_id: item.product_id, qty: item.qty, price: priceMap.get(item.product_id) || 0 })).filter((item) => item.price > 0);
+    if (mapped.length !== orderItems.length) return res.status(400).json({ error: 'Produk tidak valid.' });
+    const subtotal = mapped.reduce((sum, item) => sum + item.price * item.qty, 0);
+
+    let discount = 0;
+    const couponCode = String(req.body?.coupon_code || '').trim().toUpperCase();
+    let couponId = '';
+    if (couponCode) {
+      const { data: coupon } = await supabase.from('coupons').select('id, discount_type, amount, min_amount, usage_limit, redeemed_count, expires_at').eq('code', couponCode).eq('is_active', true).maybeSingle();
+      if (!coupon) return res.status(400).json({ error: 'Coupon tidak valid.' });
+      const row = coupon as CouponRow;
+      if (row.expires_at && new Date(row.expires_at).getTime() < Date.now()) return res.status(400).json({ error: 'Coupon sudah expired.' });
+      if (row.usage_limit !== null && Number(row.redeemed_count || 0) >= Number(row.usage_limit)) return res.status(400).json({ error: 'Coupon sudah habis.' });
+      if (subtotal < Number(row.min_amount || 0)) return res.status(400).json({ error: 'Subtotal belum memenuhi minimum coupon.' });
+      discount = couponDiscount(row, subtotal);
+      couponId = row.id;
+    }
+
+    const total = Math.max(0, subtotal - discount);
+    const { data: order, error } = await supabase.from('orders').insert({ buyer_email: email, total_amount: total, status: 'pending' }).select('id').single();
+    if (error || !order) return res.status(500).json({ error: error?.message || 'Order gagal dibuat.' });
+
+    const itemResult = await supabase.from('order_items').insert(mapped.map((item) => ({ ...item, order_id: order.id })));
+    if (itemResult.error) return res.status(500).json({ error: itemResult.error.message });
+    if (couponId && discount > 0) {
+      const { data: coupon } = await supabase.from('coupons').select('redeemed_count').eq('id', couponId).maybeSingle();
+      await supabase.from('coupons').update({ redeemed_count: Number(coupon?.redeemed_count || 0) + 1 }).eq('id', couponId);
+    }
+
+    try {
+      await notifyNewOrder({
+        orderId: order.id,
+        buyerEmail: email,
+        subtotal,
+        discount,
+        total,
+        itemCount: mapped.reduce((sum, item) => sum + item.qty, 0),
+        couponCode: couponCode || undefined,
+      });
+    } catch (telegramError) {
+      console.error('Telegram order notification failed:', telegramError);
+    }
+
+    return res.status(200).json({ orderId: order.id, subtotal, discount, total });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Create order failed';
+    return res.status(500).json({ error: message });
+  }
+}
