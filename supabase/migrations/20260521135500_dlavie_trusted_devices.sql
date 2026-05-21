@@ -14,3 +14,18 @@ alter table public.trusted_devices enable row level security;
 
 create index if not exists trusted_devices_user_idx
 on public.trusted_devices(user_id, revoked_at, last_seen_at desc);
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public'
+      and tablename = 'trusted_devices'
+      and policyname = 'users read own trusted devices'
+  ) then
+    create policy "users read own trusted devices"
+    on public.trusted_devices
+    for select to authenticated
+    using ((select auth.uid()) = user_id);
+  end if;
+end $$;
