@@ -8,6 +8,10 @@ function appBaseUrl() {
   return String(process.env.NEXT_PUBLIC_APP_URL || 'https://dlaviecomerce.vercel.app').replace(/\/$/, '');
 }
 
+function launcherPath() {
+  return '/telegram-admin';
+}
+
 function keyboardButtons() {
   return {
     keyboard: [
@@ -24,7 +28,7 @@ function keyboardButtons() {
 function inlineButtons(appUrl: string) {
   return {
     inline_keyboard: [
-      [{ text: '🚀 Panel terbaru', url: `${appUrl}/p` }, { text: '👑 Hub terbaru', url: `${appUrl}/admin/hub` }],
+      [{ text: '🚀 Panel terbaru', url: `${appUrl}${launcherPath()}` }, { text: '👑 Hub terbaru', url: `${appUrl}/admin/hub` }],
       [{ text: '📊 Stats', url: `${appUrl}/admin/intelligence` }, { text: '🛒 Orders', url: `${appUrl}/admin/order-pulse` }],
       [{ text: '🛡 Security', url: `${appUrl}/admin/security` }, { text: '🧾 Logs', url: `${appUrl}/admin/sec` }],
     ],
@@ -48,7 +52,7 @@ async function replyMenu(chatId: string | number) {
 
 async function replyLink(chatId: string | number, title: string, url: string, description: string) {
   await reply(chatId, [`✨ ${title}`, '', description].join('\n'), {
-    inline_keyboard: [[{ text: `Open ${title}`, url }], [{ text: '🚀 Panel terbaru', url: `${appBaseUrl()}/p` }]],
+    inline_keyboard: [[{ text: `Open ${title}`, url }], [{ text: '🚀 Panel terbaru', url: `${appBaseUrl()}${launcherPath()}` }]],
   });
 }
 
@@ -67,7 +71,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!chatId) return res.status(200).json({ ok: true });
 
     if (text === '/start' || text === '/menu' || text === '/help' || text === 'menu') await replyMenu(chatId);
-    else if (text === '/panel' || text === '/p' || text.includes('panel')) await replyLink(chatId, 'Dlavie Panel Terbaru', `${appUrl}/p`, 'Launcher admin Telegram versi terbaru.');
+    else if (text === '/panel' || text === '/p' || text.includes('panel')) await replyLink(chatId, 'Dlavie Panel Terbaru', `${appUrl}${launcherPath()}`, 'Launcher admin Telegram versi terbaru.');
     else if (text === '/hub' || text.includes('hub')) await replyLink(chatId, 'Dlavie Admin Hub Terbaru', `${appUrl}/admin/hub`, 'Gerbang utama semua modul admin premium terbaru.');
     else if (text === '/stats' || text === '/intelligence' || text.includes('stats')) await replyLink(chatId, 'Dlavie Admin Intelligence', `${appUrl}/admin/intelligence`, 'Stats rinci, system health, revenue view, logs, dan audits.');
     else if (text === '/security' || text.includes('security')) await replyLink(chatId, 'Dlavie Security Center', `${appUrl}/admin/security`, 'Security foundation, admin guard, dan health overview.');
