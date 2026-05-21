@@ -10,29 +10,44 @@ function required(name: string) {
   return value;
 }
 
+function launcherButtons(appUrl: string) {
+  return {
+    inline_keyboard: [
+      [
+        { text: '🚀 Panel', url: `${appUrl}/p` },
+        { text: '👑 Hub', url: `${appUrl}/admin/hub` },
+      ],
+      [
+        { text: '📊 Stats', url: `${appUrl}/admin/intelligence` },
+        { text: '🛒 Orders', url: `${appUrl}/admin/order-pulse` },
+      ],
+      [
+        { text: '🛡 Security', url: `${appUrl}/admin/security` },
+        { text: '🧾 Logs', url: `${appUrl}/admin/sec` },
+      ],
+    ],
+  };
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const appUrl = String(process.env.NEXT_PUBLIC_APP_URL || 'https://dlaviecomerce.vercel.app').replace(/\/$/, '');
   const message = [
-    '🚀 <b>DLAVIE Mobile Panel</b>',
+    '🚀 <b>DLAVIE Admin Launcher</b>',
     '',
-    'Panel command sudah siap dibuka dari Telegram.',
-    '',
-    `🔗 ${appUrl}/p`,
-    '',
-    'Gunakan panel ini untuk akses cepat ke Admin Hub, Order Pulse, dan signal dashboard.',
+    'Pilih tombol admin di bawah. Website publik tetap bersih, admin masuk dari Telegram.',
   ].join('\n');
 
   try {
     const key = String(req.query.key || '');
     if (key !== required(envName('TELEGRAM', 'SETUP', 'KEY'))) return res.status(401).json({ error: 'Invalid key' });
 
-    const result = await sendTelegramMessageToAdmins(message, { parseMode: 'HTML' });
+    const result = await sendTelegramMessageToAdmins(message, { parseMode: 'HTML', replyMarkup: launcherButtons(appUrl) });
     await writeNotificationLog({
       type: 'panel.launch',
       status: result.ok ? 'sent' : 'failed',
-      title: 'Dlavie panel launcher',
+      title: 'Dlavie panel launcher buttons',
       message,
-      payload: { result, panelUrl: `${appUrl}/p` },
+      payload: { result, panelUrl: `${appUrl}/p`, buttons: true },
       sentAt: result.ok ? new Date().toISOString() : undefined,
       errorMessage: result.ok ? undefined : 'Panel launch delivery failed',
     });
@@ -43,9 +58,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await writeNotificationLog({
       type: 'panel.launch',
       status: 'failed',
-      title: 'Dlavie panel launcher',
+      title: 'Dlavie panel launcher buttons',
       message,
-      payload: { panelUrl: `${appUrl}/p` },
+      payload: { panelUrl: `${appUrl}/p`, buttons: true },
       errorMessage,
     });
     return res.status(500).json({ error: errorMessage });
