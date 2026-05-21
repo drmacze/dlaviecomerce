@@ -1,14 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { sendTelegramMessage } from '@/lib/telegram';
 
-type IncomingMessage = {
-  text?: string;
-  chat?: { id?: string | number };
-};
-
-type IncomingBody = {
-  message?: IncomingMessage;
-};
+type IncomingMessage = { text?: string; chat?: { id?: string | number } };
+type IncomingBody = { message?: IncomingMessage };
 
 function appBaseUrl() {
   return String(process.env.NEXT_PUBLIC_APP_URL || 'https://dlaviecomerce.vercel.app').replace(/\/$/, '');
@@ -21,17 +15,17 @@ async function reply(chatId: string | number, text: string) {
 async function replyMenu(chatId: string | number) {
   const appUrl = appBaseUrl();
   await reply(chatId, [
-    '🚀 Dlavie Command Center',
+    '🚀 Dlavie Admin Entry',
     '',
-    'Pilih command:',
+    '/panel - Mobile panel',
+    '/hub - Admin hub',
+    '/stats - Admin intelligence',
+    '/security - Security center',
+    '/logs - Observability live',
+    '/orders - Order pulse',
+    '/status - Bot status',
     '',
-    `/panel - Mobile panel ringkas`,
-    `/hub - Premium admin hub`,
-    `/orders - Order pulse dashboard`,
-    `/signal - Signal center`,
-    `/status - Status bot`,
-    '',
-    `Mobile Panel: ${appUrl}/p`,
+    `Quick Panel: ${appUrl}/p`,
   ].join('\n'));
 }
 
@@ -47,22 +41,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const chatId = body.message?.chat?.id;
     const text = String(body.message?.text || '').trim().toLowerCase();
     const appUrl = appBaseUrl();
-
     if (!chatId) return res.status(200).json({ ok: true });
 
-    if (text === '/start' || text === '/menu') {
-      await replyMenu(chatId);
-    } else if (text === '/panel' || text === '/p') {
-      await replyLink(chatId, 'Dlavie Mobile Panel', `${appUrl}/p`, 'Panel ringkas untuk akses cepat dari Telegram.');
-    } else if (text === '/hub') {
-      await replyLink(chatId, 'Dlavie Admin Hub', `${appUrl}/admin/hub`, 'Gerbang utama ke semua modul admin premium.');
-    } else if (text === '/orders') {
-      await replyLink(chatId, 'Dlavie Order Pulse', `${appUrl}/admin/order-pulse`, 'Pantau order, revenue, pending, dan cleared order.');
-    } else if (text === '/signal') {
-      await replyLink(chatId, 'Dlavie Signal Center', `${appUrl}/admin/signal`, 'Pantau signal flow, priority routing, dan aktivitas penting.');
-    } else if (text === '/status') {
-      await reply(chatId, ['✅ Dlavie Bot aktif', '', 'Mode: command center', 'Panel: ready', 'Admin delivery: configured'].join('\n'));
-    }
+    if (text === '/start' || text === '/menu' || text === '/help') await replyMenu(chatId);
+    else if (text === '/panel' || text === '/p') await replyLink(chatId, 'Dlavie Mobile Panel', `${appUrl}/p`, 'Panel ringkas untuk akses cepat dari Telegram.');
+    else if (text === '/hub') await replyLink(chatId, 'Dlavie Admin Hub', `${appUrl}/admin/hub`, 'Gerbang utama semua modul admin premium.');
+    else if (text === '/stats' || text === '/intelligence') await replyLink(chatId, 'Dlavie Admin Intelligence', `${appUrl}/admin/intelligence`, 'Stats rinci, system health, revenue view, logs, dan audits.');
+    else if (text === '/security') await replyLink(chatId, 'Dlavie Security Center', `${appUrl}/admin/security`, 'Security foundation, admin guard, dan health overview.');
+    else if (text === '/logs') await replyLink(chatId, 'Dlavie Observability Live', `${appUrl}/admin/sec`, 'Notification logs, audit logs, dan failed delivery.');
+    else if (text === '/orders') await replyLink(chatId, 'Dlavie Order Pulse', `${appUrl}/admin/order-pulse`, 'Order dashboard dengan audited status actions.');
+    else if (text === '/status') await reply(chatId, ['✅ Dlavie Bot aktif', '', 'Mode: Telegram admin entry', 'Public website: clean', 'Panel: ready'].join('\n'));
 
     return res.status(200).json({ ok: true });
   } catch (error) {
