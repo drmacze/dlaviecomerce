@@ -10,7 +10,12 @@ type StackItem = {
 
 type Props = { items: StackItem[] };
 
-const inactiveColors = ['bg-[#182333]', 'bg-[#243044]', 'bg-[#303c50]'];
+const cardStyles = [
+  { shell: 'from-[#dfff4f] to-[#9eff6a]', text: 'text-slate-950', badge: 'bg-slate-950 text-[#dfff4f]', glow: 'bg-[#dfff4f]' },
+  { shell: 'from-[#38bdf8] to-[#2563eb]', text: 'text-white', badge: 'bg-white text-blue-700', glow: 'bg-sky-300' },
+  { shell: 'from-[#f97316] to-[#ef4444]', text: 'text-white', badge: 'bg-white text-orange-700', glow: 'bg-orange-300' },
+  { shell: 'from-[#a78bfa] to-[#6366f1]', text: 'text-white', badge: 'bg-white text-indigo-700', glow: 'bg-violet-300' }
+];
 
 export function WalletStackDrawer({ items }: Props) {
   const [openId, setOpenId] = useState(items[0]?.id || '');
@@ -20,14 +25,15 @@ export function WalletStackDrawer({ items }: Props) {
   return (
     <section className="relative mt-4">
       <div className="mb-2 flex items-center justify-between gap-3 px-1">
-        <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#dfff4f]">Tap card edge</p>
-        <p className="rounded-full bg-[#dfff4f] px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-950">Pull drawer</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#dfff4f]">Tap one card to switch</p>
+        <p className="rounded-full bg-[#dfff4f] px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-950 shadow-[0_0_22px_rgba(223,255,79,.24)]">Auto / Manual / Logs</p>
       </div>
-      <div className="relative h-[7.8rem] overflow-visible">
+      <div className="relative h-[8.35rem] overflow-visible">
         {items.map((item, index) => {
           const activeItem = item.id === openId;
-          const offset = index * 1.05;
-          const rotate = (index - 1) * 1.4;
+          const offset = index * 1.1;
+          const rotate = (index - 1) * 1.45;
+          const style = cardStyles[index % cardStyles.length];
           return (
             <button
               key={item.id}
@@ -38,14 +44,16 @@ export function WalletStackDrawer({ items }: Props) {
               onMouseLeave={() => setPulling('')}
               onTouchStart={() => setPulling(item.id)}
               onTouchEnd={() => setPulling('')}
-              className={`absolute left-0 right-0 h-[5.4rem] overflow-hidden rounded-t-[1.55rem] border px-4 pt-3 text-left transition duration-500 ease-out active:scale-[.985] ${activeItem ? 'z-30 border-[#dfff4f] bg-[#dfff4f] text-slate-950 shadow-[0_-14px_42px_rgba(223,255,79,.26)]' : `${inactiveColors[index % inactiveColors.length]} border-white/18 text-white shadow-[0_-12px_32px_rgba(0,0,0,.26)] hover:-translate-y-1 hover:border-[#dfff4f]/70`}`}
-              style={{ top: `${index * 1.1}rem`, transform: `translateY(${activeItem ? '1.05rem' : `${offset * 0.08}rem`}) rotate(${rotate}deg) ${pulling === item.id ? 'translateY(-.35rem)' : ''}` }}
+              className={`group absolute left-0 right-0 h-[5.55rem] overflow-hidden rounded-t-[1.55rem] border px-4 pt-3 text-left shadow-[0_-14px_36px_rgba(0,0,0,.28)] transition duration-500 ease-out active:scale-[.985] bg-gradient-to-br ${style.shell} ${style.text} ${activeItem ? 'z-30 border-white/60 shadow-[0_-16px_46px_rgba(223,255,79,.24)]' : 'border-white/30 hover:-translate-y-1 hover:border-white/80'}`}
+              style={{ top: `${index * 1.18}rem`, transform: `translateY(${activeItem ? '1.1rem' : `${offset * 0.08}rem`}) rotate(${rotate}deg) ${pulling === item.id ? 'translateY(-.38rem)' : ''}` }}
             >
-              <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/30" />
-              <span className={`absolute right-4 top-3 grid h-10 w-10 place-items-center rounded-full text-xs font-black transition ${activeItem ? 'bg-slate-950 text-[#dfff4f]' : 'bg-[#dfff4f] text-slate-950 shadow-[0_0_22px_rgba(223,255,79,.28)]'}`}>TAP</span>
-              <span className="block text-[10px] font-black uppercase tracking-[0.22em] opacity-70">{item.label}</span>
-              <span className="mt-1 block pr-14 text-base font-black">{item.title}</span>
-              <span className={`absolute bottom-0 left-0 h-1.5 transition-all duration-500 ${activeItem ? 'w-full bg-slate-950/30' : 'w-2/3 bg-[#dfff4f]'}`} />
+              <span className={`pointer-events-none absolute -right-6 -top-8 h-24 w-24 rounded-full ${style.glow} opacity-30 blur-2xl transition group-hover:opacity-60`} />
+              <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/55" />
+              {!activeItem && <span className="pointer-events-none absolute bottom-0 left-0 h-1.5 w-1/3 rounded-full bg-white/80 shadow-[0_0_18px_rgba(255,255,255,.55)] transition-all duration-700 group-hover:w-full" />}
+              <span className={`absolute right-4 top-3 grid h-10 min-w-14 place-items-center rounded-full px-2 text-[10px] font-black uppercase tracking-widest transition ${style.badge} ${activeItem ? '' : 'animate-pulse shadow-[0_0_22px_rgba(255,255,255,.25)]'}`}>{activeItem ? 'OPEN' : 'TAP'}</span>
+              <span className="block text-[10px] font-black uppercase tracking-[0.22em] opacity-75">{item.label}</span>
+              <span className="mt-1 block pr-16 text-base font-black">{item.title}</span>
+              <span className="mt-1 block text-[10px] font-bold opacity-70">{activeItem ? 'Currently opened' : 'Tap to switch method'}</span>
             </button>
           );
         })}
