@@ -7,6 +7,10 @@ function isAdminEmail(email?: string | null) {
   return Boolean(email && admins.includes(email.toLowerCase()));
 }
 
+function cleanText(value: unknown, max = 220) {
+  return String(value || '').trim().replace(/\s+/g, ' ').slice(0, max);
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const admin = await verifySupabaseUser(bearerToken(req.headers.authorization));
   if (!admin || !isAdminEmail(admin.email)) return res.status(403).json({ error: 'Forbidden' });
@@ -20,13 +24,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'POST') {
     const { id, action } = req.body || {};
+    const reviewNote = cleanText(req.body?.review_note);
     if (!id || !['approve', 'reject'].includes(action)) return res.status(400).json({ error: 'id and action are required' });
     const tx = await supabase.from('wallet_transactions').select('*').eq('id', id).eq('type', 'topup').single();
     if (tx.error || !tx.data) return res.status(404).json({ error: tx.error?.message || 'Topup not found' });
     if (tx.data.status !== 'pending') return res.status(400).json({ error: 'Topup sudah diproses.' });
 
+    const metadata = { ...(tx.data.metadata || {}), reviewed_by: admin.email, reviewed_at: new Date().toISOString(), review_note: reviewNote };
+    const provider = String(tx.data.provider || '').toLowerCase();
+    const manualProvider = provider !== 'midtrans';
+    if (manualProvider && (!metadata.sender_name || !metadata.proof_note)) {
+      return res.status(400).json({ error: 'Topup manual tidak boleh di-approve tanpa bukti pembayaran.' });
+    }
+
     if (action === 'reject') {
-      const rejected = await supabase.from('wallet_transactions').update({ status: 'rejected', metadata: { ...(tx.data.metadata || {}), reviewed_by: admin.email } }).eq('id', id).select('*').single();
+      const rejected = await supabase.from('wallet_transactions').update({ status: 'rejected', metadata }).eq('id', id).select('*').single();
       if (rejected.error) return res.status(500).json({ error: rejected.error.message });
       return res.status(200).json({ topup: rejected.data });
     }
@@ -36,7 +48,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const nextBalance = Number(profile.data.d_balance || 0) + Number(tx.data.amount || 0);
     const balance = await supabase.from('profiles').update({ d_balance: nextBalance }).eq('id', tx.data.user_id).select('id,d_balance').single();
     if (balance.error) return res.status(500).json({ error: balance.error.message });
-    const approved = await supabase.from('wallet_transactions').update({ status: 'approved', metadata: { ...(tx.data.metadata || {}), reviewed_by: admin.email } }).eq('id', id).select('*').single();
+    const approved = await supabase.from('wallet_transactions').update({ status: 'approved', metadata }).eq('id', id).select('*').single();
     if (approved.error) return res.status(500).json({ error: approved.error.message });
     return res.status(200).json({ topup: approved.data, wallet: balance.data });
   }
