@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createSupabaseServiceClient } from '@/lib/supabase-server';
 import { hasDigiflazzEnv, syncDigiflazzPrepaidProducts } from '@/lib/ppob-sync';
+import { shouldUseVipayment, syncVipaymentProducts } from '@/lib/vipayment-sync';
 
 async function listProducts() {
   const supabase = createSupabaseServiceClient();
@@ -14,6 +15,12 @@ async function listProducts() {
     .limit(100);
 }
 
+async function syncConfiguredProvider() {
+  if (shouldUseVipayment()) return syncVipaymentProducts();
+  if (hasDigiflazzEnv()) return syncDigiflazzPrepaidProducts();
+  return null;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -21,13 +28,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (result.error) return res.status(500).json({ error: result.error.message });
 
   let sync = null;
-  if ((!result.data || result.data.length === 0) && hasDigiflazzEnv()) {
+  if (!result.data || result.data.length === 0) {
     try {
-      sync = await syncDigiflazzPrepaidProducts();
+      sync = await syncConfiguredProvider();
       result = await listProducts();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'PPOB sync failed';
-      return res.status(500).json({ error: message, products: [] });
+      return res.status(200).json({ products: result.data || [], sync: null, warning: message });
     }
   }
 
