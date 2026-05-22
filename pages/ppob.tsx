@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { createSupabaseBrowserClient } from '@/lib/supabase-client';
 
 type PpobProduct = {
@@ -15,27 +15,29 @@ type UiCategory = {
   label: string;
   count: number;
   icon: string;
+  color: string;
+  dark: string;
+};
+
+type Theme = {
+  color: string;
+  dark: string;
+  soft: string;
+  icon: string;
 };
 
 const rupiah = (value = 0) => `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
 const normalize = (value?: string | null, fallback = 'Digital') => String(value || fallback).trim() || fallback;
 
-function categoryIcon(category: string) {
+function themeFor(category: string): Theme {
   const text = category.toLowerCase();
-  if (text.includes('game') || text.includes('stream')) return '🎮';
-  if (text.includes('pln') || text.includes('listrik')) return '⚡';
-  if (text.includes('data') || text.includes('internet') || text.includes('aigo') || text.includes('always')) return '📶';
-  if (text.includes('pulsa')) return '📱';
-  if (text.includes('voucher')) return '🎟️';
-  if (text.includes('wallet') || text.includes('saldo')) return '💳';
-  return '✨';
-}
-
-function targetPlaceholder(product?: PpobProduct | null) {
-  const category = `${product?.category || ''} ${product?.brand || ''} ${product?.product_name || ''}`.toLowerCase();
-  if (category.includes('game') || category.includes('free fire') || category.includes('mobile legends')) return 'Masukkan User ID / Server ID';
-  if (category.includes('pln') || category.includes('token')) return 'Masukkan nomor meter / ID pelanggan PLN';
-  return 'Masukkan nomor HP tujuan';
+  if (text.includes('game') || text.includes('stream')) return { color: '#ff7a18', dark: '#311707', soft: '#ffe1c7', icon: '🎮' };
+  if (text.includes('pln') || text.includes('listrik')) return { color: '#ffd400', dark: '#332500', soft: '#fff4a8', icon: '⚡' };
+  if (text.includes('data') || text.includes('internet') || text.includes('aigo') || text.includes('always')) return { color: '#30d5ff', dark: '#062432', soft: '#c5f5ff', icon: '📶' };
+  if (text.includes('pulsa')) return { color: '#dfff4f', dark: '#253307', soft: '#f1ffb5', icon: '📱' };
+  if (text.includes('voucher')) return { color: '#b58cff', dark: '#261345', soft: '#e8dbff', icon: '🎟️' };
+  if (text.includes('wallet') || text.includes('saldo')) return { color: '#37f29b', dark: '#06331f', soft: '#cbffe4', icon: '💳' };
+  return { color: '#f35cff', dark: '#331033', soft: '#ffd4ff', icon: '✨' };
 }
 
 function categoryTitle(category: string) {
@@ -46,9 +48,20 @@ function categoryTitle(category: string) {
   return value;
 }
 
+function targetPlaceholder(product?: PpobProduct | null) {
+  const text = `${product?.category || ''} ${product?.brand || ''} ${product?.product_name || ''}`.toLowerCase();
+  if (text.includes('game') || text.includes('free fire') || text.includes('mobile legends')) return 'User ID / Server ID';
+  if (text.includes('pln') || text.includes('token')) return 'Nomor meter / ID pelanggan PLN';
+  return 'Nomor HP tujuan';
+}
+
+function customStyle(vars: Record<string, string | number>): CSSProperties {
+  return vars as CSSProperties;
+}
+
 export default function PpobPage() {
   const [products, setProducts] = useState<PpobProduct[]>([]);
-  const [status, setStatus] = useState('Menghubungkan katalog VIPayment...');
+  const [status, setStatus] = useState('Membuka mesin katalog...');
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [activeBrand, setActiveBrand] = useState('all');
@@ -64,9 +77,9 @@ export default function PpobPage() {
       .then((json) => {
         const list = Array.isArray(json.products) ? json.products : [];
         setProducts(list);
-        setStatus(list.length ? 'Katalog live dari provider siap dipilih.' : 'Belum ada produk aktif. Coba refresh beberapa saat lagi.');
+        setStatus(list.length ? 'VIPayment cartridge loaded.' : 'Belum ada cartridge aktif. Refresh beberapa saat lagi.');
       })
-      .catch(() => setStatus('Gagal memuat katalog. Cek koneksi lalu refresh halaman.'));
+      .catch(() => setStatus('Katalog gagal dimuat. Cek koneksi lalu refresh.'));
 
     const supabase = createSupabaseBrowserClient();
     supabase.auth.getSession().then(({ data }) => setToken(data.session?.access_token || '')).catch(() => setToken(''));
@@ -75,25 +88,30 @@ export default function PpobPage() {
   const categories = useMemo<UiCategory[]>(() => {
     const counts = new Map<string, number>();
     products.forEach((item) => {
-      const key = categoryTitle(item.category);
-      counts.set(key, (counts.get(key) || 0) + 1);
+      const label = categoryTitle(item.category);
+      counts.set(label, (counts.get(label) || 0) + 1);
     });
 
     const dynamic = Array.from(counts.entries())
       .sort((a, b) => b[1] - a[1])
-      .map(([label, count]) => ({ key: label, label, count, icon: categoryIcon(label) }));
+      .map(([label, count]) => {
+        const theme = themeFor(label);
+        return { key: label, label, count, icon: theme.icon, color: theme.color, dark: theme.dark };
+      });
 
-    return [{ key: 'all', label: 'Semua', count: products.length, icon: '🌐' }, ...dynamic];
+    return [{ key: 'all', label: 'Semua', count: products.length, icon: '🕹️', color: '#dfff4f', dark: '#151c05' }, ...dynamic];
   }, [products]);
+
+  const activeCategoryData = categories.find((item) => item.key === activeCategory) || categories[0];
+  const orbitCategories = categories.slice(0, 8);
 
   const brands = useMemo(() => {
     const set = new Set<string>();
     products.forEach((item) => {
       if (activeCategory !== 'all' && categoryTitle(item.category) !== activeCategory) return;
-      const brand = normalize(item.brand, 'Digital');
-      if (brand) set.add(brand);
+      set.add(normalize(item.brand, 'Digital'));
     });
-    return ['all', ...Array.from(set).sort((a, b) => a.localeCompare(b))].slice(0, 18);
+    return ['all', ...Array.from(set).sort((a, b) => a.localeCompare(b))].slice(0, 16);
   }, [products, activeCategory]);
 
   useEffect(() => {
@@ -113,13 +131,8 @@ export default function PpobPage() {
     });
   }, [products, query, activeCategory, activeBrand]);
 
-  const featured = filtered.slice(0, 3);
-  const priceRange = useMemo(() => {
-    if (!filtered.length) return 'Rp 0';
-    const prices = filtered.map((item) => Number(item.selling_price || 0)).filter(Boolean);
-    if (!prices.length) return 'Rp 0';
-    return `${rupiah(Math.min(...prices))} - ${rupiah(Math.max(...prices))}`;
-  }, [filtered]);
+  const featured = filtered.slice(0, 4);
+  const cheapest = useMemo(() => filtered.reduce<PpobProduct | null>((best, item) => (!best || item.selling_price < best.selling_price ? item : best), null), [filtered]);
 
   function openProduct(product: PpobProduct) {
     setSelected(product);
@@ -140,14 +153,13 @@ export default function PpobPage() {
 
   async function submitOrder() {
     if (!selected || !target.trim()) return;
-
     if (!token) {
       setOrderStatus('Kamu belum login. Login untuk memakai D-Balance, atau pakai order manual dulu.');
       return;
     }
 
     setOrdering(true);
-    setOrderStatus('Membuat order otomatis...');
+    setOrderStatus('Memasukkan cartridge order ke mesin...');
     try {
       const res = await fetch('/api/ppob-order', {
         method: 'POST',
@@ -159,7 +171,7 @@ export default function PpobPage() {
         setOrderStatus(json.error || 'Order otomatis belum bisa diproses. Kamu bisa lanjut manual dulu.');
         return;
       }
-      setOrderStatus(`Order berhasil dibuat. Ref: ${json.order?.ref_id || '-'}. Cek halaman Orders/Wallet untuk status.`);
+      setOrderStatus(`Order berhasil dibuat. Ref: ${json.order?.ref_id || '-'}. Cek Orders/Wallet untuk status.`);
     } catch {
       setOrderStatus('Koneksi order gagal. Kamu bisa lanjut manual dulu.');
     } finally {
@@ -168,149 +180,165 @@ export default function PpobPage() {
   }
 
   return (
-    <main className="ppob-shell min-h-screen overflow-hidden px-4 py-5 text-slate-950 md:px-8 md:py-8">
+    <main className="arcade min-h-screen overflow-hidden px-4 py-5 text-white md:px-8 md:py-8">
       <style jsx global>{`
-        body{background:#eef5f0}.ppob-shell{position:relative;isolation:isolate;background:radial-gradient(circle at 10% 0%,rgba(223,255,79,.55),transparent 24rem),radial-gradient(circle at 92% 10%,rgba(117,179,229,.42),transparent 25rem),linear-gradient(145deg,#f7fbf2,#eef4f7 52%,#f9f9ec)}.ppob-shell:before{content:'';position:fixed;inset:-14%;z-index:-2;background:conic-gradient(from 140deg,rgba(223,255,79,.4),rgba(117,179,229,.34),rgba(255,214,163,.28),rgba(223,255,79,.42));filter:blur(76px);opacity:.72;animation:floatMesh 18s ease-in-out infinite alternate}.ppob-shell:after{content:'';position:fixed;inset:0;z-index:-1;opacity:.32;background-image:linear-gradient(rgba(15,23,42,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(15,23,42,.045) 1px,transparent 1px);background-size:34px 34px;mask-image:radial-gradient(circle at 50% 20%,black,transparent 78%)}.glass{background:linear-gradient(145deg,rgba(255,255,255,.82),rgba(255,255,255,.52));border:1px solid rgba(15,23,42,.08);box-shadow:0 26px 80px rgba(65,78,74,.14),inset 0 1px 0 rgba(255,255,255,.9);backdrop-filter:blur(24px) saturate(145%)}.product-card{position:relative;overflow:hidden}.product-card:before{content:'';position:absolute;inset:-80px auto auto -80px;width:140px;height:140px;border-radius:999px;background:rgba(223,255,79,.42);filter:blur(24px);opacity:0;transition:.32s}.product-card:hover:before{opacity:1;transform:translate(18px,18px)}.product-card:after{content:'';position:absolute;inset:auto -22% -42% auto;width:72%;height:72%;border-radius:999px;background:linear-gradient(135deg,rgba(117,179,229,.26),rgba(223,255,79,.28));filter:blur(30px);opacity:.45;transition:.32s}.product-card:hover:after{opacity:.85;transform:scale(1.08)}.chip-scroll{scrollbar-width:none}.chip-scroll::-webkit-scrollbar{display:none}.orb{position:absolute;border-radius:999px;filter:blur(0);animation:orb 8s ease-in-out infinite alternate}.scan-line{position:absolute;inset:0;background:linear-gradient(120deg,transparent,rgba(255,255,255,.48),transparent);transform:translateX(-120%);animation:scan 4.8s ease-in-out infinite}.drawer-in{animation:drawerIn .22s ease-out}.pop-in{animation:popIn .32s ease-out both}@keyframes floatMesh{0%{transform:translate3d(-3%,-2%,0) rotate(0deg) scale(1)}100%{transform:translate3d(4%,3%,0) rotate(18deg) scale(1.06)}}@keyframes orb{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(12px,-18px,0) scale(1.09)}}@keyframes scan{0%,55%{transform:translateX(-120%)}100%{transform:translateX(120%)}}@keyframes drawerIn{from{transform:translateY(18px);opacity:.65}to{transform:translateY(0);opacity:1}}@keyframes popIn{from{transform:translateY(10px) scale(.98);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
+        body{background:#080a10}.arcade{position:relative;isolation:isolate;background:#080a10}.arcade:before{content:'';position:fixed;inset:0;z-index:-4;background:radial-gradient(circle at 18% 8%,#243bff55,transparent 30rem),radial-gradient(circle at 88% 10%,#dfff4f42,transparent 26rem),radial-gradient(circle at 50% 95%,#ff7a1840,transparent 33rem),linear-gradient(135deg,#080a10,#111624 48%,#090b12)}.arcade:after{content:'';position:fixed;inset:0;z-index:-3;opacity:.42;background-image:linear-gradient(#ffffff0a 1px,transparent 1px),linear-gradient(90deg,#ffffff0a 1px,transparent 1px);background-size:34px 34px;mask-image:radial-gradient(circle at 50% 20%,black,transparent 80%)}.noise{position:fixed;inset:0;z-index:-2;pointer-events:none;opacity:.22;background:repeating-linear-gradient(0deg,transparent 0 7px,#ffffff08 8px),linear-gradient(120deg,#dfff4f10,#30d5ff10,#ff7a1810);animation:noiseMove 7s linear infinite}.machine{background:linear-gradient(180deg,#191f30,#0c101a);border:2px solid #2b344d;box-shadow:0 34px 90px #0009,inset 0 1px 0 #ffffff1e,inset 0 -18px 30px #0007}.arcade-panel{background:#101522;border:2px solid #2b344d;box-shadow:inset 0 0 0 1px #ffffff0d,0 22px 70px #0007}.banner-box{background:linear-gradient(135deg,#dfff4f,#f9ffb7 46%,#30d5ff);color:#080a10;box-shadow:0 24px 0 #101522,0 38px 70px #0008;transform:skewY(-1.5deg)}.orbit{background:radial-gradient(circle,#171f31 0 34%,#0d111d 35% 64%,#242e45 65% 66%,transparent 67%);box-shadow:inset 0 0 60px #000,0 0 55px #30d5ff22}.orbit-btn{position:absolute;left:50%;top:50%;transform:rotate(var(--angle)) translate(8.3rem) rotate(calc(-1 * var(--angle)));box-shadow:0 12px 30px #0008,0 0 22px var(--tone)}.orbit-btn.active{box-shadow:0 0 0 4px #080a10,0 0 0 8px var(--tone),0 18px 50px #0009}.slot-card{background:linear-gradient(180deg,#20283b,#0e1320);border:2px solid #303a54;box-shadow:0 20px 0 #080b12,0 28px 55px #0008,inset 0 1px 0 #ffffff22;animation:dropIn .42s ease both}.slot-card:before{content:'';position:absolute;left:1rem;right:1rem;top:.8rem;height:.45rem;border-radius:999px;background:linear-gradient(90deg,transparent,var(--tone),transparent);opacity:.65;animation:pulseRail 2.7s ease-in-out infinite}.slot-card:after{content:'';position:absolute;right:-2.2rem;bottom:-2.2rem;width:8rem;height:8rem;border-radius:2rem;background:var(--tone);opacity:.18;filter:blur(12px);transform:rotate(18deg);transition:.3s}.slot-card:hover{transform:translateY(-9px) rotate(-.7deg);border-color:var(--tone);box-shadow:0 22px 0 #080b12,0 42px 80px #000b,0 0 42px color-mix(in srgb,var(--tone),transparent 62%)}.slot-card:hover:after{opacity:.34;transform:rotate(32deg) scale(1.12)}.crate{background:linear-gradient(180deg,#1b2234,#0b0f19);border:2px solid #2d3852;box-shadow:inset 0 16px 0 #ffffff08,inset 0 -20px 0 #0006,0 30px 80px #0007}.crate-lid{background:repeating-linear-gradient(90deg,#2d3852 0 18px,#20283b 18px 36px);border:2px solid #3b4866;box-shadow:0 12px 0 #0b0f19}.solid-input{background:#080b12;border:2px solid #2d3852;color:white;box-shadow:inset 0 4px 14px #0008}.solid-input:focus{border-color:#dfff4f;box-shadow:0 0 0 4px #dfff4f22,inset 0 4px 14px #0008}.brand-pill{background:#141a28;border:1px solid #2d3852}.brand-pill.active{background:#dfff4f;color:#080a10;border-color:#dfff4f}.drawer{animation:drawer .24s ease-out}.chip-row{scrollbar-width:none}.chip-row::-webkit-scrollbar{display:none}@keyframes noiseMove{to{background-position:0 80px,120px 0}}@keyframes dropIn{from{opacity:0;transform:translateY(18px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}@keyframes pulseRail{0%,100%{opacity:.35;transform:scaleX(.72)}50%{opacity:1;transform:scaleX(1)}}@keyframes drawer{from{opacity:.7;transform:translateY(22px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
       `}</style>
+      <div className="noise" />
 
       <section className="mx-auto max-w-7xl">
-        <div className="glass relative overflow-hidden rounded-[2.4rem] p-5 md:p-8">
-          <span className="orb right-10 top-10 h-24 w-24 bg-[#dfff4f]/60" />
-          <span className="orb bottom-10 left-8 h-16 w-16 bg-sky-300/50" />
-          <div className="relative z-10 grid gap-6 lg:grid-cols-[1.1fr_.9fr] lg:items-end">
-            <div>
-              <div className="flex flex-wrap gap-2">
-                <span className="rounded-full bg-slate-950 px-4 py-2 text-[11px] font-black uppercase tracking-[.22em] text-[#dfff4f]">DLAVIE PPOB</span>
-                <span className="rounded-full bg-white/70 px-4 py-2 text-[11px] font-black uppercase tracking-[.18em] text-slate-500 ring-1 ring-black/5">VIPayment Live</span>
+        <div className="machine rounded-[2.4rem] p-4 md:p-6">
+          <div className="banner-box relative overflow-hidden rounded-[1.8rem] p-5 md:p-8">
+            <div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-white/40 blur-2xl" />
+            <div className="relative z-10 grid gap-6 lg:grid-cols-[1.1fr_.9fr] lg:items-end">
+              <div>
+                <p className="inline-flex rounded-full bg-black px-4 py-2 text-[11px] font-black uppercase tracking-[.22em] text-[#dfff4f]">DLAVIE PPOB ARCADE</p>
+                <h1 className="mt-5 max-w-3xl text-5xl font-black leading-[.84] tracking-[-.055em] md:text-7xl">Pilih produk seperti main arcade.</h1>
+                <p className="mt-5 max-w-2xl text-sm font-black leading-7 text-slate-800 md:text-base">Kategori diputar lewat orbit, produk tampil sebagai cartridge, dan order masuk lewat panel mesin D-Balance.</p>
               </div>
-              <h1 className="mt-5 max-w-3xl text-4xl font-black leading-[.95] tracking-[-.04em] md:text-6xl">Topup digital dengan katalog yang hidup.</h1>
-              <p className="mt-4 max-w-2xl text-sm font-semibold leading-7 text-slate-600 md:text-base">Cari produk, filter kategori, pilih brand, lalu order dengan D-Balance. UI dibuat ringan di HP tapi tetap terasa premium dan interaktif.</p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-[1.6rem] bg-slate-950 p-4 text-white"><p className="text-[10px] font-black uppercase tracking-[.2em] text-slate-400">Produk</p><p className="mt-2 text-3xl font-black text-[#dfff4f]">{products.length}</p></div>
-              <div className="rounded-[1.6rem] bg-white/70 p-4 ring-1 ring-black/5"><p className="text-[10px] font-black uppercase tracking-[.2em] text-slate-400">Kategori</p><p className="mt-2 text-3xl font-black">{Math.max(categories.length - 1, 0)}</p></div>
-              <div className="rounded-[1.6rem] bg-white/70 p-4 ring-1 ring-black/5"><p className="text-[10px] font-black uppercase tracking-[.2em] text-slate-400">Harga</p><p className="mt-2 text-xs font-black leading-5 text-slate-600">{priceRange}</p></div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-[1.25rem] bg-black p-4 text-[#dfff4f]"><p className="text-[10px] font-black uppercase tracking-[.2em] text-white/45">Produk</p><p className="mt-2 text-3xl font-black">{products.length}</p></div>
+                <div className="rounded-[1.25rem] bg-white p-4 text-black"><p className="text-[10px] font-black uppercase tracking-[.2em] text-black/40">Kategori</p><p className="mt-2 text-3xl font-black">{Math.max(categories.length - 1, 0)}</p></div>
+                <div className="rounded-[1.25rem] bg-[#30d5ff] p-4 text-black"><p className="text-[10px] font-black uppercase tracking-[.2em] text-black/45">Mode</p><p className="mt-2 text-lg font-black">LIVE</p></div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="sticky top-3 z-30 mt-4">
-          <div className="glass rounded-[2rem] p-3 md:p-4">
-            <div className="grid gap-3 md:grid-cols-[1fr_auto]">
-              <div className="relative overflow-hidden rounded-[1.4rem] bg-white ring-1 ring-black/5">
-                <div className="scan-line" />
-                <input value={query} onChange={(event) => setQuery(event.target.value)} className="relative z-10 w-full bg-transparent px-5 py-4 text-sm font-black outline-none placeholder:text-slate-400" placeholder="Cari Axis, Telkomsel, ML, FF, PLN, kode produk..." />
-              </div>
-              <a href="/wallet" className="grid place-items-center rounded-[1.4rem] bg-slate-950 px-5 py-4 text-sm font-black text-[#dfff4f] shadow-lg shadow-slate-950/10">Buka Wallet</a>
-            </div>
+          <div className="mt-10 grid gap-5 lg:grid-cols-[25rem_1fr]">
+            <aside className="space-y-5">
+              <div className="arcade-panel rounded-[2rem] p-4">
+                <div className="orbit relative mx-auto hidden h-[22rem] w-[22rem] rounded-full md:block">
+                  <div className="absolute left-1/2 top-1/2 grid h-32 w-32 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-4 border-[#dfff4f] bg-black text-center shadow-[0_0_50px_#dfff4f44]">
+                    <div>
+                      <p className="text-3xl">{activeCategoryData?.icon || '🕹️'}</p>
+                      <p className="mt-1 px-3 text-xs font-black leading-4 text-[#dfff4f]">{activeCategoryData?.label || 'Semua'}</p>
+                    </div>
+                  </div>
+                  {orbitCategories.map((category, index) => {
+                    const angle = `${index * (360 / Math.max(orbitCategories.length, 1))}deg`;
+                    return (
+                      <button key={category.key} type="button" onClick={() => setActiveCategory(category.key)} className={`orbit-btn ${activeCategory === category.key ? 'active' : ''} grid h-16 w-16 place-items-center rounded-2xl border-2 border-white/10 bg-[#101522] text-2xl transition hover:scale-110`} style={customStyle({ '--angle': angle, '--tone': category.color })} aria-label={category.label}>
+                        {category.icon}
+                      </button>
+                    );
+                  })}
+                </div>
 
-            <div className="chip-scroll mt-3 flex gap-2 overflow-x-auto pb-1">
-              {categories.map((category) => (
-                <button key={category.key} type="button" onClick={() => setActiveCategory(category.key)} className={`shrink-0 rounded-full px-4 py-3 text-xs font-black transition ${activeCategory === category.key ? 'bg-[#dfff4f] text-slate-950 shadow-lg shadow-lime-200/60' : 'bg-white/75 text-slate-500 ring-1 ring-black/5 hover:bg-white'}`}>
-                  <span className="mr-1.5">{category.icon}</span>{category.label} <span className="ml-1 text-[10px] opacity-60">{category.count}</span>
-                </button>
-              ))}
-            </div>
-
-            {brands.length > 2 && (
-              <div className="chip-scroll mt-2 flex gap-2 overflow-x-auto pb-1">
-                {brands.map((brand) => (
-                  <button key={brand} type="button" onClick={() => setActiveBrand(brand)} className={`shrink-0 rounded-full px-3.5 py-2 text-[11px] font-black transition ${activeBrand === brand ? 'bg-slate-950 text-[#dfff4f]' : 'bg-slate-100 text-slate-500 hover:bg-white'}`}>
-                    {brand === 'all' ? 'Semua Brand' : brand}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="mt-4 grid gap-4 lg:grid-cols-[.82fr_1.18fr]">
-          <aside className="grid gap-4 self-start lg:sticky lg:top-40">
-            <div className="glass rounded-[2rem] p-5">
-              <p className="text-[10px] font-black uppercase tracking-[.24em] text-slate-400">Status katalog</p>
-              <p className="mt-2 text-lg font-black">{status}</p>
-              <p className="mt-2 text-sm font-bold text-slate-500">Menampilkan {filtered.length} dari {products.length} produk.</p>
-            </div>
-            {featured.length > 0 && (
-              <div className="glass rounded-[2rem] p-5">
-                <p className="text-[10px] font-black uppercase tracking-[.24em] text-slate-400">Pilihan cepat</p>
-                <div className="mt-4 grid gap-2">
-                  {featured.map((item) => (
-                    <button key={item.id} type="button" onClick={() => openProduct(item)} className="rounded-[1.4rem] bg-white/75 p-3 text-left ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:bg-white">
-                      <p className="line-clamp-1 text-sm font-black">{item.product_name}</p>
-                      <p className="mt-1 text-xs font-bold text-slate-400">{rupiah(item.selling_price)}</p>
+                <div className="chip-row flex gap-2 overflow-x-auto pb-2 md:hidden">
+                  {categories.map((category) => (
+                    <button key={category.key} type="button" onClick={() => setActiveCategory(category.key)} className={`shrink-0 rounded-2xl border-2 px-4 py-3 text-left transition ${activeCategory === category.key ? 'border-[#dfff4f] bg-[#dfff4f] text-black' : 'border-[#2d3852] bg-[#111827] text-white'}`}>
+                      <span className="text-xl">{category.icon}</span>
+                      <span className="ml-2 text-xs font-black">{category.label}</span>
                     </button>
                   ))}
                 </div>
-              </div>
-            )}
-          </aside>
 
-          <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {filtered.map((product, index) => (
-              <button key={product.id} type="button" onClick={() => openProduct(product)} className="product-card pop-in group rounded-[1.8rem] bg-white/80 p-4 text-left shadow-sm ring-1 ring-black/5 transition hover:-translate-y-1 hover:bg-white hover:shadow-2xl hover:shadow-slate-300/40 focus:outline-none focus:ring-2 focus:ring-slate-950" style={{ animationDelay: `${Math.min(index, 12) * 24}ms` }}>
-                <div className="relative z-10 flex min-h-[11rem] flex-col justify-between gap-4">
-                  <div>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="rounded-full bg-slate-100 px-3 py-1.5 text-[11px] font-black text-slate-600">{categoryIcon(product.category)} {categoryTitle(product.category)}</span>
-                      <span className="rounded-full bg-slate-950 px-3 py-1.5 text-[11px] font-black text-[#dfff4f]">{rupiah(product.selling_price)}</span>
-                    </div>
-                    <h3 className="mt-4 line-clamp-2 text-lg font-black leading-tight text-slate-950">{product.product_name}</h3>
-                    <p className="mt-2 line-clamp-1 text-xs font-bold text-slate-400">{product.brand || 'Digital'} · {product.sku_code}</p>
-                  </div>
-                  <div className="flex items-center justify-between border-t border-black/5 pt-3">
-                    <span className="text-xs font-black text-slate-500">Tap detail</span>
-                    <span className="grid h-9 w-9 place-items-center rounded-full bg-[#dfff4f] text-sm font-black transition group-hover:rotate-12 group-hover:scale-110">→</span>
-                  </div>
+                <div className="mt-4 rounded-[1.5rem] bg-[#080b12] p-4 ring-1 ring-white/10">
+                  <p className="text-[10px] font-black uppercase tracking-[.22em] text-slate-500">Status mesin</p>
+                  <p className="mt-2 text-sm font-black leading-6 text-white">{status}</p>
+                  <p className="mt-1 text-xs font-bold text-slate-500">{filtered.length} cartridge tampil dari {products.length} produk.</p>
                 </div>
-              </button>
-            ))}
-
-            {!filtered.length && (
-              <div className="glass col-span-full rounded-[2rem] p-8 text-center">
-                <p className="text-4xl">🔎</p>
-                <h2 className="mt-3 text-2xl font-black">Produk tidak ditemukan</h2>
-                <p className="mt-2 text-sm font-bold text-slate-500">Coba ganti kata pencarian, kategori, atau brand.</p>
               </div>
-            )}
-          </section>
+
+              <div className="crate rounded-[2rem] p-4">
+                <div className="crate-lid rounded-[1.2rem] px-4 py-3 text-xs font-black uppercase tracking-[.18em] text-[#dfff4f]">Control Panel</div>
+                <input value={query} onChange={(event) => setQuery(event.target.value)} className="solid-input mt-4 w-full rounded-[1.25rem] px-4 py-4 text-sm font-black outline-none" placeholder="Cari AXIS, TRI, ML, kode produk..." />
+                {brands.length > 2 && (
+                  <div className="chip-row mt-3 flex gap-2 overflow-x-auto pb-1">
+                    {brands.map((brand) => (
+                      <button key={brand} type="button" onClick={() => setActiveBrand(brand)} className={`brand-pill ${activeBrand === brand ? 'active' : ''} shrink-0 rounded-full px-3 py-2 text-[11px] font-black transition`}>
+                        {brand === 'all' ? 'Semua Brand' : brand}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </aside>
+
+            <section className="space-y-5">
+              {featured.length > 0 && (
+                <div className="grid gap-3 md:grid-cols-4">
+                  {featured.map((item) => {
+                    const theme = themeFor(item.category);
+                    return (
+                      <button key={item.id} type="button" onClick={() => openProduct(item)} className="rounded-[1.4rem] border-2 border-[#2d3852] bg-[#111827] p-4 text-left transition hover:-translate-y-1" style={customStyle({ boxShadow: `0 0 32px ${theme.color}22` })}>
+                        <p className="text-2xl">{theme.icon}</p>
+                        <p className="mt-2 line-clamp-1 text-sm font-black">{item.product_name}</p>
+                        <p className="mt-2 text-xs font-black" style={{ color: theme.color }}>{rupiah(item.selling_price)}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {filtered.map((product, index) => {
+                  const theme = themeFor(product.category);
+                  return (
+                    <button key={product.id} type="button" onClick={() => openProduct(product)} className="slot-card relative rounded-[1.7rem] p-4 text-left transition duration-300" style={customStyle({ '--tone': theme.color, animationDelay: `${Math.min(index, 16) * 28}ms` })}>
+                      <div className="relative z-10 flex min-h-[12rem] flex-col justify-between">
+                        <div>
+                          <div className="flex items-center justify-between gap-2 pt-2">
+                            <span className="rounded-full px-3 py-1.5 text-[11px] font-black text-black" style={{ backgroundColor: theme.color }}>{theme.icon} {categoryTitle(product.category)}</span>
+                            <span className="rounded-full bg-black px-3 py-1.5 text-[11px] font-black" style={{ color: theme.color }}>{rupiah(product.selling_price)}</span>
+                          </div>
+                          <h3 className="mt-5 line-clamp-2 text-xl font-black leading-tight">{product.product_name}</h3>
+                          <p className="mt-2 line-clamp-1 text-xs font-bold text-slate-400">{product.brand || 'Digital'} · {product.sku_code}</p>
+                        </div>
+                        <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-4">
+                          <span className="text-[11px] font-black uppercase tracking-[.18em] text-slate-500">Insert card</span>
+                          <span className="grid h-10 w-10 place-items-center rounded-xl bg-white text-black transition group-hover:rotate-6">↗</span>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {!filtered.length && (
+                <div className="rounded-[2rem] border-2 border-[#2d3852] bg-[#111827] p-10 text-center">
+                  <p className="text-5xl">🧃</p>
+                  <h2 className="mt-4 text-3xl font-black">Cartridge kosong</h2>
+                  <p className="mt-2 text-sm font-bold text-slate-400">Ganti kategori, brand, atau kata pencarian.</p>
+                </div>
+              )}
+            </section>
+          </div>
         </div>
       </section>
 
       {selected && (
-        <div className="fixed inset-0 z-50 flex items-end bg-slate-950/55 p-3 backdrop-blur-md md:items-center md:justify-center">
-          <section className="drawer-in w-full overflow-hidden rounded-[2rem] bg-white shadow-2xl md:max-w-xl">
-            <div className="relative overflow-hidden bg-slate-950 p-5 text-white md:p-6">
-              <span className="orb right-6 top-6 h-20 w-20 bg-[#dfff4f]/40" />
+        <div className="fixed inset-0 z-50 flex items-end bg-black/75 p-3 backdrop-blur-md md:items-center md:justify-center">
+          <section className="drawer w-full overflow-hidden rounded-[2rem] border-2 border-[#2d3852] bg-[#0d1220] text-white shadow-2xl md:max-w-xl">
+            <div className="relative p-5 md:p-6" style={customStyle({ background: `linear-gradient(135deg,${themeFor(selected.category).dark},#080a10 62%)` })}>
+              <div className="absolute right-5 top-5 h-24 w-24 rounded-full blur-xl" style={{ backgroundColor: themeFor(selected.category).color, opacity: 0.28 }} />
               <div className="relative z-10 flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.22em] text-[#dfff4f]">Detail Produk</p>
+                  <p className="text-xs font-black uppercase tracking-[0.22em]" style={{ color: themeFor(selected.category).color }}>Order Cartridge</p>
                   <h2 className="mt-2 text-2xl font-black leading-tight">{selected.product_name}</h2>
                   <p className="mt-2 text-sm font-bold text-slate-400">{categoryTitle(selected.category)} · {selected.brand || 'Digital'} · {selected.sku_code}</p>
                 </div>
-                <button type="button" onClick={closeProduct} className="rounded-full bg-white/10 px-4 py-2 text-sm font-black text-white ring-1 ring-white/10">Tutup</button>
+                <button type="button" onClick={closeProduct} className="rounded-full bg-white px-4 py-2 text-sm font-black text-black">Tutup</button>
               </div>
-              <div className="relative z-10 mt-5 rounded-[1.5rem] bg-white/10 p-4 ring-1 ring-white/10">
+              <div className="relative z-10 mt-5 rounded-[1.5rem] border-2 border-white/10 bg-black p-4">
                 <p className="text-xs font-bold text-slate-400">Total Bayar</p>
-                <p className="mt-1 text-4xl font-black text-[#dfff4f]">{rupiah(selected.selling_price)}</p>
+                <p className="mt-1 text-4xl font-black" style={{ color: themeFor(selected.category).color }}>{rupiah(selected.selling_price)}</p>
               </div>
             </div>
 
             <div className="p-5 md:p-6">
-              <label className="block text-sm font-black text-slate-700">Nomor tujuan / User ID</label>
-              <input value={target} onChange={(event) => setTarget(event.target.value)} className="mt-2 w-full rounded-2xl border border-black/10 bg-slate-50 px-4 py-4 text-base font-bold outline-none transition focus:bg-white focus:ring-2 focus:ring-slate-950" placeholder={targetPlaceholder(selected)} />
-
-              <div className="mt-4 rounded-2xl bg-lime-50 p-4 ring-1 ring-lime-200">
-                <p className="text-xs font-black uppercase tracking-[.16em] text-lime-700">Mode order</p>
-                <p className="mt-1 text-sm font-bold leading-6 text-lime-800">Order otomatis memakai D-Balance dan VIPayment. Jika belum aktif atau saldo kurang, gunakan order manual.</p>
+              <label className="block text-sm font-black text-slate-300">Nomor tujuan / User ID</label>
+              <input value={target} onChange={(event) => setTarget(event.target.value)} className="solid-input mt-2 w-full rounded-2xl px-4 py-4 text-base font-bold outline-none" placeholder={targetPlaceholder(selected)} />
+              <div className="mt-4 rounded-2xl border-2 border-[#2d3852] bg-[#111827] p-4">
+                <p className="text-xs font-black uppercase tracking-[.16em] text-[#dfff4f]">D-Balance Machine</p>
+                <p className="mt-1 text-sm font-bold leading-6 text-slate-300">Order otomatis memakai D-Balance dan VIPayment. Kalau belum login atau saldo kurang, gunakan order manual.</p>
               </div>
-              {orderStatus && <p className="mt-3 rounded-2xl bg-slate-100 p-3 text-xs font-bold leading-5 text-slate-600">{orderStatus}</p>}
-
+              {orderStatus && <p className="mt-3 rounded-2xl bg-white p-3 text-xs font-black leading-5 text-black">{orderStatus}</p>}
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <button type="button" onClick={closeProduct} className="rounded-2xl bg-slate-100 px-5 py-4 text-sm font-black text-slate-600">Pilih Produk Lain</button>
-                <button type="button" onClick={submitOrder} disabled={!target.trim() || ordering} className={`rounded-2xl px-5 py-4 text-center text-sm font-black transition ${target.trim() && !ordering ? 'bg-slate-950 text-[#dfff4f] shadow-xl shadow-slate-950/15 hover:-translate-y-0.5' : 'bg-slate-200 text-slate-400'}`}>{ordering ? 'Memproses...' : 'Lanjut Order'}</button>
+                <button type="button" onClick={closeProduct} className="rounded-2xl border-2 border-[#2d3852] bg-[#111827] px-5 py-4 text-sm font-black text-slate-300">Pilih Lain</button>
+                <button type="button" onClick={submitOrder} disabled={!target.trim() || ordering} className={`rounded-2xl px-5 py-4 text-center text-sm font-black transition ${target.trim() && !ordering ? 'bg-[#dfff4f] text-black shadow-xl shadow-lime-500/20 hover:-translate-y-0.5' : 'bg-slate-700 text-slate-400'}`}>{ordering ? 'Memproses...' : 'Lanjut Order'}</button>
               </div>
-              <a href={`https://wa.me/?text=${manualMessage()}`} className="mt-3 block rounded-2xl bg-white px-5 py-3 text-center text-xs font-black text-slate-500 ring-1 ring-black/10">Order Manual via WhatsApp</a>
+              <a href={`https://wa.me/?text=${manualMessage()}`} className="mt-3 block rounded-2xl border-2 border-[#2d3852] bg-black px-5 py-3 text-center text-xs font-black text-slate-300">Order Manual via WhatsApp</a>
             </div>
           </section>
         </div>
