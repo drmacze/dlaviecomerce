@@ -6,7 +6,6 @@ import { shouldUseVipayment } from '@/lib/vipayment-sync';
 
 type ProductRow = {
   id: string;
-  provider: string;
   sku_code: string;
   product_name: string;
   provider_price: number;
@@ -46,6 +45,15 @@ async function debitBalance(supabase: ReturnType<typeof createSupabaseServiceCli
   return Number(result.data || 0);
 }
 
+async function creditBalance(supabase: ReturnType<typeof createSupabaseServiceClient>, userId: string, amount: number) {
+  const result = await supabase.rpc('credit_d_balance_atomic', {
+    target_user_id: userId,
+    credit_amount: Math.floor(Number(amount || 0))
+  });
+  if (result.error) throw new Error(friendlyDbError(result.error.message));
+  return Number(result.data || 0);
+}
+
 async function refundOrder(supabase: ReturnType<typeof createSupabaseServiceClient>, input: { orderId: string; reference: string; reason: string; metadata?: Record<string, unknown> }) {
   const result = await supabase.rpc('refund_ppob_order_atomic', {
     target_order_id: input.orderId,
@@ -59,11 +67,7 @@ async function refundOrder(supabase: ReturnType<typeof createSupabaseServiceClie
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
-  if (!autoOrderEnabled()) {
-    return res.status(403).json({ error: 'Order otomatis PPOB masih dikunci. Aktifkan PPOB_AUTO_ORDER_ENABLED=true setelah siap testing saldo kecil.' });
-  }
-
+  if (!autoOrderEnabled()) return res.status(403).json({ error: 'Order otomatis PPOB masih dikunci. Aktifkan PPOB_AUTO_ORDER_ENABLED=true setelah siap testing saldo kecil.' });
   if (!shouldUseVipayment()) return res.status(503).json({ error: 'Provider VIPayment belum aktif atau env belum lengkap.' });
 
   const user = await verifySupabaseUser(bearerToken(req.headers.authorization));
@@ -77,7 +81,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const supabase = createSupabaseServiceClient();
   const productResult = await supabase
     .from('ppob_products')
-    .select('id,provider,sku_code,product_name,provider_price,margin,selling_price')
+    .select('id,sku_code,product_name,provider_price,margin,selling_price')
     .eq('id', productId)
     .eq('provider', 'vipayment')
     .eq('is_active', true)
@@ -88,7 +92,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const sellingPrice = Math.floor(Number(product.selling_price || 0));
   if (sellingPrice <= 0) return res.status(400).json({ error: 'Harga produk tidak valid.' });
 
+  const localRef = `DLV-VIP-${Date.now()}-${user.id.slice(0, 6)}`;
   let nextBalance = 0;
+
   try {
     nextBalance = await debitBalance(supabase, user.id, sellingPrice);
   } catch (error) {
@@ -96,7 +102,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: message });
   }
 
-  const localRef = `DLV-VIP-${Date.now()}-${user.id.slice(0, 6)}`;
   const walletResult = await supabase.from('wallet_transactions').insert({
     user_id: user.id,
     type: 'purchase',
@@ -117,61 +122,91 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }).select('*').single();
 
   if (walletResult.error) {
-    await supabase.rpc('credit_d_balance_atomic', { target_user_id: user.id, credit_amount: sellingPrice });
+    await creditBalance(supabase, user.id, sellingPrice).catch(() => null);
     return res.status(500).json({ error: walletResult.error.message });
   }
 
+  const localOrder = await supabase.from('ppob_orders').insert({
+    user_id: user.id,
+    product_id: product.id,
+    ref_id: localRef,
+    provider: 'vipayment',
+    sku_code: product.sku_code,
+    product_name: product.product_name,
+    customer_no: customerNo,
+    provider_price: Math.floor(Number(product.provider_price || 0)),
+    margin: Math.floor(Number(product.margin || 0)),
+    selling_price: sellingPrice,
+    status: 'pending',
+    provider_status: 'local_pending',
+    provider_message: 'Waiting for provider request.',
+    wallet_transaction_id: walletResult.data.id,
+    raw_response: { local_ref: localRef, created_before_provider: true }
+  }).select('*').single();
+
+  if (localOrder.error) {
+    await supabase.from('wallet_transactions').update({ status: 'failed', metadata: { ...walletResult.data.metadata, local_order_error: localOrder.error.message } }).eq('id', walletResult.data.id);
+    await creditBalance(supabase, user.id, sellingPrice).catch(() => null);
+    return res.status(500).json({ error: localOrder.error.message });
+  }
+
   try {
-    const order = await requestVipaymentPrepaidOrder({ service: product.sku_code, dataNo: customerNo });
-    const status = normalizeStatus(order.status);
-    const refId = order.trxid || localRef;
+    const providerOrder = await requestVipaymentPrepaidOrder({ service: product.sku_code, dataNo: customerNo });
+    const status = normalizeStatus(providerOrder.status);
+    const providerRef = providerOrder.trxid || localRef;
+    const now = new Date().toISOString();
 
-    const ppobOrder = await supabase.from('ppob_orders').insert({
-      user_id: user.id,
-      product_id: product.id,
-      ref_id: refId,
-      provider: 'vipayment',
-      sku_code: product.sku_code,
-      product_name: product.product_name,
-      customer_no: customerNo,
-      provider_price: Math.floor(Number(product.provider_price || 0)),
-      margin: Math.floor(Number(product.margin || 0)),
-      selling_price: sellingPrice,
+    const update = await supabase.from('ppob_orders').update({
+      ref_id: providerRef,
       status,
-      provider_status: order.status || null,
-      provider_message: order.note || null,
-      wallet_transaction_id: walletResult.data.id,
-      raw_response: order,
-      settled_at: status === 'success' || status === 'failed' ? new Date().toISOString() : null
-    }).select('*').single();
+      provider_status: providerOrder.status || null,
+      provider_message: providerOrder.note || null,
+      raw_response: providerOrder,
+      settled_at: status === 'success' || status === 'failed' ? now : null,
+      updated_at: now
+    }).eq('id', localOrder.data.id).select('*').single();
 
-    if (ppobOrder.error) throw new Error(ppobOrder.error.message);
+    if (update.error) {
+      return res.status(202).json({
+        warning: 'Order sudah dikirim ke VIPayment, tetapi update database gagal. Cek status manual dengan local_ref.',
+        local_ref: localRef,
+        provider: providerOrder,
+        error: update.error.message
+      });
+    }
 
     await supabase.from('wallet_transactions').update({
-      reference: refId,
+      reference: providerRef,
       metadata: {
         ...walletResult.data.metadata,
-        provider_response: order,
-        ppob_order_id: ppobOrder.data.id
+        provider_response: providerOrder,
+        ppob_order_id: update.data.id
       }
     }).eq('id', walletResult.data.id);
 
     let refund = null;
     if (status === 'failed') {
       refund = await refundOrder(supabase, {
-        orderId: ppobOrder.data.id,
-        reference: refId,
-        reason: order.note || 'VIPayment order failed',
-        metadata: { provider_response: order }
+        orderId: update.data.id,
+        reference: providerRef,
+        reason: providerOrder.note || 'VIPayment order failed',
+        metadata: { provider_response: providerOrder }
       });
       await supabase.from('wallet_transactions').update({ status: 'failed' }).eq('id', walletResult.data.id);
     }
 
-    return res.status(200).json({ order: ppobOrder.data, provider: order, wallet: { d_balance: nextBalance }, refund });
+    return res.status(200).json({ order: update.data, provider: providerOrder, wallet: { d_balance: nextBalance }, refund });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Order VIPayment gagal.';
-    await supabase.from('wallet_transactions').update({ status: 'failed', metadata: { ...walletResult.data.metadata, provider_error: message } }).eq('id', walletResult.data.id);
-    await supabase.rpc('credit_d_balance_atomic', { target_user_id: user.id, credit_amount: sellingPrice });
-    return res.status(502).json({ error: message, refund: { refunded: true } });
+    await supabase.from('ppob_orders').update({
+      status: 'failed',
+      provider_status: 'request_failed',
+      provider_message: message,
+      updated_at: new Date().toISOString(),
+      settled_at: new Date().toISOString()
+    }).eq('id', localOrder.data.id);
+    await supabase.from('wallet_transactions').update({ status: 'failed', metadata: { ...walletResult.data.metadata, provider_error: message, ppob_order_id: localOrder.data.id } }).eq('id', walletResult.data.id);
+    const refund = await refundOrder(supabase, { orderId: localOrder.data.id, reference: localRef, reason: message, metadata: { product_id: product.id, sku_code: product.sku_code } });
+    return res.status(502).json({ error: message, refund });
   }
 }
