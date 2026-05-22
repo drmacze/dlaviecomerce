@@ -8,6 +8,7 @@ import { createSupabaseBrowserClient } from '@/lib/supabase-client';
 
 type WalletData = { d_balance?: number; d_points?: number; vip_level?: string };
 type Tx = { id: string; type: string; amount: number; status: string; provider?: string | null; reference?: string | null };
+type ManualProof = { provider: string; sender_name: string; proof_note: string };
 const rupiah = (v = 0) => `Rp ${Number(v || 0).toLocaleString('id-ID')}`;
 
 export default function WalletPage() {
@@ -29,14 +30,14 @@ export default function WalletPage() {
     setStatus('Wallet tersinkron dengan Supabase.');
   }
 
-  async function manualTopup() {
+  async function manualTopup(proof: ManualProof) {
     if (!token) return setStatus('Login dulu sebelum topup.');
-    setStatus('Membuat topup pending manual...');
-    const res = await fetch('/api/wallet', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ amount, provider: 'manual-payment' }) });
+    setStatus('Mengirim bukti topup manual...');
+    const res = await fetch('/api/wallet', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ amount, provider: proof.provider, sender_name: proof.sender_name, proof_note: proof.proof_note }) });
     const json = await res.json();
     if (!res.ok) return setStatus(json.error || 'Topup gagal dibuat.');
     setTransactions((items) => [json.transaction, ...items]);
-    setStatus('Topup pending dibuat. Bayar via BRI, Dana, Gopay, atau QRIS lalu tunggu approve admin.');
+    setStatus(`Bukti topup terkirim. Ref ${json.transaction?.reference || '-'} menunggu review admin.`);
   }
 
   useEffect(() => {
