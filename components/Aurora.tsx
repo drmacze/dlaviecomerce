@@ -94,8 +94,10 @@ export default function Aurora(props: AuroraProps) {
 
     let program: Program | null = null;
     function resize() {
-      const width = ctn.offsetWidth || window.innerWidth;
-      const height = ctn.offsetHeight || window.innerHeight;
+      const container = ctnDom.current;
+      if (!container) return;
+      const width = container.offsetWidth || window.innerWidth;
+      const height = container.offsetHeight || window.innerHeight;
       renderer.setSize(width, height);
       if (program) program.uniforms.uResolution.value = [width, height];
     }
