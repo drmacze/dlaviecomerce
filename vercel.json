@@ -4,6 +4,7 @@
   "installCommand": "npm install",
   "outputDirectory": ".next",
   "ignoreCommand": "exit 1",
+  "regions": ["sin1"],
   "github": {
     "silent": false
   }
