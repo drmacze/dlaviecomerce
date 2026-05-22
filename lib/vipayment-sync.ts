@@ -11,6 +11,14 @@ function clean(value: unknown, fallback = '') {
   return String(value || fallback).trim();
 }
 
+function priceFromVipayment(value: unknown) {
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    return toInt(record.basic ?? record.premium ?? record.special ?? 0);
+  }
+  return toInt(value);
+}
+
 function marginFor(category: string) {
   const key = category.toLowerCase();
   const values: Record<string, number> = {
@@ -27,7 +35,7 @@ function marginFor(category: string) {
 function active(item: VipaymentService) {
   if (typeof item.status === 'boolean') return item.status;
   const value = String(item.status ?? '').trim().toLowerCase();
-  return !['0', 'false', 'off', 'offline', 'gangguan', 'closed', 'close'].includes(value);
+  return !['0', 'false', 'off', 'offline', 'gangguan', 'closed', 'close', 'empty'].includes(value);
 }
 
 function chunk<T>(items: T[], size: number) {
@@ -47,9 +55,9 @@ export async function syncVipaymentProducts() {
     .filter((item) => clean(item.code) && clean(item.name))
     .map((item) => {
       const category = clean(item.category, 'Digital');
-      const providerPrice = toInt(item.price);
+      const providerPrice = priceFromVipayment(item.price);
       const margin = marginFor(category);
-      const isActive = active(item);
+      const isActive = active(item) && providerPrice > 0;
 
       return {
         provider: 'vipayment',
