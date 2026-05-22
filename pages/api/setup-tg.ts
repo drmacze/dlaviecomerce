@@ -8,6 +8,13 @@ function required(name: string) {
   return value;
 }
 
+function appBaseUrl(req: NextApiRequest) {
+  const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').trim();
+  const proto = String(req.headers['x-forwarded-proto'] || 'https').split(',')[0];
+  if (host) return `${proto}://${host}`.replace(/\/$/, '');
+  return String(process.env.NEXT_PUBLIC_APP_URL || 'https://dlaviecomerce-dlavie.vercel.app').replace(/\/$/, '');
+}
+
 async function telegramPost(botKey: string, method: string, body: unknown) {
   const response = await fetch(`https://api.telegram.org/bot${botKey}/${method}`, {
     method: 'POST',
@@ -26,7 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (key !== required(setupKeyName)) return res.status(401).json({ error: 'Invalid key' });
 
     const botKey = required(botKeyName);
-    const appUrl = String(process.env.NEXT_PUBLIC_APP_URL || 'https://dlaviecomerce.vercel.app').replace(/\/$/, '');
+    const appUrl = appBaseUrl(req);
     const webhookUrl = `${appUrl}/api/tg`;
     const menuUrl = `${appUrl}/telegram-admin`;
 
@@ -41,6 +48,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(webhook.ok && menuButton.ok ? 200 : 500).json({
       ok: webhook.ok && menuButton.ok,
+      appUrl,
       webhook: webhookUrl,
       menuButton: menuUrl,
       data: { webhook: webhook.data, menuButton: menuButton.data },
