@@ -43,5 +43,5 @@ export type DPointLedger = { id: string; user_id: string; amount: number; reason
 export type LPointLedger = DPointLedger;
 export type DailyCheckIn = { id: string; user_id: string; checkin_date: string; points_awarded: number; created_at: string };
 export type Coupon = { id: string; code: string; discount_type: 'percent' | 'fixed'; amount: number; min_amount: number; usage_limit: number | null; redeemed_count: number; is_active: boolean; expires_at: string | null; created_at: string };
-export type WalletTransaction = { id: string; user_id: string; type: string; amount: number; status: string; provider?: string | null; metadata?: Record<string, unknown> | null; created_at: string };
+export type WalletTransaction = { id: string; user_id: string; type: string; amount: number; status: string; provider?: string | null; reference?: string | null; metadata?: Record<string, unknown> | null; created_at: string };
 export type ReferralRow = { id: string; referrer_id: string; referred_user_id?: string | null; status: string; reward_points: number; created_at: string };
