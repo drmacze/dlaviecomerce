@@ -10,11 +10,11 @@ function base64url(value: Buffer | string) {
 }
 
 function sessionSecret() {
-  return process.env.DLAVIE_ADMIN_SESSION_SECRET || process.env.TELEGRAM_SETUP_KEY || '';
+  return (process.env.DLAVIE_ADMIN_SESSION_SECRET || process.env.TELEGRAM_SETUP_KEY || '').trim();
 }
 
 function securityKey() {
-  return process.env.DLAVIE_ADMIN_SECURITY_KEY || '';
+  return (process.env.DLAVIE_ADMIN_SECURITY_KEY || '').trim();
 }
 
 function sign(payload: string) {
@@ -37,11 +37,13 @@ function setSessionCookies(res: NextApiResponse) {
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
-  if (!securityKey()) return res.status(500).json({ ok: false, error: 'DLAVIE_ADMIN_SECURITY_KEY belum diisi.' });
-  if (!sessionSecret()) return res.status(500).json({ ok: false, error: 'DLAVIE_ADMIN_SESSION_SECRET belum diisi.' });
+  const expectedKey = securityKey();
+  const secret = sessionSecret();
+  if (!expectedKey) return res.status(500).json({ ok: false, error: 'DLAVIE_ADMIN_SECURITY_KEY belum diisi.' });
+  if (!secret) return res.status(500).json({ ok: false, error: 'DLAVIE_ADMIN_SESSION_SECRET belum diisi.' });
 
-  const input = String(req.body?.key || '');
-  if (!input || !safeEqual(input, securityKey())) return res.status(401).json({ ok: false, error: 'Security key salah.' });
+  const input = String(req.body?.key || '').trim();
+  if (!input || !safeEqual(input, expectedKey)) return res.status(401).json({ ok: false, error: 'Security key salah.' });
 
   setSessionCookies(res);
   return res.status(200).json({ ok: true, unlocked: true, expiresIn: SESSION_SECONDS });
