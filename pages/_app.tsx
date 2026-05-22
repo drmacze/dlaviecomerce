@@ -2,6 +2,7 @@ import type { AppProps } from 'next/app';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { AccountShortcut } from '@/components/account-shortcut';
+import { DlavieAlertCenter } from '@/components/dlavie-alert-center';
 import { DlavieProviders } from '@/components/dlavie-providers';
 import '../styles/globals.css';
 
@@ -27,5 +28,5 @@ export default function App({ Component, pageProps }: AppProps) {
     };
   }, [router.events]);
 
-  return <DlavieProviders><DlavieLoader active={loading} /><AccountShortcut /><div className="transition-opacity duration-300"><Component {...pageProps} /></div></DlavieProviders>;
+  return <DlavieProviders><DlavieAlertCenter /><DlavieLoader active={loading} /><AccountShortcut /><div className="transition-opacity duration-300"><Component {...pageProps} /></div></DlavieProviders>;
 }
