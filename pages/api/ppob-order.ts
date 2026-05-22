@@ -14,19 +14,13 @@ type ProductRow = {
   selling_price: number;
 };
 
-type ProfileRow = {
-  id: string;
-  email?: string | null;
-  d_balance: number;
-};
-
 function cleanTarget(value: unknown) {
   return String(value || '').trim().replace(/\s+/g, '').slice(0, 80);
 }
 
 function normalizeStatus(value?: string) {
   const status = String(value || '').trim().toLowerCase();
-  if (status === 'success') return 'success';
+  if (status === 'success' || status === 'sukses') return 'success';
   if (status === 'error' || status === 'failed' || status === 'gagal') return 'failed';
   return 'pending';
 }
@@ -35,31 +29,32 @@ function autoOrderEnabled() {
   return process.env.PPOB_AUTO_ORDER_ENABLED === 'true';
 }
 
-async function refundBalance(input: { userId: string; amount: number; reference: string; reason: string; metadata?: Record<string, unknown> }) {
-  const supabase = createSupabaseServiceClient();
-  const profile = await supabase.from('profiles').select('id,d_balance').eq('id', input.userId).single();
-  if (profile.error) throw new Error(profile.error.message);
+function friendlyDbError(message: string) {
+  if (message.includes('INSUFFICIENT_BALANCE')) return 'D-Balance tidak cukup untuk order ini.';
+  if (message.includes('INVALID_AMOUNT')) return 'Nominal transaksi tidak valid.';
+  if (message.includes('PROFILE_NOT_FOUND')) return 'Profil wallet tidak ditemukan.';
+  if (message.includes('ORDER_NOT_FOUND')) return 'Order PPOB tidak ditemukan.';
+  return message;
+}
 
-  const nextBalance = Number(profile.data.d_balance || 0) + input.amount;
-  const updated = await supabase.from('profiles').update({ d_balance: nextBalance }).eq('id', input.userId).select('id,d_balance').single();
-  if (updated.error) throw new Error(updated.error.message);
+async function debitBalance(supabase: ReturnType<typeof createSupabaseServiceClient>, userId: string, amount: number) {
+  const result = await supabase.rpc('debit_d_balance_atomic', {
+    target_user_id: userId,
+    debit_amount: Math.floor(Number(amount || 0))
+  });
+  if (result.error) throw new Error(friendlyDbError(result.error.message));
+  return Number(result.data || 0);
+}
 
-  const wallet = await supabase.from('wallet_transactions').insert({
-    user_id: input.userId,
-    type: 'refund',
-    amount: input.amount,
-    status: 'success',
-    provider: 'vipayment',
-    reference: `${input.reference}-REFUND`,
-    metadata: {
-      source: 'ppob-vipayment',
-      reason: input.reason,
-      ...input.metadata
-    }
-  }).select('*').single();
-
-  if (wallet.error) throw new Error(wallet.error.message);
-  return { wallet: wallet.data, balance: updated.data };
+async function refundOrder(supabase: ReturnType<typeof createSupabaseServiceClient>, input: { orderId: string; reference: string; reason: string; metadata?: Record<string, unknown> }) {
+  const result = await supabase.rpc('refund_ppob_order_atomic', {
+    target_order_id: input.orderId,
+    refund_reference: input.reference,
+    refund_reason: input.reason,
+    refund_metadata: input.metadata || {}
+  });
+  if (result.error) throw new Error(friendlyDbError(result.error.message));
+  return result.data;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -93,22 +88,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const sellingPrice = Math.floor(Number(product.selling_price || 0));
   if (sellingPrice <= 0) return res.status(400).json({ error: 'Harga produk tidak valid.' });
 
-  const profileResult = await supabase.from('profiles').select('id,email,d_balance').eq('id', user.id).single();
-  if (profileResult.error || !profileResult.data) return res.status(404).json({ error: 'Profil wallet tidak ditemukan. Buka halaman Wallet dahulu.' });
-  const profile = profileResult.data as ProfileRow;
-
-  if (Number(profile.d_balance || 0) < sellingPrice) return res.status(400).json({ error: 'D-Balance tidak cukup untuk order ini.' });
+  let nextBalance = 0;
+  try {
+    nextBalance = await debitBalance(supabase, user.id, sellingPrice);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Debit D-Balance gagal.';
+    return res.status(400).json({ error: message });
+  }
 
   const localRef = `DLV-VIP-${Date.now()}-${user.id.slice(0, 6)}`;
-  const nextBalance = Number(profile.d_balance || 0) - sellingPrice;
-  const balanceUpdate = await supabase.from('profiles').update({ d_balance: nextBalance }).eq('id', user.id).select('id,d_balance').single();
-  if (balanceUpdate.error) return res.status(500).json({ error: balanceUpdate.error.message });
-
   const walletResult = await supabase.from('wallet_transactions').insert({
     user_id: user.id,
     type: 'purchase',
     amount: sellingPrice,
-    status: 'pending',
+    status: 'success',
     provider: 'vipayment',
     reference: localRef,
     metadata: {
@@ -118,12 +111,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       product_name: product.product_name,
       customer_no: customerNo,
       deducted_balance: sellingPrice,
+      balance_after: nextBalance,
       created_at: new Date().toISOString()
     }
   }).select('*').single();
 
   if (walletResult.error) {
-    await supabase.from('profiles').update({ d_balance: profile.d_balance }).eq('id', user.id);
+    await supabase.rpc('credit_d_balance_atomic', { target_user_id: user.id, credit_amount: sellingPrice });
     return res.status(500).json({ error: walletResult.error.message });
   }
 
@@ -154,7 +148,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (ppobOrder.error) throw new Error(ppobOrder.error.message);
 
     await supabase.from('wallet_transactions').update({
-      status: status === 'failed' ? 'failed' : 'success',
       reference: refId,
       metadata: {
         ...walletResult.data.metadata,
@@ -165,15 +158,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     let refund = null;
     if (status === 'failed') {
-      refund = await refundBalance({ userId: user.id, amount: sellingPrice, reference: refId, reason: order.note || 'VIPayment order failed', metadata: { ppob_order_id: ppobOrder.data.id } });
-      await supabase.from('ppob_orders').update({ refund_wallet_transaction_id: refund.wallet.id }).eq('id', ppobOrder.data.id);
+      refund = await refundOrder(supabase, {
+        orderId: ppobOrder.data.id,
+        reference: refId,
+        reason: order.note || 'VIPayment order failed',
+        metadata: { provider_response: order }
+      });
+      await supabase.from('wallet_transactions').update({ status: 'failed' }).eq('id', walletResult.data.id);
     }
 
-    return res.status(200).json({ order: ppobOrder.data, provider: order, wallet: balanceUpdate.data, refund });
+    return res.status(200).json({ order: ppobOrder.data, provider: order, wallet: { d_balance: nextBalance }, refund });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Order VIPayment gagal.';
     await supabase.from('wallet_transactions').update({ status: 'failed', metadata: { ...walletResult.data.metadata, provider_error: message } }).eq('id', walletResult.data.id);
-    const refund = await refundBalance({ userId: user.id, amount: sellingPrice, reference: localRef, reason: message, metadata: { product_id: product.id, sku_code: product.sku_code } });
-    return res.status(502).json({ error: message, refund });
+    await supabase.rpc('credit_d_balance_atomic', { target_user_id: user.id, credit_amount: sellingPrice });
+    return res.status(502).json({ error: message, refund: { refunded: true } });
   }
 }
