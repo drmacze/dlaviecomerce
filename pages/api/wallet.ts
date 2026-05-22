@@ -10,6 +10,10 @@ function sanitizeAmount(value: unknown) {
   return amount;
 }
 
+function cleanText(value: unknown, max = 240) {
+  return String(value || '').trim().replace(/\s+/g, ' ').slice(0, max);
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const user = await verifySupabaseUser(bearerToken(req.headers.authorization));
   if (!user) return res.status(401).json({ error: 'Unauthorized. Login diperlukan untuk mengakses wallet.' });
@@ -37,8 +41,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const provider = String(req.body?.provider || 'manual-payment').toLowerCase();
     const safeProvider = allowedManualProviders.has(provider) ? provider : 'manual-payment';
-    const reference = `DLV-MANUAL-${Date.now()}-${user.id.slice(0, 6)}`;
+    const senderName = cleanText(req.body?.sender_name, 80);
+    const proofNote = cleanText(req.body?.proof_note, 300);
+    if (senderName.length < 3) return res.status(400).json({ error: 'Nama pengirim wajib diisi minimal 3 karakter.' });
+    if (proofNote.length < 6) return res.status(400).json({ error: 'Catatan bukti pembayaran wajib diisi.' });
 
+    const reference = `DLV-MANUAL-${Date.now()}-${user.id.slice(0, 6)}`;
     const created = await supabase.from('wallet_transactions').insert({
       user_id: user.id,
       type: 'topup',
@@ -46,7 +54,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       status: 'pending',
       provider: safeProvider,
       reference,
-      metadata: { source: 'dlavie-wallet', provider: safeProvider, needs_admin_approval: true }
+      metadata: {
+        source: 'dlavie-wallet',
+        provider: safeProvider,
+        sender_name: senderName,
+        proof_note: proofNote,
+        submitted_at: new Date().toISOString(),
+        needs_admin_approval: true
+      }
     }).select('*').single();
 
     if (created.error) return res.status(500).json({ error: created.error.message });
