@@ -1,4 +1,4 @@
-name: Auto Vercel Deploy
+name: Auto Vercel Deploy Stamp
 
 on:
   push:
@@ -6,15 +6,28 @@ on:
       - dlavie-redesign-v1
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 concurrency:
-  group: auto-vercel-deploy
+  group: auto-vercel-deploy-stamp
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  stamp:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Vercel Deploy Hook
-        run: curl -X POST "$VERCEL_DEPLOY_HOOK_URL"
-        env:
-          VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: dlavie-redesign-v1
+
+      - name: Create verified deploy stamp
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          printf "auto deploy stamp %s\nsource %s\n" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$GITHUB_SHA" > verified-deploy.tx
+          git add verified-deploy.tx
+          git commit -m "chore: verified auto deploy stamp [skip ci]" || exit 0
+          git push origin dlavie-redesign-v1
