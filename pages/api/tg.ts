@@ -12,6 +12,10 @@ function appBaseUrl(req: NextApiRequest) {
   return String(process.env.NEXT_PUBLIC_APP_URL || 'https://dlaviecomerce-dlavie.vercel.app').replace(/\/$/, '');
 }
 
+function hasEnv(name: string) {
+  return Boolean(String(process.env[name] || '').trim());
+}
+
 function adminIds() {
   return String(process.env.DLAVIE_ADMIN_IDS || process.env.TELEGRAM_ADMIN_IDS || process.env.TELEGRAM_ADMIN_CHAT_IDS || '')
     .split(',')
@@ -38,6 +42,10 @@ function identityLine(message?: IncomingMessage) {
   return [`Telegram User ID: ${fromId}`, `Chat ID: ${chatId}`, `Username: ${username}`].join('\n');
 }
 
+function checkmark(value: boolean) {
+  return value ? '✅' : '⚠️';
+}
+
 function launcherPath() {
   return '/telegram-admin';
 }
@@ -48,6 +56,7 @@ function keyboardButtons() {
       [{ text: '🚀 Panel' }, { text: '👑 Hub' }],
       [{ text: '📊 Stats' }, { text: '🛒 Orders' }],
       [{ text: '🛡 Security' }, { text: '🧾 Logs' }],
+      [{ text: '✅ Status' }, { text: '🪪 ID' }],
     ],
     resize_keyboard: true,
     is_persistent: true,
@@ -61,6 +70,16 @@ function inlineButtons(appUrl: string) {
       [{ text: '🚀 Panel terbaru', url: `${appUrl}${launcherPath()}` }, { text: '👑 Hub terbaru', url: `${appUrl}/admin/hub` }],
       [{ text: '📊 Stats', url: `${appUrl}/admin/intelligence` }, { text: '🛒 Orders', url: `${appUrl}/admin/order-pulse` }],
       [{ text: '🛡 Security', url: `${appUrl}/admin/security` }, { text: '🧾 Logs', url: `${appUrl}/admin/sec` }],
+    ],
+  };
+}
+
+function opsButtons(appUrl: string) {
+  return {
+    inline_keyboard: [
+      [{ text: '🚀 Open Secure Gate', url: `${appUrl}${launcherPath()}` }],
+      [{ text: '🛡 Security Center', url: `${appUrl}/admin/security` }, { text: '🧾 Logs', url: `${appUrl}/admin/sec` }],
+      [{ text: '👑 Admin Hub', url: `${appUrl}/admin/hub` }],
     ],
   };
 }
@@ -86,6 +105,40 @@ async function replyLink(chatId: string | number, title: string, url: string, de
   });
 }
 
+async function replyStatus(chatId: string | number, appUrl: string) {
+  const ids = adminIds();
+  await reply(chatId, [
+    '✅ Dlavie System Status',
+    '',
+    `${checkmark(hasEnv('TELEGRAM_BOT_TOKEN'))} Telegram bot token: ${hasEnv('TELEGRAM_BOT_TOKEN') ? 'ready' : 'missing'}`,
+    `${checkmark(ids.length > 0)} Admin allowlist: ${ids.length} admin ID`,
+    `${checkmark(hasEnv('DLAVIE_ADMIN_SECURITY_KEY'))} Security key gate: ${hasEnv('DLAVIE_ADMIN_SECURITY_KEY') ? 'ready' : 'missing'}`,
+    `${checkmark(hasEnv('DLAVIE_ADMIN_SESSION_SECRET') || hasEnv('TELEGRAM_SETUP_KEY'))} Session signing: ${hasEnv('DLAVIE_ADMIN_SESSION_SECRET') || hasEnv('TELEGRAM_SETUP_KEY') ? 'ready' : 'missing'}`,
+    `${checkmark(hasEnv('TELEGRAM_SETUP_KEY'))} Setup key: ${hasEnv('TELEGRAM_SETUP_KEY') ? 'ready' : 'missing'}`,
+    '',
+    `App URL: ${appUrl}`,
+    `Webhook: ${appUrl}/api/tg`,
+    `Mini App: ${appUrl}${launcherPath()}`,
+  ].join('\n'), opsButtons(appUrl));
+}
+
+async function replySecurity(chatId: string | number, appUrl: string, message?: IncomingMessage) {
+  await reply(chatId, [
+    '🛡 Dlavie Security Center',
+    '',
+    'Access model:',
+    '1. Telegram Admin ID Allowlist',
+    '2. Secure Gate Security Key',
+    '3. Signed HttpOnly Session Cookie',
+    '4. Middleware protection for /admin/*',
+    '',
+    identityLine(message),
+    '',
+    `Admin IDs registered: ${adminIds().length}`,
+    `Protected route: ${appUrl}/admin/hub`,
+  ].join('\n'), opsButtons(appUrl));
+}
+
 function normalize(text: string) {
   return text.trim().toLowerCase();
 }
@@ -101,7 +154,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const appUrl = appBaseUrl(req);
     if (!chatId) return res.status(200).json({ ok: true });
 
-    if (text === '/id' || text === 'id') {
+    if (text === '/id' || text === 'id' || text.includes('🪪')) {
       await reply(chatId, ['🪪 Dlavie Telegram Identity', '', identityLine(message), '', 'Masukkan angka Telegram User ID ke env DLAVIE_ADMIN_IDS.'].join('\n'));
       return res.status(200).json({ ok: true });
     }
@@ -115,10 +168,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     else if (text === '/panel' || text === '/p' || text.includes('panel')) await replyLink(chatId, 'Dlavie Panel Terbaru', `${appUrl}${launcherPath()}`, 'Launcher admin Telegram versi terbaru.', appUrl);
     else if (text === '/hub' || text.includes('hub')) await replyLink(chatId, 'Dlavie Admin Hub Terbaru', `${appUrl}/admin/hub`, 'Gerbang utama semua modul admin premium terbaru.', appUrl);
     else if (text === '/stats' || text === '/intelligence' || text.includes('stats')) await replyLink(chatId, 'Dlavie Admin Intelligence', `${appUrl}/admin/intelligence`, 'Stats rinci, system health, revenue view, logs, dan audits.', appUrl);
-    else if (text === '/security' || text.includes('security')) await replyLink(chatId, 'Dlavie Security Center', `${appUrl}/admin/security`, 'Security foundation, admin guard, dan health overview.', appUrl);
+    else if (text === '/security' || text.includes('security')) await replySecurity(chatId, appUrl, message);
     else if (text === '/logs' || text.includes('logs')) await replyLink(chatId, 'Dlavie Observability Live', `${appUrl}/admin/sec`, 'Notification logs, audit logs, dan failed delivery.', appUrl);
     else if (text === '/orders' || text.includes('orders')) await replyLink(chatId, 'Dlavie Order Pulse', `${appUrl}/admin/order-pulse`, 'Order dashboard dengan audited status actions.', appUrl);
-    else if (text === '/status') await reply(chatId, ['✅ Dlavie Bot aktif', '', 'Mode: Telegram admin keyboard', 'Access: admin allowlist aktif', 'Panel terbaru: ready'].join('\n'), keyboardButtons());
+    else if (text === '/status' || text.includes('status') || text.includes('✅')) await replyStatus(chatId, appUrl);
 
     return res.status(200).json({ ok: true });
   } catch (error) {
