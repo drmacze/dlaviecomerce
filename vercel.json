@@ -3,6 +3,7 @@
   "buildCommand": "npm run build",
   "installCommand": "npm install",
   "outputDirectory": ".next",
+  "ignoreCommand": "exit 1",
   "github": {
     "silent": false
   }
