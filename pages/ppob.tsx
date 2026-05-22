@@ -18,7 +18,7 @@ type UiCategory = {
 };
 
 const rupiah = (value = 0) => `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
-const normalize = (value?: string | null) => String(value || 'Digital').trim() || 'Digital';
+const normalize = (value?: string | null, fallback = 'Digital') => String(value || fallback).trim() || fallback;
 
 function categoryIcon(category: string) {
   const text = category.toLowerCase();
