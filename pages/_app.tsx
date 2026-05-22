@@ -2,10 +2,12 @@ import type { AppProps } from 'next/app';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { AccountShortcut } from '@/components/account-shortcut';
+import { AmbientBg } from '@/components/ambient-bg';
 import { DlavieAlertCenter } from '@/components/dlavie-alert-center';
 import { DlavieErrorBoundary } from '@/components/dlavie-error-boundary';
 import { DlavieProviders } from '@/components/dlavie-providers';
 import '../styles/globals.css';
+import '../styles/ambient.css';
 
 function DlavieLoader({ active }: { active: boolean }) {
   if (!active) return null;
@@ -29,5 +31,5 @@ export default function App({ Component, pageProps }: AppProps) {
     };
   }, [router.events]);
 
-  return <DlavieProviders><DlavieAlertCenter /><DlavieLoader active={loading} /><AccountShortcut /><DlavieErrorBoundary><div className="transition-opacity duration-300"><Component {...pageProps} /></div></DlavieErrorBoundary></DlavieProviders>;
+  return <DlavieProviders><AmbientBg /><DlavieAlertCenter /><DlavieLoader active={loading} /><AccountShortcut /><DlavieErrorBoundary><div className="relative z-10 transition-opacity duration-300"><Component {...pageProps} /></div></DlavieErrorBoundary></DlavieProviders>;
 }
