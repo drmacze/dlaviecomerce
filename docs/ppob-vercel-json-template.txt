@@ -1,0 +1,11 @@
+Copy this content into a root-level file named vercel.json:
+
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/cron/ppob-products",
+      "schedule": "0 */6 * * *"
+    }
+  ]
+}
