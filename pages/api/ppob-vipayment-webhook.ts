@@ -39,46 +39,23 @@ function callbackIpAllowed(req: NextApiRequest) {
 
 async function refundIfNeeded(input: {
   orderId: string;
-  userId: string;
-  amount: number;
   reference: string;
   reason: string;
   existingRefundId?: string | null;
   payload: VipaymentWebhookBody;
 }) {
-  if (input.existingRefundId) return null;
+  if (input.existingRefundId) return { refunded: false, already_refunded: true, refund_wallet_transaction_id: input.existingRefundId };
 
   const supabase = createSupabaseServiceClient();
-  const profile = await supabase.from('profiles').select('id,d_balance').eq('id', input.userId).single();
-  if (profile.error) throw new Error(profile.error.message);
+  const result = await supabase.rpc('refund_ppob_order_atomic', {
+    target_order_id: input.orderId,
+    refund_reference: input.reference,
+    refund_reason: input.reason,
+    refund_metadata: { provider_payload: input.payload, source: 'vipayment-webhook' }
+  });
 
-  const nextBalance = Number(profile.data.d_balance || 0) + input.amount;
-  const updatedBalance = await supabase.from('profiles').update({ d_balance: nextBalance }).eq('id', input.userId).select('id,d_balance').single();
-  if (updatedBalance.error) throw new Error(updatedBalance.error.message);
-
-  const wallet = await supabase.from('wallet_transactions').insert({
-    user_id: input.userId,
-    type: 'refund',
-    amount: input.amount,
-    status: 'success',
-    provider: 'vipayment',
-    reference: `${input.reference}-REFUND`,
-    metadata: {
-      source: 'vipayment-webhook',
-      ppob_order_id: input.orderId,
-      reason: input.reason,
-      provider_payload: input.payload
-    }
-  }).select('*').single();
-
-  if (wallet.error) throw new Error(wallet.error.message);
-
-  await supabase.from('ppob_orders').update({
-    refund_wallet_transaction_id: wallet.data.id,
-    updated_at: new Date().toISOString()
-  }).eq('id', input.orderId);
-
-  return { wallet: wallet.data, balance: updatedBalance.data };
+  if (result.error) throw new Error(result.error.message);
+  return result.data;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -101,8 +78,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const now = new Date().toISOString();
   const order = found.data as {
     id: string;
-    user_id: string;
-    selling_price: number;
     wallet_transaction_id?: string | null;
     refund_wallet_transaction_id?: string | null;
     raw_callback?: Record<string, unknown> | null;
@@ -140,8 +115,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (status === 'failed') {
     refund = await refundIfNeeded({
       orderId: order.id,
-      userId: order.user_id,
-      amount: Number(order.selling_price || 0),
       reference: trxid,
       reason: payload.note || 'VIPayment transaction failed',
       existingRefundId: order.refund_wallet_transaction_id,
