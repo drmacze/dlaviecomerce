@@ -33,8 +33,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const metadata = { ...(tx.data.metadata || {}), reviewed_by: admin.email, reviewed_at: new Date().toISOString(), review_note: reviewNote };
     const provider = String(tx.data.provider || '').toLowerCase();
     const manualProvider = provider !== 'midtrans';
-    if (manualProvider && (!metadata.sender_name || !metadata.proof_note)) {
-      return res.status(400).json({ error: 'Topup manual tidak boleh di-approve tanpa bukti pembayaran.' });
+    if (manualProvider && (!metadata.sender_name || !metadata.proof_note || !metadata.proof_image_data)) {
+      return res.status(400).json({ error: 'Topup manual tidak boleh di-approve tanpa nama pengirim, catatan, dan gambar bukti pembayaran.' });
     }
 
     if (action === 'reject') {
