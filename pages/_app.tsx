@@ -8,6 +8,7 @@ import { DlavieErrorBoundary } from '@/components/dlavie-error-boundary';
 import { DlavieProviders } from '@/components/dlavie-providers';
 import '../styles/globals.css';
 import '../styles/ambient.css';
+import '../styles/cosmic.css';
 
 function DlavieLoader({ active }: { active: boolean }) {
   if (!active) return null;
