@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { createSupabaseBrowserClient } from '@/lib/supabase-client';
 
 type PpobProduct = {
   id: string;
@@ -24,6 +25,9 @@ export default function PpobPage() {
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<PpobProduct | null>(null);
   const [target, setTarget] = useState('');
+  const [token, setToken] = useState('');
+  const [orderStatus, setOrderStatus] = useState('');
+  const [ordering, setOrdering] = useState(false);
 
   useEffect(() => {
     fetch('/api/ppob-products')
@@ -33,6 +37,11 @@ export default function PpobPage() {
         setStatus((json.products || []).length ? 'Produk PPOB siap dipilih.' : 'Belum ada produk. Jalankan sync provider terlebih dahulu.');
       })
       .catch(() => setStatus('Gagal memuat produk PPOB.'));
+
+    const supabase = createSupabaseBrowserClient();
+    supabase.auth.getSession().then(({ data }) => {
+      setToken(data.session?.access_token || '');
+    }).catch(() => setToken(''));
   }, []);
 
   const filtered = useMemo(() => {
@@ -44,16 +53,51 @@ export default function PpobPage() {
   function openProduct(product: PpobProduct) {
     setSelected(product);
     setTarget('');
+    setOrderStatus('');
   }
 
   function closeProduct() {
     setSelected(null);
     setTarget('');
+    setOrderStatus('');
   }
 
   function manualMessage() {
     if (!selected) return '';
     return encodeURIComponent(`Halo admin Dlavie, saya ingin order PPOB:\n\nProduk: ${selected.product_name}\nKode: ${selected.sku_code}\nTujuan: ${target || '-'}\nHarga: ${rupiah(selected.selling_price)}\n\nMohon dibantu prosesnya.`);
+  }
+
+  async function submitOrder() {
+    if (!selected || !target.trim()) return;
+
+    if (!token) {
+      setOrderStatus('Kamu belum login. Silakan lanjut order manual atau login untuk memakai D-Balance.');
+      window.location.href = `https://wa.me/?text=${manualMessage()}`;
+      return;
+    }
+
+    setOrdering(true);
+    setOrderStatus('Membuat order otomatis...');
+    try {
+      const res = await fetch('/api/ppob-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ product_id: selected.id, customer_no: target.trim() })
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setOrderStatus(json.error || 'Order otomatis belum bisa diproses. Kamu bisa lanjut manual dulu.');
+        return;
+      }
+      setOrderStatus(`Order berhasil dibuat. Ref: ${json.order?.ref_id || '-'}. Cek halaman Orders/Wallet untuk status.`);
+    } catch {
+      setOrderStatus('Koneksi order gagal. Kamu bisa lanjut manual dulu.');
+    } finally {
+      setOrdering(false);
+    }
   }
 
   return (
@@ -111,12 +155,14 @@ export default function PpobPage() {
             <label className="mt-5 block text-sm font-black text-slate-700">Nomor tujuan / User ID</label>
             <input value={target} onChange={(event) => setTarget(event.target.value)} className="mt-2 w-full rounded-2xl border border-black/10 bg-slate-50 px-4 py-4 text-base font-bold outline-none focus:ring-2 focus:ring-slate-950" placeholder={targetPlaceholder(selected)} />
 
-            <p className="mt-3 rounded-2xl bg-amber-50 p-3 text-xs font-bold leading-5 text-amber-700">Order otomatis provider sedang disiapkan. Untuk saat ini, tombol lanjut akan membuat pesan order manual agar transaksi tidak gagal.</p>
+            <p className="mt-3 rounded-2xl bg-amber-50 p-3 text-xs font-bold leading-5 text-amber-700">Order otomatis memakai D-Balance dan VIPayment. Jika fitur belum diaktifkan, kamu tetap bisa lanjut manual.</p>
+            {orderStatus && <p className="mt-3 rounded-2xl bg-slate-100 p-3 text-xs font-bold leading-5 text-slate-600">{orderStatus}</p>}
 
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               <button type="button" onClick={closeProduct} className="rounded-2xl bg-slate-100 px-5 py-4 text-sm font-black text-slate-600">Pilih Produk Lain</button>
-              <a href={`https://wa.me/?text=${manualMessage()}`} className={`rounded-2xl px-5 py-4 text-center text-sm font-black ${target.trim() ? 'bg-slate-950 text-[#dfff4f]' : 'pointer-events-none bg-slate-200 text-slate-400'}`}>Lanjut Order</a>
+              <button type="button" onClick={submitOrder} disabled={!target.trim() || ordering} className={`rounded-2xl px-5 py-4 text-center text-sm font-black ${target.trim() && !ordering ? 'bg-slate-950 text-[#dfff4f]' : 'bg-slate-200 text-slate-400'}`}>{ordering ? 'Memproses...' : 'Lanjut Order'}</button>
             </div>
+            <a href={`https://wa.me/?text=${manualMessage()}`} className="mt-3 block rounded-2xl bg-white px-5 py-3 text-center text-xs font-black text-slate-500 ring-1 ring-black/10">Order Manual via WhatsApp</a>
           </section>
         </div>
       )}
