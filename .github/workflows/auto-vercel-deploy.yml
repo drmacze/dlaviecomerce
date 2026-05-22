@@ -29,5 +29,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           printf "auto deploy stamp %s\nsource %s\n" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$GITHUB_SHA" > verified-deploy.tx
           git add verified-deploy.tx
-          git commit -m "chore: verified auto deploy stamp [skip ci]" || exit 0
+          git commit -m "chore: verified auto deploy stamp" || exit 0
           git push origin dlavie-redesign-v1
