@@ -14,6 +14,14 @@ function cleanText(value: unknown, max = 240) {
   return String(value || '').trim().replace(/\s+/g, ' ').slice(0, max);
 }
 
+function cleanProofImage(value: unknown) {
+  const data = String(value || '');
+  if (!data) return '';
+  if (!data.startsWith('data:image/')) return '';
+  if (data.length > 1_250_000) return 'too-large';
+  return data;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const user = await verifySupabaseUser(bearerToken(req.headers.authorization));
   if (!user) return res.status(401).json({ error: 'Unauthorized. Login diperlukan untuk mengakses wallet.' });
@@ -43,8 +51,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const safeProvider = allowedManualProviders.has(provider) ? provider : 'manual-payment';
     const senderName = cleanText(req.body?.sender_name, 80);
     const proofNote = cleanText(req.body?.proof_note, 300);
+    const proofImageData = cleanProofImage(req.body?.proof_image_data);
+    const proofImageName = cleanText(req.body?.proof_image_name, 120);
+
     if (senderName.length < 3) return res.status(400).json({ error: 'Nama pengirim wajib diisi minimal 3 karakter.' });
     if (proofNote.length < 6) return res.status(400).json({ error: 'Catatan bukti pembayaran wajib diisi.' });
+    if (!proofImageData) return res.status(400).json({ error: 'Upload bukti pembayaran dari galeri wajib diisi.' });
+    if (proofImageData === 'too-large') return res.status(400).json({ error: 'Ukuran bukti gambar terlalu besar. Maksimal sekitar 900KB.' });
 
     const reference = `DLV-MANUAL-${Date.now()}-${user.id.slice(0, 6)}`;
     const created = await supabase.from('wallet_transactions').insert({
@@ -59,6 +72,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         provider: safeProvider,
         sender_name: senderName,
         proof_note: proofNote,
+        proof_image_data: proofImageData,
+        proof_image_name: proofImageName,
         submitted_at: new Date().toISOString(),
         needs_admin_approval: true
       }
