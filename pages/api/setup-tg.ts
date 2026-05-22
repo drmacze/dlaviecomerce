@@ -8,6 +8,16 @@ function required(name: string) {
   return value;
 }
 
+async function telegramPost(botKey: string, method: string, body: unknown) {
+  const response = await fetch(`https://api.telegram.org/bot${botKey}/${method}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const data = await response.json();
+  return { ok: response.ok, data };
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const setupKeyName = envName('TELEGRAM', 'SETUP', 'KEY');
@@ -17,14 +27,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const botKey = required(botKeyName);
     const appUrl = String(process.env.NEXT_PUBLIC_APP_URL || 'https://dlaviecomerce.vercel.app').replace(/\/$/, '');
-    const response = await fetch(`https://api.telegram.org/bot${botKey}/setWebhook`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: `${appUrl}/api/tg` }),
+    const webhookUrl = `${appUrl}/api/tg`;
+    const menuUrl = `${appUrl}/telegram-admin`;
+
+    const webhook = await telegramPost(botKey, 'setWebhook', { url: webhookUrl });
+    const menuButton = await telegramPost(botKey, 'setChatMenuButton', {
+      menu_button: {
+        type: 'web_app',
+        text: 'Open Dlavie',
+        web_app: { url: menuUrl },
+      },
     });
 
-    const data = await response.json();
-    return res.status(response.ok ? 200 : 500).json({ ok: response.ok, webhook: `${appUrl}/api/tg`, data });
+    return res.status(webhook.ok && menuButton.ok ? 200 : 500).json({
+      ok: webhook.ok && menuButton.ok,
+      webhook: webhookUrl,
+      menuButton: menuUrl,
+      data: { webhook: webhook.data, menuButton: menuButton.data },
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Setup failed';
     return res.status(500).json({ error: message });
