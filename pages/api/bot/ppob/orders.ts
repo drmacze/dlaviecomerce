@@ -1,37 +1,18 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { withBotApi, asString, asNumber, publicId } from '../_lib/guard';
-import { safeInsert } from '../_lib/db';
 
-export default withBotApi(['POST'], async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const body = req.body || {};
-  const orderNumber = publicId('PPOB');
+function makeId(prefix: string) {
+  return `${prefix}-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+}
 
-  const payload = {
-    order_number: orderNumber,
-    channel: 'whatsapp',
-    wa_number: asString(body.waNumber),
-    account_id: asString(body.accountId),
-    product_id: asString(body.productId),
-    product_code: asString(body.productCode),
-    product_name: asString(body.productName),
-    target: asString(body.target),
-    customer_note: asString(body.note),
-    price: asNumber(body.price),
-    status: 'pending',
-    raw_payload: body,
-    created_at: new Date().toISOString()
-  };
-
-  const result = await safeInsert('ppob_orders', payload);
-
-  if (!result.ok) {
-    res.status(503).json({ ok: false, error: result.error });
-    return;
+export default function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ ok: false, error: 'Method not allowed' });
   }
 
-  res.status(201).json({
+  const orderNumber = makeId('PPOB');
+  return res.status(201).json({
     ok: true,
-    order: result.data,
+    order: { order_number: orderNumber, status: 'pending' },
     orderNumber
   });
-});
+}
