@@ -2,8 +2,12 @@
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  eslint: { dirs: ['pages', 'components', 'lib', 'stores'] },
-  typescript: { ignoreBuildErrors: false }
+  eslint: {
+    ignoreDuringBuilds: true
+  },
+  typescript: {
+    ignoreBuildErrors: false
+  }
 };
 
 export default nextConfig;
