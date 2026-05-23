@@ -27,6 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   return res.status(200).json({
     ok: true,
+    service: 'dlavie-whatsapp-connect',
     session_id: sessionId,
     status: 'pending',
     connected: false,
