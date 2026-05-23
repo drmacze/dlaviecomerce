@@ -1,6 +1,17 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { withBotApi, asString, asNumber, publicId } from '../_lib/guard';
-import { safeInsert } from '../_lib/db';
+import { createSupabaseServiceClient } from '@/lib/supabase-server';
+
+async function insertDepositRequest(payload: Record<string, unknown>) {
+  const supabase = createSupabaseServiceClient();
+  const result = await supabase.from('deposit_requests').insert(payload).select('*').single();
+
+  if (result.error) {
+    return { ok: false, data: null, error: result.error.message };
+  }
+
+  return { ok: true, data: result.data, error: null };
+}
 
 export default withBotApi(['POST'], async function handler(req: NextApiRequest, res: NextApiResponse) {
   const body = req.body || {};
@@ -19,7 +30,7 @@ export default withBotApi(['POST'], async function handler(req: NextApiRequest, 
     created_at: new Date().toISOString()
   };
 
-  const result = await safeInsert('deposit_requests', payload);
+  const result = await insertDepositRequest(payload);
 
   if (!result.ok) {
     res.status(503).json({ ok: false, error: result.error });
