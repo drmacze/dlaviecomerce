@@ -87,6 +87,8 @@ export function asNumber(value: unknown, fallback = 0) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+// This file is kept for backward compatibility. Next.js still treats files inside pages/api as routes,
+// so a default handler is required even though the named exports are helper utilities.
 export default function guardHelperRoute(_req: NextApiRequest, res: NextApiResponse) {
   return res.status(404).json({
     ok: false,
