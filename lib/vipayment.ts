@@ -3,7 +3,7 @@ import crypto from 'crypto';
 export type VipaymentService = {
   code?: string;
   name?: string;
-  price?: number | string;
+  price?: number | string | { basic?: number | string; premium?: number | string; special?: number | string };
   status?: string | boolean;
   category?: string;
   brand?: string;
@@ -11,6 +11,8 @@ export type VipaymentService = {
   prepost?: string;
   note?: string;
   multi?: string | boolean;
+  multi_trx?: string | boolean;
+  maintenace?: string;
 };
 
 export type VipaymentTransaction = {
@@ -19,10 +21,20 @@ export type VipaymentTransaction = {
   data_no?: string;
   service?: string;
   service_name?: string;
+  code?: string;
   status?: string;
   note?: string;
   price?: number | string;
   balance?: number | string;
+};
+
+export type VipaymentProfile = {
+  full_name?: string;
+  username?: string;
+  balance?: number | string;
+  point?: number | string;
+  level?: string;
+  registered?: string;
 };
 
 type VipaymentResponse<T> = {
@@ -91,6 +103,12 @@ async function postVipayment<T>(path: string, input: Record<string, string | num
   if (!response.ok) throw new Error(`VIPayment request failed with HTTP ${response.status}`);
   if (json.result === false || json.status === false) throw new Error(json.message || 'VIPayment request rejected');
   return json;
+}
+
+export async function fetchVipaymentProfile() {
+  const json = await postVipayment<VipaymentProfile>('/api/profile', {});
+  if (!json.data) throw new Error('VIPayment profile response missing data payload');
+  return json.data;
 }
 
 export async function fetchVipaymentPrepaidServices(input?: { filterType?: string; filterValue?: string }) {
