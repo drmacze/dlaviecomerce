@@ -15,6 +15,12 @@ type PanelOrderRow = {
   refund_wallet_transaction_id?: string | null;
 };
 
+type AdminContext = {
+  user: NonNullable<Awaited<ReturnType<typeof verifySupabaseUser>>>;
+  profile: { id: string; email?: string | null; role?: string | null };
+  supabase: SupabaseService;
+};
+
 function cleanText(value: unknown, max = 300) {
   return String(value || '')
     .trim()
@@ -42,17 +48,23 @@ function friendlyDbError(message: string) {
   return message;
 }
 
-async function requireAdmin(req: NextApiRequest) {
+async function requireAdmin(req: NextApiRequest): Promise<AdminContext> {
   const user = await verifySupabaseUser(bearerToken(req.headers.authorization));
-  if (!user) return { user: null, error: 'Login diperlukan.', status: 401 } as const;
+  if (!user) throw Object.assign(new Error('Login diperlukan.'), { statusCode: 401 });
 
   const supabase = createSupabaseServiceClient();
   const profile = await supabase.from('profiles').select('id,email,role').eq('id', user.id).single();
-  if (profile.error) return { user: null, error: profile.error.message, status: 500 } as const;
+  if (profile.error) throw Object.assign(new Error(profile.error.message), { statusCode: 500 });
 
   const role = String(profile.data?.role || '').toLowerCase();
-  if (role !== 'admin' && role !== 'owner') return { user: null, error: 'Akses admin diperlukan.', status: 403 } as const;
-  return { user, profile: profile.data, supabase, error: null, status: 200 } as const;
+  if (role !== 'admin' && role !== 'owner') throw Object.assign(new Error('Akses admin diperlukan.'), { statusCode: 403 });
+  return { user, profile: profile.data, supabase };
+}
+
+function adminError(res: NextApiResponse, error: unknown) {
+  const statusCode = typeof error === 'object' && error && 'statusCode' in error ? Number((error as { statusCode?: number }).statusCode) : 500;
+  const message = error instanceof Error ? error.message : 'Akses admin gagal.';
+  return res.status(statusCode || 500).json({ error: message });
 }
 
 async function recordEvent(
@@ -73,8 +85,12 @@ async function recordEvent(
 }
 
 async function listOrders(req: NextApiRequest, res: NextApiResponse) {
-  const admin = await requireAdmin(req);
-  if (admin.error) return res.status(admin.status).json({ error: admin.error });
+  let admin: AdminContext;
+  try {
+    admin = await requireAdmin(req);
+  } catch (error) {
+    return adminError(res, error);
+  }
   const { supabase } = admin;
 
   const status = cleanText(req.query.status, 60);
@@ -90,16 +106,16 @@ async function listOrders(req: NextApiRequest, res: NextApiResponse) {
   if (ordersResult.error) return res.status(500).json({ error: ordersResult.error.message });
 
   const orders = ordersResult.data || [];
-  const userIds = Array.from(new Set(orders.map((order: any) => order.user_id).filter(Boolean)));
+  const userIds = Array.from(new Set(orders.map((order) => order.user_id).filter(Boolean)));
   const profilesResult = userIds.length
     ? await supabase.from('profiles').select('id,email,display_name,role,d_balance').in('id', userIds)
     : { data: [], error: null };
 
   if (profilesResult.error) return res.status(500).json({ error: profilesResult.error.message });
-  const profilesById = new Map((profilesResult.data || []).map((profile: any) => [profile.id, profile]));
+  const profilesById = new Map((profilesResult.data || []).map((profile) => [profile.id, profile]));
 
   return res.status(200).json({
-    orders: orders.map((order: any) => ({ ...order, customer: profilesById.get(order.user_id) || null }))
+    orders: orders.map((order) => ({ ...order, customer: profilesById.get(order.user_id) || null }))
   });
 }
 
@@ -117,8 +133,7 @@ function calculateExpiry(order: PanelOrderRow) {
   return expiry.toISOString();
 }
 
-async function fulfillOrder(req: NextApiRequest, res: NextApiResponse, admin: Awaited<ReturnType<typeof requireAdmin>>) {
-  if (!admin.user) return res.status(401).json({ error: 'Login diperlukan.' });
+async function fulfillOrder(req: NextApiRequest, res: NextApiResponse, admin: AdminContext) {
   const { supabase } = admin;
   const orderId = cleanText(req.body?.order_id, 80);
   const panelUrl = cleanUrl(req.body?.panel_url || req.body?.provisioned_panel_url);
@@ -180,8 +195,7 @@ async function fulfillOrder(req: NextApiRequest, res: NextApiResponse, admin: Aw
   return res.status(200).json({ order: update.data, message: 'Order panel berhasil difulfill. Detail sudah tampil di dashboard user.' });
 }
 
-async function markStatus(req: NextApiRequest, res: NextApiResponse, admin: Awaited<ReturnType<typeof requireAdmin>>) {
-  if (!admin.user) return res.status(401).json({ error: 'Login diperlukan.' });
+async function markStatus(req: NextApiRequest, res: NextApiResponse, admin: AdminContext) {
   const { supabase } = admin;
   const orderId = cleanText(req.body?.order_id, 80);
   const targetStatus = cleanText(req.body?.status, 60);
@@ -215,8 +229,7 @@ async function markStatus(req: NextApiRequest, res: NextApiResponse, admin: Awai
   return res.status(200).json({ order: update.data, message: 'Status order panel berhasil diperbarui.' });
 }
 
-async function refundOrder(req: NextApiRequest, res: NextApiResponse, admin: Awaited<ReturnType<typeof requireAdmin>>) {
-  if (!admin.user) return res.status(401).json({ error: 'Login diperlukan.' });
+async function refundOrder(req: NextApiRequest, res: NextApiResponse, admin: AdminContext) {
   const { supabase } = admin;
   const orderId = cleanText(req.body?.order_id, 80);
   const reason = cleanText(req.body?.reason || req.body?.admin_notes || 'Refund order panel oleh admin.', 500);
@@ -239,7 +252,7 @@ async function refundOrder(req: NextApiRequest, res: NextApiResponse, admin: Awa
     userId: order.user_id,
     eventType: 'refunded',
     message: reason,
-    metadata: { admin_user_id: admin.user.id, refund: refund.data }
+    metadata: { admin_user_id: admin.user.id, refund: refund.data as Record<string, unknown> }
   });
 
   const updated = await getOrder(supabase, orderId);
@@ -247,8 +260,12 @@ async function refundOrder(req: NextApiRequest, res: NextApiResponse, admin: Awa
 }
 
 async function updateOrder(req: NextApiRequest, res: NextApiResponse) {
-  const admin = await requireAdmin(req);
-  if (admin.error) return res.status(admin.status).json({ error: admin.error });
+  let admin: AdminContext;
+  try {
+    admin = await requireAdmin(req);
+  } catch (error) {
+    return adminError(res, error);
+  }
 
   const action = cleanText(req.body?.action, 40);
   try {
