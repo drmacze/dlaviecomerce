@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { bearerToken, verifySupabaseUser } from '@/lib/auth-server';
 import { createSupabaseServiceClient } from '@/lib/supabase-server';
-import { requestVipaymentPrepaidOrder } from '@/lib/vipayment';
+import { fetchVipaymentProfile, requestVipaymentPrepaidOrder } from '@/lib/vipayment';
 import { shouldUseVipayment } from '@/lib/vipayment-sync';
 
 type ProductRow = {
@@ -28,6 +28,20 @@ function normalizeStatus(value?: string) {
 
 function autoOrderEnabled() {
   return process.env.PPOB_AUTO_ORDER_ENABLED === 'true';
+}
+
+function providerBalanceCheckEnabled() {
+  return process.env.PPOB_PROVIDER_BALANCE_CHECK_ENABLED !== 'false';
+}
+
+function minimumProviderBalance() {
+  const value = Number(process.env.PPOB_PROVIDER_MIN_BALANCE || 25000);
+  return Number.isFinite(value) && value > 0 ? value : 25000;
+}
+
+function numeric(value: unknown) {
+  const parsed = Number(value || 0);
+  return Number.isFinite(parsed) ? parsed : 0;
 }
 
 function friendlyDbError(message: string) {
@@ -150,6 +164,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const product = productResult.data as ProductRow;
   const sellingPrice = Math.floor(Number(product.selling_price || 0));
   if (sellingPrice <= 0) return res.status(400).json({ error: 'Harga produk tidak valid.' });
+
+  if (providerBalanceCheckEnabled()) {
+    try {
+      const providerProfile = await fetchVipaymentProfile();
+      const providerBalance = numeric(providerProfile.balance);
+      const minimumRequired = Math.max(minimumProviderBalance(), sellingPrice);
+      if (providerBalance < minimumRequired) {
+        return res.status(503).json({
+          error: 'Saldo provider VIPayment sedang tidak mencukupi. Silakan coba lagi nanti.',
+          provider: {
+            balance: providerBalance,
+            minimum_required: minimumRequired,
+            product_price: sellingPrice
+          }
+        });
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Gagal cek saldo provider VIPayment.';
+      return res.status(503).json({ error: `Cek saldo provider gagal: ${message}` });
+    }
+  }
 
   const publicOrderId = createPublicOrderId();
   const localRef = `DLV-VIP-${Date.now()}-${user.id.slice(0, 6)}`;
