@@ -25,6 +25,15 @@ async function countRows(query: PromiseLike<{ count: number | null; error: { mes
   return result.count || 0;
 }
 
+async function requireAdmin(supabase: ReturnType<typeof createSupabaseServiceClient>, userId: string) {
+  const result = await supabase.from('profiles').select('role,email').eq('id', userId).single();
+  if (result.error) throw new Error(result.error.message);
+
+  const role = String(result.data?.role || '').toLowerCase();
+  if (role === 'admin' || role === 'owner') return { ok: true, profile: result.data };
+  return { ok: false, profile: result.data };
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -32,6 +41,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!user) return res.status(401).json({ error: 'Login diperlukan.' });
 
   const supabase = createSupabaseServiceClient();
+  const admin = await requireAdmin(supabase, user.id);
+  if (!admin.ok) return res.status(403).json({ error: 'Akses admin diperlukan.' });
+
   const today = startOfTodayIso();
   const checks = {
     vipayment_env_ready: hasVipaymentEnv(),
