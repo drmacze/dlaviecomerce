@@ -3,6 +3,7 @@ import { bearerToken, verifySupabaseUser } from '@/lib/auth-server';
 import { createSupabaseServiceClient } from '@/lib/supabase-server';
 import { fetchVipaymentProfile, requestVipaymentPrepaidOrder } from '@/lib/vipayment';
 import { shouldUseVipayment } from '@/lib/vipayment-sync';
+import { isProviderAddressBlocked, providerAddressBlockedPayload } from '@/lib/provider-errors';
 
 type ProductRow = {
   id: string;
@@ -42,6 +43,10 @@ function minimumProviderBalance() {
 function numeric(value: unknown) {
   const parsed = Number(value || 0);
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function errorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
 }
 
 function friendlyDbError(message: string) {
@@ -172,6 +177,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const minimumRequired = Math.max(minimumProviderBalance(), sellingPrice);
       if (providerBalance < minimumRequired) {
         return res.status(503).json({
+          code: 'PROVIDER_LOW_BALANCE',
           error: 'Saldo provider VIPayment sedang tidak mencukupi. Silakan coba lagi nanti.',
           provider: {
             balance: providerBalance,
@@ -181,8 +187,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         });
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Gagal cek saldo provider VIPayment.';
-      return res.status(503).json({ error: `Cek saldo provider gagal: ${message}` });
+      const message = errorMessage(error, 'Gagal cek saldo provider VIPayment.');
+      if (isProviderAddressBlocked(message)) return res.status(503).json(providerAddressBlockedPayload(message));
+      return res.status(503).json({ code: 'PROVIDER_BALANCE_CHECK_FAILED', error: `Cek saldo provider gagal: ${message}` });
     }
   }
 
@@ -202,7 +209,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     nextBalance = await debitBalance(supabase, user.id, sellingPrice);
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Debit D-Balance gagal.';
+    const message = errorMessage(error, 'Debit D-Balance gagal.');
     return res.status(400).json({ error: message });
   }
 
@@ -321,11 +328,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(200).json({ order: update.data, provider: providerOrder, wallet: { d_balance: nextBalance }, refund });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Order VIPayment gagal.';
+    const message = errorMessage(error, 'Order VIPayment gagal.');
     const failedAt = new Date().toISOString();
     await supabase.from('ppob_orders').update({
       status: 'failed',
-      provider_status: 'request_failed',
+      provider_status: isProviderAddressBlocked(message) ? 'provider_address_blocked' : 'request_failed',
       provider_message: message,
       updated_at: failedAt,
       settled_at: failedAt
@@ -333,7 +340,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await supabase.from('wallet_transactions').update({ status: 'failed', metadata: { ...walletResult.data.metadata, provider_error: message, ppob_order_id: localOrder.data.id } }).eq('id', walletResult.data.id);
     const refund = await refundOrder(supabase, { orderId: localOrder.data.id, reference: publicOrderId, reason: message, metadata: { product_id: product.id, sku_code: product.sku_code } });
     await supabase.from('ppob_orders').update({ refunded_at: new Date().toISOString() }).eq('id', localOrder.data.id);
-    await recordEvent(supabase, { orderId: localOrder.data.id, userId: user.id, eventType: 'provider_request_failed', message, metadata: { refund } });
+    await recordEvent(supabase, { orderId: localOrder.data.id, userId: user.id, eventType: isProviderAddressBlocked(message) ? 'provider_address_blocked' : 'provider_request_failed', message, metadata: { refund } });
+
+    if (isProviderAddressBlocked(message)) {
+      return res.status(503).json({ ...providerAddressBlockedPayload(message), refund, order: { id: localOrder.data.id, public_order_id: publicOrderId } });
+    }
+
     return res.status(502).json({ error: message, refund, order: { id: localOrder.data.id, public_order_id: publicOrderId } });
   }
 }
