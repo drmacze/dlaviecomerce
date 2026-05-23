@@ -86,3 +86,10 @@ export function asNumber(value: unknown, fallback = 0) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
 }
+
+export default function guardHelperRoute(_req: NextApiRequest, res: NextApiResponse) {
+  return res.status(404).json({
+    ok: false,
+    error: 'Not found.'
+  });
+}
