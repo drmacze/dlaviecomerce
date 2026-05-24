@@ -1,6 +1,7 @@
 import { FormEvent, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { DlavieLogo } from '@/components/dlavie-logo';
 import { createSupabaseBrowserClient } from '@/lib/supabase-client';
 
 type Mode = 'login' | 'signup' | 'reset';
@@ -122,9 +123,8 @@ export default function Login() {
           <div className="absolute inset-0 bg-gradient-to-r from-[#050817]/84 via-[#050817]/34 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-[#050817] via-[#050817]/60 to-transparent" />
           <div className="absolute left-4 right-4 top-4 flex items-center justify-between gap-3 md:left-6 md:right-6 md:top-6">
-            <Link href="/" className="flex items-center gap-3 rounded-full bg-white/10 px-3 py-2 ring-1 ring-white/10 backdrop-blur-xl">
-              <span className="grid h-9 w-9 place-items-center rounded-full bg-[#dfff4f] text-sm font-black text-slate-950">D</span>
-              <span className="text-sm font-black tracking-tight text-white">DLAVIE</span>
+            <Link href="/" className="flex items-center rounded-full bg-white/90 px-4 py-2 shadow-[0_18px_50px_rgba(0,0,0,.18)] ring-1 ring-white/60 backdrop-blur-xl">
+              <DlavieLogo className="h-8 w-auto" />
             </Link>
             <Link href="/" className="rounded-full bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-white/65 ring-1 ring-white/10 backdrop-blur-xl">Back</Link>
           </div>
