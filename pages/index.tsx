@@ -3,7 +3,7 @@ import { SecretLogoGate } from '@/components/secret-logo-gate';
 import { VipStatusBanner } from '@/components/vip-status-banner';
 
 const services = [
-  { label: 'PPOB', note: 'Pulsa, data, PLN, game', href: '/ppob', color: 'from-[#dfff4f] to-[#f7ffbf]' },
+  { label: 'Produk', note: 'Pulsa, data, PLN, game', href: '/products', color: 'from-[#dfff4f] to-[#f7ffbf]' },
   { label: 'Wallet', note: 'D-Balance & topup', href: '/wallet', color: 'from-[#75b3e5] to-[#dff4ff]' },
   { label: 'Orders', note: 'Riwayat transaksi', href: '/orders', color: 'from-white to-slate-100' },
   { label: 'Rewards', note: 'D-Points & VIP', href: '/rewards', color: 'from-[#f8ffbd] to-[#dfff4f]' }
@@ -28,7 +28,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="hidden gap-2 md:flex">
-                <a className="rounded-full bg-white/70 px-4 py-2 text-sm font-black ring-1 ring-black/5" href="/products">Products</a>
+                <a className="rounded-full bg-white/70 px-4 py-2 text-sm font-black ring-1 ring-black/5" href="/products">Produk</a>
                 <a className="rounded-full bg-white/70 px-4 py-2 text-sm font-black ring-1 ring-black/5" href="/wallet">Wallet</a>
                 <a className="rounded-full bg-white/70 px-4 py-2 text-sm font-black ring-1 ring-black/5" href="/orders">Orders</a>
               </div>
@@ -37,15 +37,17 @@ export default function Home() {
           </nav>
         </header>
 
+        <DlavieBrandMotion />
+
         <section className="home-mica home-wave relative mt-5 overflow-hidden rounded-[2.8rem] p-6 md:p-10">
           <div className="absolute right-8 top-8 hidden h-28 w-28 rounded-full bg-[#dfff4f]/60 blur-2xl md:block" />
           <div className="relative z-10 grid gap-8 lg:grid-cols-[1.05fr_.95fr] lg:items-center">
             <div>
               <p className="inline-flex rounded-full bg-slate-950 px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-[#dfff4f]">DLAVIE Pay</p>
               <h1 className="mt-6 max-w-3xl text-5xl font-black leading-[0.95] tracking-[-0.045em] md:text-7xl">Bayar digital terasa lebih ringan.</h1>
-              <p className="mt-5 max-w-2xl text-base font-semibold leading-8 text-slate-600 md:text-lg">Pulsa, data, PLN, game, voucher, wallet, dan reward dibuat dalam tampilan yang cepat dipahami. Fokusnya bukan ramai, tapi jelas.</p>
+              <p className="mt-5 max-w-2xl text-base font-semibold leading-8 text-slate-600 md:text-lg">Pulsa, data, PLN, game, voucher, wallet, dan reward dibuat dalam satu menu produk yang cepat dipahami. Fokusnya bukan ramai, tapi jelas.</p>
               <div className="mt-7 flex flex-wrap gap-3">
-                <a href="/ppob" className="rounded-[1.25rem] bg-[#dfff4f] px-5 py-4 text-sm font-black text-slate-950 shadow-[0_18px_44px_rgba(176,205,55,.24)]">Buka PPOB</a>
+                <a href="/products" className="rounded-[1.25rem] bg-[#dfff4f] px-5 py-4 text-sm font-black text-slate-950 shadow-[0_18px_44px_rgba(176,205,55,.24)]">Buka Produk</a>
                 <a href="/wallet" className="rounded-[1.25rem] bg-slate-950 px-5 py-4 text-sm font-black text-white shadow-[0_18px_48px_rgba(16,19,21,.2)]">Isi Wallet</a>
               </div>
             </div>
@@ -64,7 +66,6 @@ export default function Home() {
           </div>
         </section>
 
-        <DlavieBrandMotion />
         <VipStatusBanner />
       </div>
     </main>
