@@ -1,13 +1,15 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { createSupabaseServiceClient } from '@/lib/supabase-server';
 
 type PpobProduct = {
+  id?: string;
   code: string;
   name: string;
   category: string;
   brand?: string;
   price: number;
   status: 'available' | 'offline';
-  source: 'vipayment' | 'demo';
+  source: 'database' | 'vipayment' | 'demo';
 };
 
 const categoryMap: Record<string, string[]> = {
@@ -66,6 +68,34 @@ function matchesCategory(product: PpobProduct, type: string) {
   return terms.some((term) => haystack.includes(term));
 }
 
+async function fetchDatabaseProducts(type: string): Promise<PpobProduct[]> {
+  const supabase = createSupabaseServiceClient();
+  const terms = categoryMap[type] || [type];
+  const or = terms.flatMap((term) => [`category.ilike.%${term}%`, `brand.ilike.%${term}%`, `product_name.ilike.%${term}%`]).join(',');
+  const { data, error } = await supabase
+    .from('ppob_products')
+    .select('id, sku_code, product_name, category, brand, selling_price, provider_price, margin, buyer_product_status, seller_product_status, is_active')
+    .eq('is_active', true)
+    .or(or)
+    .order('selling_price', { ascending: true })
+    .limit(96);
+  if (error || !data?.length) return [];
+  return data.map((item) => {
+    const price = Number(item.selling_price || 0) || Number(item.provider_price || 0) + Number(item.margin || 0);
+    const available = Boolean(item.buyer_product_status) && Boolean(item.seller_product_status) && Boolean(item.is_active);
+    return {
+      id: item.id,
+      code: item.sku_code,
+      name: item.product_name,
+      category: item.category,
+      brand: item.brand || '',
+      price,
+      status: available ? 'available' : 'offline',
+      source: 'database'
+    } satisfies PpobProduct;
+  }).filter((product) => matchesCategory(product, type));
+}
+
 function normalizeVipaymentProduct(item: Record<string, unknown>): PpobProduct {
   const code = String(item.code || item.kode || item.service || item.id || item.sku || 'PRODUCT');
   const name = String(item.name || item.nama || item.service_name || item.product || code);
@@ -83,21 +113,14 @@ async function fetchVipaymentProducts(type: string): Promise<PpobProduct[]> {
   const key = process.env.VIPAYMENT_API_KEY || process.env.VIP_RESELLER_API_KEY || process.env.VI_PAYMENT_API_KEY;
   const sign = process.env.VIPAYMENT_SIGN || process.env.VIP_RESELLER_SIGN || process.env.VI_PAYMENT_SIGN;
   if (!endpoint || !key || !sign) return [];
-
   const body = new URLSearchParams();
   body.set('key', key);
   body.set('sign', sign);
   body.set('type', 'services');
   body.set('category', type);
   body.set('filter_type', type);
-
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body
-  });
+  const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body });
   if (!response.ok) return [];
-
   const json = await response.json().catch(() => null) as Record<string, unknown> | null;
   const raw = (json?.data || json?.products || json?.services || []) as unknown;
   if (!Array.isArray(raw)) return [];
@@ -108,9 +131,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'Method not allowed' });
   const type = normalizeCategory(req.query.type);
   try {
+    const databaseProducts = await fetchDatabaseProducts(type);
+    if (databaseProducts.length) return res.status(200).json({ ok: true, type, source: 'database', products: databaseProducts });
     const vipaymentProducts = await fetchVipaymentProducts(type);
-    const products = vipaymentProducts.length ? vipaymentProducts : demoProducts[type];
-    return res.status(200).json({ ok: true, type, source: vipaymentProducts.length ? 'vipayment' : 'demo', products });
+    if (vipaymentProducts.length) return res.status(200).json({ ok: true, type, source: 'vipayment', products: vipaymentProducts });
+    return res.status(200).json({ ok: true, type, source: 'demo', products: demoProducts[type] });
   } catch {
     return res.status(200).json({ ok: true, type, source: 'demo', products: demoProducts[type] });
   }
