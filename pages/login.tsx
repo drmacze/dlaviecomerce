@@ -1,9 +1,26 @@
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { LoginAccessPanel } from '@/components/login-access-panel';
 import { createSupabaseBrowserClient } from '@/lib/supabase-client';
 
 type Mode = 'login' | 'signup' | 'reset';
+
+type Notice = { type: 'success' | 'error' | 'info'; text: string } | null;
+
+const loginVideos = [
+  {
+    src: 'https://cdn.imageurlgenerator.com/uploads/216ff627-b7ab-4e36-a2cf-feeaba760057.mp4',
+    label: 'DLAVIE Motion',
+    title: 'Masuk ke dunia DLAVIE.',
+    desc: 'Wallet, produk digital, reward, dan dashboard akun disatukan dalam pengalaman yang lebih hidup.'
+  },
+  {
+    src: 'https://cdn.imageurlgenerator.com/uploads/a6e6e07f-ef29-48da-9215-1b3e43fc693c.mp4',
+    label: 'Brand Pulse',
+    title: 'Login yang terasa premium.',
+    desc: 'Visual branding bergerak, glass form, dan detail kecil dibuat menyatu seperti aplikasi DLAVIE.'
+  }
+] as const;
 
 function getSiteUrl() {
   if (typeof window !== 'undefined') return window.location.origin;
@@ -40,11 +57,18 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [mode, setMode] = useState<Mode>('login');
   const [showPassword, setShowPassword] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [status, setStatus] = useState('');
+  const [activeVideo, setActiveVideo] = useState(0);
+  const [formOpen, setFormOpen] = useState(true);
+  const [notice, setNotice] = useState<Notice>(null);
   const [loading, setLoading] = useState(false);
   const score = useMemo(() => passwordScore(password), [password]);
   const confirmUrl = `${getSiteUrl()}/auth/confirmed`;
+  const currentVideo = loginVideos[activeVideo];
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setActiveVideo((value) => (value + 1) % loginVideos.length), 8200);
+    return () => window.clearInterval(timer);
+  }, []);
 
   async function recordLoginEvent(accessToken: string) {
     await fetch('/api/security', {
@@ -57,19 +81,19 @@ export default function Login() {
   async function submit(event: FormEvent) {
     event.preventDefault();
     setLoading(true);
-    setStatus('Processing secure request...');
+    setNotice({ type: 'info', text: 'Memproses akses akun...' });
     const supabase = createSupabaseBrowserClient();
 
     if (mode === 'reset') {
       const result = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${getSiteUrl()}/reset-password` });
       setLoading(false);
-      setStatus(result.error ? authMessage(result.error.message) : 'Password reset link sudah dikirim. Cek inbox email kamu.');
+      setNotice(result.error ? { type: 'error', text: authMessage(result.error.message) } : { type: 'success', text: 'Password reset link sudah dikirim. Cek inbox email kamu.' });
       return;
     }
 
     if (mode === 'signup' && score < 3) {
       setLoading(false);
-      setStatus('Gunakan password yang lebih kuat sebelum membuat akun.');
+      setNotice({ type: 'error', text: 'Gunakan password yang lebih kuat sebelum membuat akun.' });
       return;
     }
 
@@ -78,85 +102,131 @@ export default function Login() {
       : await supabase.auth.signUp({ email, password, options: { emailRedirectTo: confirmUrl } });
 
     setLoading(false);
-    if (result.error) return setStatus(authMessage(result.error.message));
+    if (result.error) {
+      setNotice({ type: 'error', text: authMessage(result.error.message) });
+      return;
+    }
 
     if (mode === 'signup') {
-      setStatus('Akun dibuat. Cek Gmail kamu untuk konfirmasi email sebelum login penuh.');
+      setNotice({ type: 'success', text: 'Akun dibuat. Cek email kamu untuk konfirmasi sebelum login penuh.' });
       return;
     }
 
     const accessToken = result.data.session?.access_token;
     if (accessToken) await recordLoginEvent(accessToken);
-    setStatus('Login berhasil. Mengalihkan ke Dashboard...');
+    setNotice({ type: 'success', text: 'Login berhasil. Mengalihkan ke Dashboard...' });
     router.push('/dashboard');
   }
 
   async function resendConfirmation() {
-    if (!email) return setStatus('Masukkan email dulu.');
+    if (!email) {
+      setNotice({ type: 'error', text: 'Masukkan email dulu.' });
+      return;
+    }
     setLoading(true);
     const supabase = createSupabaseBrowserClient();
     const result = await supabase.auth.resend({ type: 'signup', email, options: { emailRedirectTo: confirmUrl } });
     setLoading(false);
-    setStatus(result.error ? authMessage(result.error.message) : 'Email konfirmasi sudah dikirim ulang.');
+    setNotice(result.error ? { type: 'error', text: authMessage(result.error.message) } : { type: 'success', text: 'Email konfirmasi sudah dikirim ulang.' });
   }
 
+  const noticeClass = notice?.type === 'error'
+    ? 'bg-red-100 text-red-700 ring-red-200'
+    : notice?.type === 'success'
+      ? 'bg-[#dfff4f] text-slate-950 ring-black/5'
+      : 'bg-white/75 text-slate-600 ring-black/5';
+
   return (
-    <main className="min-h-screen overflow-hidden px-4 py-4 text-slate-950 md:p-6">
-      <div className="pointer-events-none fixed inset-0 -z-10">
-        <div className="absolute -left-24 -top-24 h-80 w-80 rounded-full bg-[#dfff4f]/25 blur-3xl" />
-        <div className="absolute -right-24 top-32 h-96 w-96 rounded-full bg-[#75b3e5]/20 blur-3xl" />
-        <div className="absolute inset-0 dlavie-grid-bg opacity-35" />
-      </div>
+    <main className="dl-login-page min-h-screen overflow-hidden px-3 py-3 text-slate-950 md:px-6 md:py-6">
+      <style jsx global>{`
+        .dl-login-page{position:relative;isolation:isolate;background:radial-gradient(circle at 10% 12%,rgba(69,213,255,.2),transparent 28rem),radial-gradient(circle at 86% 10%,rgba(82,39,255,.18),transparent 24rem),radial-gradient(circle at 50% 100%,rgba(223,255,79,.18),transparent 30rem),linear-gradient(135deg,#edf4ee 0%,#eef4ff 42%,#f7fbe8 100%)}
+        .dl-login-page:before{content:'';position:fixed;inset:0;z-index:-3;background-image:linear-gradient(rgba(15,23,42,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(15,23,42,.035) 1px,transparent 1px);background-size:34px 34px;mask-image:radial-gradient(circle at 50% 32%,black,transparent 80%)}
+        .dl-login-mesh{position:fixed;inset:-20%;z-index:-2;filter:blur(80px);opacity:.78;background:conic-gradient(from 120deg at 50% 50%,rgba(69,213,255,.32),rgba(82,39,255,.28),rgba(231,40,255,.2),rgba(223,255,79,.36),rgba(69,213,255,.32));animation:dlLoginMesh 18s ease-in-out infinite alternate;pointer-events:none}
+        .dl-login-glass{border:1px solid rgba(15,23,42,.08);background:linear-gradient(145deg,rgba(255,255,255,.76),rgba(255,255,255,.43));box-shadow:0 30px 90px rgba(15,23,42,.13),inset 0 1px 0 rgba(255,255,255,.92);-webkit-backdrop-filter:blur(24px) saturate(155%);backdrop-filter:blur(24px) saturate(155%)}
+        .dl-login-ring{position:relative;overflow:hidden}.dl-login-ring:before{content:'';position:absolute;inset:-2px;border-radius:inherit;padding:2px;background:conic-gradient(from 0deg,transparent,rgba(69,213,255,.58),rgba(82,39,255,.7),rgba(223,255,79,.96),rgba(231,40,255,.52),transparent 48%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:dlLoginSpin 14s linear infinite;pointer-events:none}
+        .dl-login-float{animation:dlLoginFloat 8s ease-in-out infinite alternate}.dl-login-progress span{animation:dlLoginProgress 8.2s linear infinite}.dl-login-lift{transition:transform .28s ease,box-shadow .28s ease,background .28s ease}.dl-login-lift:hover{transform:translateY(-4px);box-shadow:0 24px 60px rgba(15,23,42,.16)}
+        @keyframes dlLoginMesh{0%{transform:translate3d(-4%,-2%,0) rotate(0deg) scale(1)}100%{transform:translate3d(5%,4%,0) rotate(14deg) scale(1.08)}}@keyframes dlLoginSpin{to{transform:rotate(360deg)}}@keyframes dlLoginFloat{from{transform:translate3d(-10px,-8px,0) scale(.97)}to{transform:translate3d(14px,10px,0) scale(1.04)}}@keyframes dlLoginProgress{from{transform:translateX(-100%)}to{transform:translateX(0)}}
+      `}</style>
+      <div className="dl-login-mesh" />
 
-      <section className="mx-auto max-w-3xl pt-1 md:pt-6">
-        <LoginAccessPanel open={drawerOpen} onToggle={() => setDrawerOpen((open) => !open)} />
+      <section className="mx-auto grid min-h-[calc(100vh-1.5rem)] max-w-7xl gap-4 lg:grid-cols-[1.08fr_.92fr]">
+        <article className="dl-login-glass dl-login-ring relative min-h-[32rem] overflow-hidden rounded-[2.35rem] lg:min-h-[calc(100vh-3rem)]">
+          <div className="dl-login-float absolute -left-16 -top-16 h-56 w-56 rounded-full bg-[#45d5ff]/25 blur-3xl" />
+          <div className="dl-login-float absolute right-10 top-12 h-56 w-56 rounded-full bg-[#5227ff]/18 blur-3xl" />
+          <div className="dl-login-float absolute -right-20 bottom-0 h-64 w-64 rounded-full bg-[#dfff4f]/20 blur-3xl" />
 
-        <div className={`overflow-hidden transition-all duration-700 ease-out ${drawerOpen ? 'max-h-[760px] opacity-100' : 'max-h-0 opacity-0'}`}>
-          <section className={`dlavie-glass dlavie-edge-flow mx-auto mt-8 rounded-[1.7rem] p-4 shadow-[0_22px_65px_rgba(65,78,74,.14)] transition-all duration-700 md:rounded-[2rem] md:p-6 ${drawerOpen ? 'translate-y-0 scale-100' : '-translate-y-6 scale-[.98]'}`}>
-            <div className="flex rounded-full bg-white/70 p-1 shadow-sm ring-1 ring-black/5">
-              {(['login', 'signup', 'reset'] as Mode[]).map((item) => (
-                <button key={item} type="button" onClick={() => setMode(item)} className={`flex-1 rounded-full px-3 py-2.5 text-xs font-black capitalize transition md:text-sm ${mode === item ? 'bg-slate-950 text-white shadow-sm' : 'text-slate-500 hover:text-slate-950'}`}>{item === 'signup' ? 'Register' : item}</button>
-              ))}
-            </div>
-
-            <div className="mt-5 flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <h2 className="text-2xl font-black tracking-tight text-slate-950 md:text-4xl">
-                  {mode === 'login' ? 'Welcome back' : mode === 'signup' ? 'Create account' : 'Recover access'}
-                </h2>
-                <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">
-                  {mode === 'login' ? 'Masuk untuk membuka fitur akun.' : mode === 'signup' ? 'Email aktif diperlukan untuk konfirmasi.' : 'Kirim link reset ke email akun.'}
-                </p>
+          <div className="grid h-full grid-rows-[1fr_auto]">
+            <div className="relative min-h-[24rem] overflow-hidden">
+              {loginVideos.map((video, index) => <video key={video.src} className={`absolute inset-0 h-full w-full object-cover transition duration-700 ${index === activeVideo ? 'opacity-100 scale-100' : 'opacity-0 scale-[1.035]'}`} src={video.src} autoPlay muted loop playsInline preload="metadata" />)}
+              <div className="absolute inset-0 bg-gradient-to-r from-slate-950/78 via-slate-950/22 to-slate-950/5" />
+              <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-slate-950 via-slate-950/44 to-transparent" />
+              <div className="absolute left-4 top-4 rounded-full bg-white/12 px-4 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-[#dfff4f] ring-1 ring-white/15 backdrop-blur-xl md:left-6 md:top-6">{currentVideo.label}</div>
+              <div className="absolute bottom-4 left-4 right-4 max-w-2xl md:bottom-6 md:left-6">
+                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/45">DLAVIE Login Stage</p>
+                <h1 className="mt-2 text-4xl font-black leading-[.95] tracking-[-.045em] text-white md:text-6xl">{currentVideo.title}</h1>
+                <p className="mt-3 max-w-xl text-sm font-semibold leading-6 text-white/68 md:text-base">{currentVideo.desc}</p>
               </div>
-              <a href="/security" className="rounded-full bg-white/75 px-4 py-2 text-xs font-black text-slate-500 ring-1 ring-black/5">Security</a>
             </div>
-
-            <form onSubmit={submit} className="mt-5 space-y-3">
-              <input value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-full border border-black/5 bg-white/80 p-3.5 font-semibold outline-none transition focus:ring-4 focus:ring-[#dfff4f]/40 md:p-4" placeholder="Email" type="email" autoComplete="email" required />
-              {mode !== 'reset' && (
+            <div className="border-t border-white/10 bg-slate-950/88 p-4 text-white md:p-6">
+              <div className="flex flex-wrap items-end justify-between gap-4">
                 <div>
-                  <div className="flex rounded-full border border-black/5 bg-white/80 pr-2 focus-within:ring-4 focus-within:ring-[#dfff4f]/40">
-                    <input value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-full bg-transparent p-3.5 font-semibold outline-none md:p-4" placeholder="Password" type={showPassword ? 'text' : 'password'} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} required />
-                    <button type="button" onClick={() => setShowPassword((v) => !v)} className="px-3 text-xs font-black text-slate-500 md:px-4 md:text-sm">{showPassword ? 'Hide' : 'Show'}</button>
-                  </div>
-                  <div className="mt-2 flex items-center gap-2">
-                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200"><div className="h-full rounded-full bg-[#dfff4f] transition-all" style={{ width: `${(score / 5) * 100}%` }} /></div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{passwordLabel(score)}</span>
-                  </div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#dfff4f]">Secure entry</p>
+                  <h2 className="mt-2 text-2xl font-black tracking-tight">Akses akun dibuat terasa seperti produk premium.</h2>
+                  <p className="mt-2 max-w-xl text-sm font-semibold leading-6 text-white/54">Motion branding dipakai sebagai pembuka, sementara form tetap fokus dan cepat digunakan.</p>
                 </div>
-              )}
-              <button disabled={loading} className="w-full rounded-full bg-[#dfff4f] px-5 py-3.5 font-black text-slate-950 shadow-[0_14px_30px_rgba(120,150,45,.2)] transition hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-60 md:py-4">
-                {loading ? 'Processing...' : mode === 'login' ? 'Secure Login' : mode === 'signup' ? 'Create Account' : 'Send Reset Link'}
-              </button>
-            </form>
-
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              {mode === 'signup' && <button onClick={resendConfirmation} disabled={loading} className="rounded-full bg-white/75 px-4 py-3 text-xs font-black shadow-sm ring-1 ring-black/5 transition hover:bg-white disabled:opacity-60">Resend email</button>}
-              <button onClick={() => setDrawerOpen(false)} className="rounded-full bg-slate-950 px-4 py-3 text-xs font-black text-white shadow-sm">Minimize</button>
+                <div className="flex items-center gap-2">{loginVideos.map((_, index) => <button key={index} onClick={() => setActiveVideo(index)} className={`h-2.5 rounded-full transition-all ${index === activeVideo ? 'w-8 bg-[#dfff4f]' : 'w-2.5 bg-white/25 hover:bg-white/60'}`} aria-label={`Slide ${index + 1}`} />)}</div>
+              </div>
+              <div className="dl-login-progress mt-4 h-1 overflow-hidden rounded-full bg-white/10"><span key={activeVideo} className="block h-full w-full rounded-full bg-[#dfff4f]" /></div>
             </div>
-            {status && <p className="mt-3 rounded-[1.2rem] bg-white/75 p-3 text-xs font-bold leading-5 text-slate-700 ring-1 ring-black/5 md:text-sm">{status}</p>}
-          </section>
-        </div>
+          </div>
+        </article>
+
+        <aside className="dl-login-glass dl-login-ring relative overflow-hidden rounded-[2.35rem] p-4 md:p-6">
+          <div className="dl-login-float absolute -right-10 top-10 h-40 w-40 rounded-full bg-[#e728ff]/14 blur-3xl" />
+          <div className="dl-login-float absolute -left-10 bottom-10 h-40 w-40 rounded-full bg-[#45d5ff]/12 blur-3xl" />
+          <div className="relative z-10 flex min-h-full flex-col">
+            <div className="flex items-center justify-between gap-3">
+              <Link href="/" className="flex items-center gap-3">
+                <div className="grid h-11 w-11 place-items-center rounded-[1rem] bg-slate-950 text-xl font-black text-[#dfff4f] shadow-[0_14px_34px_rgba(15,23,42,.18)]">D</div>
+                <div><p className="text-lg font-black tracking-tight text-slate-950">DLAVIE</p><p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">Secure access</p></div>
+              </Link>
+              <Link href="/" className="rounded-full bg-white/72 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-slate-500 ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:text-slate-950">Back</Link>
+            </div>
+
+            <div className="mt-6 rounded-[1.65rem] bg-slate-950 p-4 text-white shadow-[0_24px_64px_rgba(15,23,42,.18)]">
+              <div className="flex items-center justify-between gap-3">
+                <div><p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#dfff4f]">Account Login</p><p className="mt-2 text-2xl font-black tracking-tight">Masuk ke akun kamu.</p><p className="mt-1 text-xs font-bold text-white/45">Akses wallet, transaksi, reward, dan dashboard.</p></div>
+                <button type="button" onClick={() => setFormOpen((value) => !value)} className="grid h-12 w-12 place-items-center rounded-full bg-[#dfff4f] text-slate-950 shadow-[0_0_28px_rgba(223,255,79,.32)] transition hover:-translate-y-1" aria-label="Toggle form">
+                  <svg viewBox="0 0 24 24" className={`h-5 w-5 transition-transform ${formOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+                </button>
+              </div>
+              <div className="dl-login-progress mt-4 h-1 overflow-hidden rounded-full bg-white/10"><span className="block h-full w-full rounded-full bg-[#dfff4f]" /></div>
+            </div>
+
+            <div className={`grid transition-all duration-500 ${formOpen ? 'mt-5 grid-rows-[1fr] opacity-100' : 'mt-0 grid-rows-[0fr] opacity-0'}`}>
+              <div className="overflow-hidden">
+                <div className="flex rounded-full bg-white/72 p-1 shadow-sm ring-1 ring-black/5 backdrop-blur-xl">
+                  {(['login', 'signup', 'reset'] as Mode[]).map((item) => <button key={item} type="button" onClick={() => { setMode(item); setNotice(null); }} className={`flex-1 rounded-full px-3 py-2.5 text-xs font-black capitalize transition md:text-sm ${mode === item ? 'bg-slate-950 text-white shadow-sm' : 'text-slate-500 hover:text-slate-950'}`}>{item === 'signup' ? 'Register' : item}</button>)}
+                </div>
+
+                <form onSubmit={submit} className="mt-4 rounded-[1.65rem] bg-white/72 p-4 ring-1 ring-black/5 backdrop-blur-xl">
+                  <div><p className="text-2xl font-black tracking-tight text-slate-950">{mode === 'login' ? 'Welcome back' : mode === 'signup' ? 'Create account' : 'Recover access'}</p><p className="mt-1 text-sm font-semibold leading-6 text-slate-500">{mode === 'login' ? 'Masuk untuk membuka semua fitur akun.' : mode === 'signup' ? 'Email aktif diperlukan untuk konfirmasi.' : 'Kirim link reset ke email akun.'}</p></div>
+                  <label className="mt-4 block"><span className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">Email</span><input value={email} onChange={(event) => setEmail(event.target.value)} className="mt-2 w-full rounded-[1.15rem] border border-black/5 bg-white/85 px-4 py-3 text-base font-bold text-slate-950 outline-none placeholder:text-slate-400 focus:border-slate-950" placeholder="nama@email.com" type="email" autoComplete="email" required /></label>
+                  {mode !== 'reset' && <label className="mt-4 block"><span className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">Password</span><div className="mt-2 flex rounded-[1.15rem] border border-black/5 bg-white/85 pr-2 focus-within:border-slate-950"><input value={password} onChange={(event) => setPassword(event.target.value)} className="w-full rounded-[1.15rem] bg-transparent px-4 py-3 text-base font-bold text-slate-950 outline-none placeholder:text-slate-400" placeholder="Masukkan password" type={showPassword ? 'text' : 'password'} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} required /><button type="button" onClick={() => setShowPassword((value) => !value)} className="px-3 text-xs font-black text-slate-500">{showPassword ? 'Hide' : 'Show'}</button></div><div className="mt-2 flex items-center gap-2"><div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200"><div className="h-full rounded-full bg-[#dfff4f] transition-all" style={{ width: `${(score / 5) * 100}%` }} /></div><span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{passwordLabel(score)}</span></div></label>}
+                  {notice && <div className={`mt-4 rounded-[1.15rem] px-4 py-3 text-sm font-bold ring-1 ${noticeClass}`}>{notice.text}</div>}
+                  <div className="mt-5 grid gap-3 sm:grid-cols-2"><button disabled={loading} className="dl-login-lift rounded-[1.25rem] bg-[#dfff4f] px-5 py-4 text-sm font-black text-slate-950 shadow-[0_18px_42px_rgba(176,205,55,.24)] disabled:cursor-not-allowed disabled:opacity-60">{loading ? 'Processing...' : mode === 'login' ? 'Secure Login' : mode === 'signup' ? 'Create Account' : 'Send Reset Link'}</button><button type="button" onClick={() => setMode(mode === 'signup' ? 'login' : 'signup')} className="dl-login-lift rounded-[1.25rem] bg-slate-950 px-5 py-4 text-sm font-black text-white shadow-[0_18px_42px_rgba(15,23,42,.18)]">{mode === 'signup' ? 'Login' : 'Register'}</button></div>
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3"><button type="button" onClick={() => setMode('reset')} className="text-sm font-black text-slate-500 transition hover:text-slate-950">Lupa password?</button>{mode === 'signup' && <button type="button" onClick={resendConfirmation} disabled={loading} className="rounded-full bg-white/86 px-3 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500 ring-1 ring-black/5 disabled:opacity-60">Resend email</button>}</div>
+                </form>
+              </div>
+            </div>
+
+            <div className="mt-auto pt-5">
+              <div className="grid gap-3 sm:grid-cols-3">
+                {['Wallet', 'Produk', 'Reward'].map((item) => <div key={item} className="rounded-[1.25rem] bg-white/42 p-4 text-slate-800 ring-1 ring-black/5 backdrop-blur-xl"><p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">{item}</p><p className="mt-2 text-sm font-black">{item === 'Wallet' ? 'Saldo dan topup lebih ringkas.' : item === 'Produk' ? 'PPOB dan produk digital cepat.' : 'Benefit akun lebih jelas.'}</p></div>)}
+              </div>
+            </div>
+          </div>
+        </aside>
       </section>
     </main>
   );
