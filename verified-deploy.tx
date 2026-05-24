@@ -1,2 +1,3 @@
-auto deploy stamp 2026-05-22T10:09:29Z
-source f3d58b4b4dfd82c50135907457525ab16d900456
+stable brand motion deploy
+source 4c79a9f3c61f61b2ba03000f6b6c8b396358a86e
+review https://dlaviecomerce.vercel.app/?v=brand-motion-stable
