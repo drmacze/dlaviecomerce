@@ -10,6 +10,7 @@ import '../styles/globals.css';
 import '../styles/ambient.css';
 import '../styles/cosmic.css';
 import '../styles/dlavie-system.css';
+import '../styles/auth-motion.css';
 
 function DlavieLoader({ active }: { active: boolean }) {
   if (!active) return null;
