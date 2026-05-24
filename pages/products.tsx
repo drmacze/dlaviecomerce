@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
+import { createSupabaseBrowserClient } from '@/lib/supabase-client';
 
 type PpobProduct = {
   code: string;
@@ -8,7 +9,7 @@ type PpobProduct = {
   brand?: string;
   price: number;
   status: 'available' | 'offline';
-  source: 'vipayment' | 'demo';
+  source: 'database' | 'vipayment' | 'demo';
 };
 
 type OrderResult = { orderNumber?: string; message?: string } | null;
@@ -112,9 +113,17 @@ export default function ProductsPage() {
 
     setSubmitting(true);
     try {
+      const supabase = createSupabaseBrowserClient();
+      const { data, error } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (error || !token) {
+        setOrderError('Sesi login tidak terbaca. Buka Dashboard dulu atau login ulang, lalu coba lagi.');
+        return;
+      }
+
       const response = await fetch('/api/bot/ppob/orders', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           type: selectedType || selectedProduct.category,
           productCode: selectedProduct.code,
@@ -128,7 +137,7 @@ export default function ProductsPage() {
         setOrderError(json.error || 'Order gagal dibuat. Coba ulangi beberapa saat lagi.');
         return;
       }
-      setOrderResult({ orderNumber: json.orderNumber || json.order?.order_number, message: json.message || 'Order berhasil dibuat.' });
+      setOrderResult({ orderNumber: json.orderNumber || json.order?.order_number || json.order?.ref_id, message: json.message || 'Order berhasil dibuat.' });
     } catch {
       setOrderError('Koneksi gagal saat membuat order. Coba ulangi.');
     } finally {
@@ -143,6 +152,7 @@ export default function ProductsPage() {
   const statusText = useMemo(() => {
     if (!selectedType) return 'Menu produk';
     if (loading) return 'Memuat produk...';
+    if (source === 'database') return 'Data PPOB aktif';
     if (source === 'vipayment') return 'Data VIPayment';
     if (source === 'demo') return 'Demo fallback';
     return 'Belum tersedia';
