@@ -11,6 +11,8 @@ type PpobProduct = {
   source: 'vipayment' | 'demo';
 };
 
+type OrderResult = { orderNumber?: string; message?: string } | null;
+
 const services = [
   { key: 'pulsa', label: 'Pulsa', note: 'Isi nomor HP', href: '/products?type=pulsa', tone: '#dfff4f', path: 'M7 4h10v16H7z M10 7h4 M11 17h2' },
   { key: 'data', label: 'Paket Data', note: 'Internet harian', href: '/products?type=data', tone: '#45d5ff', path: 'M12 4a8 8 0 1 0 0 16a8 8 0 0 0 0-16z M4 12h16 M12 4c2 2 3 5 3 8s-1 6-3 8 M12 4c-2 2-3 5-3 8s1 6 3 8' },
@@ -33,6 +35,20 @@ function ProductIcon({ path }: { path: string }) {
   return <svg viewBox="0 0 24 24" className="h-5 w-5 text-slate-900" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><path d={path} /></svg>;
 }
 
+function targetLabel(type: string) {
+  if (type === 'pln') return 'Nomor meter / ID pelanggan';
+  if (type === 'game') return 'User ID / server game';
+  if (type === 'wallet') return 'Nomor e-wallet';
+  return 'Nomor HP tujuan';
+}
+
+function targetPlaceholder(type: string) {
+  if (type === 'pln') return 'Contoh: 12345678901';
+  if (type === 'game') return 'Contoh: 12345678(1234)';
+  if (type === 'wallet') return 'Contoh: 081234567890';
+  return 'Contoh: 081234567890';
+}
+
 export default function ProductsPage() {
   const router = useRouter();
   const selectedType = typeof router.query.type === 'string' ? router.query.type : '';
@@ -41,6 +57,11 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<PpobProduct[]>([]);
   const [loading, setLoading] = useState(false);
   const [source, setSource] = useState('menu');
+  const [selectedProduct, setSelectedProduct] = useState<PpobProduct | null>(null);
+  const [target, setTarget] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [orderResult, setOrderResult] = useState<OrderResult>(null);
+  const [orderError, setOrderError] = useState('');
 
   useEffect(() => {
     const timer = window.setInterval(() => setStepIndex((value) => (value + 1) % flow.length), 5500);
@@ -56,6 +77,10 @@ export default function ProductsPage() {
         return;
       }
       setLoading(true);
+      setSelectedProduct(null);
+      setTarget('');
+      setOrderResult(null);
+      setOrderError('');
       try {
         const response = await fetch(`/api/bot/ppob/products?type=${encodeURIComponent(selectedType)}`);
         const json = await response.json();
@@ -73,6 +98,43 @@ export default function ProductsPage() {
     load();
     return () => { alive = false; };
   }, [selectedType]);
+
+  async function submitOrder() {
+    if (!selectedProduct) return;
+    setOrderResult(null);
+    setOrderError('');
+
+    const cleanTarget = target.trim();
+    if (!cleanTarget) {
+      setOrderError(`${targetLabel(selectedType)} wajib diisi.`);
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const response = await fetch('/api/bot/ppob/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: selectedType || selectedProduct.category,
+          productCode: selectedProduct.code,
+          productName: selectedProduct.name,
+          price: selectedProduct.price,
+          target: cleanTarget
+        })
+      });
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok || !json.ok) {
+        setOrderError(json.error || 'Order gagal dibuat. Coba ulangi beberapa saat lagi.');
+        return;
+      }
+      setOrderResult({ orderNumber: json.orderNumber || json.order?.order_number, message: json.message || 'Order berhasil dibuat.' });
+    } catch {
+      setOrderError('Koneksi gagal saat membuat order. Coba ulangi.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   const currentStep = flow[stepIndex];
   const title = selectedService ? `${selectedService.label} DLAVIE` : 'Satu menu untuk semua layanan digital.';
@@ -148,12 +210,44 @@ export default function ProductsPage() {
             <p className="mt-1 text-xs font-bold text-slate-500">{product.brand || product.category} · {product.code}</p>
             <div className="mt-4 flex items-center justify-between gap-3">
               <p className="text-xl font-black">{rupiah(product.price)}</p>
-              <button className="rounded-full bg-[#dfff4f] px-4 py-2 text-xs font-black text-slate-950 shadow-sm transition hover:-translate-y-1">Pilih</button>
+              <button onClick={() => { setSelectedProduct(product); setTarget(''); setOrderResult(null); setOrderError(''); }} disabled={product.status !== 'available'} className="rounded-full bg-[#dfff4f] px-4 py-2 text-xs font-black text-slate-950 shadow-sm transition hover:-translate-y-1 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400">Pilih</button>
             </div>
           </article>)}
           {!loading && !products.length && <div className="dlavie-mica rounded-[1.55rem] p-6 font-bold text-slate-500 sm:col-span-2 lg:col-span-3"><p className="text-2xl font-black text-slate-950">Produk belum tersedia.</p><p className="mt-2">Kategori ini belum mengembalikan data. Cek kredensial VIPayment atau kategori layanan.</p></div>}
         </div>}
       </section>
     </section>
+
+    {selectedProduct && <div className="fixed inset-0 z-[80] grid place-items-end bg-slate-950/40 p-3 backdrop-blur-sm md:place-items-center">
+      <div className="dlavie-mica dlavie-ring w-full max-w-xl overflow-hidden rounded-[2rem] p-4 shadow-[0_30px_100px_rgba(15,23,42,.3)] md:p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Konfirmasi produk</p>
+            <h3 className="mt-1 text-2xl font-black tracking-tight text-slate-950">{selectedProduct.name}</h3>
+            <p className="mt-1 text-sm font-bold text-slate-500">{selectedProduct.brand || selectedProduct.category} · {selectedProduct.code}</p>
+          </div>
+          <button onClick={() => setSelectedProduct(null)} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/70 text-lg font-black text-slate-500 ring-1 ring-black/5">×</button>
+        </div>
+
+        <div className="mt-4 rounded-[1.35rem] bg-slate-950 p-4 text-white">
+          <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#dfff4f]">Total bayar</p>
+          <p className="mt-1 text-3xl font-black tracking-tight">{rupiah(selectedProduct.price)}</p>
+          <p className="mt-1 text-xs font-bold text-white/42">Pembayaran akan diproses sebagai order PPOB.</p>
+        </div>
+
+        <label className="mt-4 block">
+          <span className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">{targetLabel(selectedType)}</span>
+          <input value={target} onChange={(event) => setTarget(event.target.value)} placeholder={targetPlaceholder(selectedType)} className="mt-2 w-full rounded-[1.2rem] border border-black/5 bg-white/75 px-4 py-3 text-base font-bold text-slate-950 outline-none ring-0 backdrop-blur placeholder:text-slate-400 focus:border-slate-950" />
+        </label>
+
+        {orderError && <div className="mt-3 rounded-[1.2rem] bg-red-100 px-4 py-3 text-sm font-bold text-red-700 ring-1 ring-red-200">{orderError}</div>}
+        {orderResult && <div className="mt-3 rounded-[1.2rem] bg-[#dfff4f] px-4 py-3 text-sm font-bold text-slate-950 ring-1 ring-black/5"><p>Order dibuat: {orderResult.orderNumber}</p><p className="mt-1 text-xs text-slate-600">{orderResult.message}</p></div>}
+
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          <button onClick={submitOrder} disabled={submitting} className="dlavie-lime-btn rounded-[1.2rem] px-5 py-4 text-sm font-black transition hover:-translate-y-1 disabled:opacity-60">{submitting ? 'Memproses...' : 'Buat Order'}</button>
+          <a href="/orders" className="dlavie-primary-btn rounded-[1.2rem] px-5 py-4 text-center text-sm font-black transition hover:-translate-y-1">Lihat Orders</a>
+        </div>
+      </div>
+    </div>}
   </main>;
 }
