@@ -9,6 +9,7 @@ import { DlavieProviders } from '@/components/dlavie-providers';
 import '../styles/globals.css';
 import '../styles/ambient.css';
 import '../styles/cosmic.css';
+import '../styles/dlavie-system.css';
 
 function DlavieLoader({ active }: { active: boolean }) {
   if (!active) return null;
