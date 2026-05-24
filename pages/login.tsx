@@ -1,7 +1,7 @@
 import { FormEvent, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { DlavieLogo } from '@/components/dlavie-logo';
+import { DlavieLogo, DlavieMarkWatermark } from '@/components/dlavie-logo';
 import { createSupabaseBrowserClient } from '@/lib/supabase-client';
 
 type Mode = 'login' | 'signup' | 'reset';
@@ -136,8 +136,9 @@ export default function Login() {
           </div>
         </div>
 
-        <div className="auth-panel mt-3 rounded-[2rem] p-4 md:p-6">
-          <div className="grid gap-5 lg:grid-cols-[.82fr_1.18fr] lg:items-start">
+        <div className="auth-panel relative mt-3 overflow-hidden rounded-[2rem] p-4 md:p-6">
+          <DlavieMarkWatermark className="absolute -right-14 top-4 h-56 w-56 opacity-[0.045]" />
+          <div className="relative z-10 grid gap-5 lg:grid-cols-[.82fr_1.18fr] lg:items-start">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#dfff4f]">Secure Access</p>
               <h2 className="mt-2 text-3xl font-black tracking-tight">Masuk ke akun kamu.</h2>
