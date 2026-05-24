@@ -10,7 +10,7 @@ const loginVideo = {
   src: 'https://cdn.imageurlgenerator.com/uploads/216ff627-b7ab-4e36-a2cf-feeaba760057.mp4',
   label: 'DLAVIE Motion',
   title: 'Masuk ke dunia DLAVIE.',
-  desc: 'Wallet, produk digital, reward, dan dashboard akun disatukan dalam pengalaman yang lebih hidup.'
+  desc: 'Akses wallet, produk digital, reward, dan dashboard akun dalam satu ruang yang lebih hidup.'
 };
 
 function getSiteUrl() {
