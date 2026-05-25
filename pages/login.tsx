@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { DlavieLogo, DlavieMarkWatermark } from '@/components/dlavie-logo';
@@ -45,6 +45,11 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const score = useMemo(() => scorePassword(password), [password]);
   const confirmUrl = `${getSiteUrl()}/auth/confirmed`;
+
+  useEffect(() => {
+    setEmail('');
+    setPassword('');
+  }, []);
 
   async function recordLoginEvent(accessToken: string) {
     await fetch('/api/security', {
@@ -152,16 +157,16 @@ export default function Login() {
                 ))}
               </div>
 
-              <form onSubmit={submit} className="mt-4">
+              <form onSubmit={submit} className="mt-4" autoComplete="off">
                 <label className="block">
                   <span className="text-[11px] font-black uppercase tracking-[0.18em] text-white/42">Email</span>
-                  <input value={email} onChange={(event) => setEmail(event.target.value)} className="auth-input mt-2 w-full rounded-[1.15rem] px-4 py-3 text-base font-bold" placeholder="nama@email.com" type="email" autoComplete="email" required />
+                  <input value={email} onChange={(event) => setEmail(event.target.value)} className="auth-input mt-2 w-full rounded-[1.15rem] px-4 py-3 text-base font-bold" placeholder="nama@email.com" type="email" name="dlavie-login-id" autoComplete="off" autoCorrect="off" autoCapitalize="none" spellCheck={false} inputMode="email" required />
                 </label>
 
                 {mode !== 'reset' && <label className="mt-4 block">
                   <span className="text-[11px] font-black uppercase tracking-[0.18em] text-white/42">Password</span>
                   <div className="auth-input mt-2 flex rounded-[1.15rem] pr-2 focus-within:border-[#dfff4f]/80">
-                    <input value={password} onChange={(event) => setPassword(event.target.value)} className="w-full rounded-[1.15rem] bg-transparent px-4 py-3 text-base font-bold text-white outline-none placeholder:text-white/30" placeholder="Masukkan password" type={showPassword ? 'text' : 'password'} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} required />
+                    <input value={password} onChange={(event) => setPassword(event.target.value)} className="w-full rounded-[1.15rem] bg-transparent px-4 py-3 text-base font-bold text-white outline-none placeholder:text-white/30" placeholder="Masukkan password" type={showPassword ? 'text' : 'password'} name="dlavie-login-secret" autoComplete="new-password" autoCorrect="off" autoCapitalize="none" spellCheck={false} required />
                     <button type="button" onClick={() => setShowPassword((value) => !value)} className="px-3 text-xs font-black text-white/45 hover:text-white">{showPassword ? 'Hide' : 'Show'}</button>
                   </div>
                   <div className="mt-2 flex items-center gap-2"><div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/12"><div className="h-full rounded-full bg-[#dfff4f] transition-all" style={{ width: `${(score / 5) * 100}%` }} /></div><span className="text-[10px] font-black uppercase tracking-widest text-white/45">{scoreLabel(score)}</span></div>
