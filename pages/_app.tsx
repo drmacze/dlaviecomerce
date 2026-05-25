@@ -12,6 +12,7 @@ import '../styles/ambient.css';
 import '../styles/cosmic.css';
 import '../styles/dlavie-system.css';
 import '../styles/dlavie-motion.css';
+import '../styles/dlavie-theme.css';
 import '../styles/auth-motion.css';
 
 const THEME_KEY = 'dlavie_theme_mode_v1';
