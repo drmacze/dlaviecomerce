@@ -1,11 +1,6 @@
 {
   "framework": "nextjs",
   "buildCommand": "npm run build",
-  "installCommand": "npm install",
-  "outputDirectory": ".next",
-  "ignoreCommand": "exit 1",
-  "regions": ["sin1"],
-  "github": {
-    "silent": false
-  }
+  "installCommand": "npm install --legacy-peer-deps",
+  "outputDirectory": ".next"
 }
