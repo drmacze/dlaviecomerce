@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { AccountShortcut } from '@/components/account-shortcut';
 import { AmbientBg } from '@/components/ambient-bg';
 import { DlavieAlertCenter } from '@/components/dlavie-alert-center';
-import { DlavieCookieConsent } from '@/components/dlavie-cookie-consent';
 import { DlavieErrorBoundary } from '@/components/dlavie-error-boundary';
 import { DlavieProviders } from '@/components/dlavie-providers';
 import '../styles/globals.css';
@@ -78,5 +77,5 @@ export default function App({ Component, pageProps }: AppProps) {
     };
   }, [router.events]);
 
-  return <DlavieProviders><AmbientBg /><DlavieAlertCenter /><DlavieCookieConsent /><DlavieThemeSwitch /><DlavieLoader active={loading} /><AccountShortcut /><DlavieErrorBoundary><div className="relative z-10 transition-opacity duration-300"><Component {...pageProps} /></div></DlavieErrorBoundary></DlavieProviders>;
+  return <DlavieProviders><AmbientBg /><DlavieAlertCenter /><DlavieThemeSwitch /><DlavieLoader active={loading} /><AccountShortcut /><DlavieErrorBoundary><div className="relative z-10 transition-opacity duration-300"><Component {...pageProps} /></div></DlavieErrorBoundary></DlavieProviders>;
 }
