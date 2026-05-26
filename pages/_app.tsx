@@ -5,16 +5,27 @@ import { AccountShortcut } from '@/components/account-shortcut';
 import { AmbientBg } from '@/components/ambient-bg';
 import { DlavieAlertCenter } from '@/components/dlavie-alert-center';
 import { DlavieErrorBoundary } from '@/components/dlavie-error-boundary';
+import { DlavieExperienceShell } from '@/components/dlavie-experience-shell';
 import { DlavieProviders } from '@/components/dlavie-providers';
 import '../styles/globals.css';
 import '../styles/ambient.css';
 import '../styles/cosmic.css';
 import '../styles/dlavie-system.css';
+import '../styles/dlavie-experience.css';
 import '../styles/auth-motion.css';
 
 function DlavieLoader({ active }: { active: boolean }) {
   if (!active) return null;
-  return <div className="fixed inset-0 z-50 grid place-items-center bg-[#eef4ee]/85 backdrop-blur-xl"><div className="rounded-[2rem] bg-white/80 p-6 text-center shadow-[0_28px_85px_rgba(65,78,74,.18)] ring-1 ring-black/5"><div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-slate-950 text-2xl font-black text-[#dfff4f] shadow-inner">D</div><p className="mt-4 text-sm font-black uppercase tracking-[0.35em] text-slate-500">DLAVIE</p><p className="mt-1 text-sm font-semibold text-slate-500">Loading smooth experience...</p></div></div>;
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-[#eef4ee]/78 backdrop-blur-2xl">
+      <div className="dlavie-loader-card rounded-[2rem] bg-white/82 p-6 text-center shadow-[0_28px_85px_rgba(65,78,74,.18)] ring-1 ring-black/5">
+        <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-slate-950 text-2xl font-black text-[#dfff4f] shadow-inner">D</div>
+        <p className="mt-4 text-sm font-black uppercase tracking-[0.35em] text-slate-500">DLAVIE</p>
+        <p className="mt-1 text-sm font-semibold text-slate-500">Loading premium experience...</p>
+      </div>
+    </div>
+  );
 }
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -34,5 +45,19 @@ export default function App({ Component, pageProps }: AppProps) {
     };
   }, [router.events]);
 
-  return <DlavieProviders><AmbientBg /><DlavieAlertCenter /><DlavieLoader active={loading} /><AccountShortcut /><DlavieErrorBoundary><div className="relative z-10 transition-opacity duration-300"><Component {...pageProps} /></div></DlavieErrorBoundary></DlavieProviders>;
+  return (
+    <DlavieProviders>
+      <DlavieExperienceShell>
+        <AmbientBg />
+        <DlavieAlertCenter />
+        <DlavieLoader active={loading} />
+        <AccountShortcut />
+        <DlavieErrorBoundary>
+          <div className="relative z-10 transition-opacity duration-300">
+            <Component {...pageProps} />
+          </div>
+        </DlavieErrorBoundary>
+      </DlavieExperienceShell>
+    </DlavieProviders>
+  );
 }
