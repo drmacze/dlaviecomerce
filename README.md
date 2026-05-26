@@ -1,20 +1,57 @@
-# LUMINA Digital Commerce
+# LUMINA / DLAVIE Digital Commerce
 
-LUMINA adalah e-commerce produk digital berbasis Next.js, Supabase, Gemini AI, Tailwind CSS, dan Zustand.
+LUMINA / DLAVIE adalah e-commerce produk digital berbasis Next.js, Supabase, Gemini AI, Tailwind CSS, Zustand, dan DLAVIE Experience Engine.
 
 ## Stack
 
 - Next.js Pages Router
+- React 19
 - TypeScript
 - Tailwind CSS
 - Supabase Auth, Database, Storage, RPC
 - Gemini AI via `@google/genai`
 - Zustand cart store
+- TanStack Query server-state cache
+- Lenis smooth scroll
+- GSAP + `@gsap/react` advanced animation runtime
+- Framer Motion global motion configuration
+- Three.js + React Three Fiber + Drei WebGL ambient layer
+- CMDK command palette
+- Sonner toast system
 - GitHub Actions CI
+
+## DLAVIE Experience Engine 2.0
+
+This repo includes a full-site experience layer, not only isolated component registry code.
+
+### Global UX upgrades
+
+- `DlavieExperienceShell` wraps the whole app from `pages/_app.tsx`.
+- `DlavieSiteDock` adds global bottom navigation for core routes.
+- `DlavieCommandPalette` adds `Ctrl/⌘ + K` navigation.
+- `DlaviePageProgress` adds route transition feedback.
+- `DlavieProviders` now includes theme support, tuned TanStack Query defaults, smoother Lenis config, and improved toast styling.
+- `AmbientBg` now combines CSS prism layers with a dynamic WebGL holographic scene.
+- `styles/dlavie-experience.css` applies cross-site polish: focus rings, premium glass, motion safety, kinetic card states, dock spacing, and reduced-motion handling.
+
+### Main engine files
+
+```txt
+components/dlavie-experience-shell.tsx
+components/dlavie-site-dock.tsx
+components/dlavie-command-palette.tsx
+components/dlavie-page-progress.tsx
+components/dlavie-holographic-scene.tsx
+components/ambient-bg.tsx
+lib/dlavie-experience.ts
+hooks/use-reduced-motion.ts
+styles/dlavie-experience.css
+```
 
 ## Main Routes
 
-- `/` catalog produk digital
+- `/` catalog dan opening experience
+- `/products` produk digital / PPOB
 - `/product/[slug]` detail produk digital
 - `/login` auth Supabase
 - `/profile` profil user, Premium/VIP, L-Points
@@ -25,8 +62,11 @@ LUMINA adalah e-commerce produk digital berbasis Next.js, Supabase, Gemini AI, T
 - `/download` akses download produk digital
 - `/checkin` daily check-in L-Points
 - `/gift` kirim L-Points
+- `/wallet` D-Balance dan top up
+- `/rewards` rewards dan VIP benefits
 - `/ai` persistent AI chat
 - `/ai/history` riwayat AI chat
+- `/dashboard` pusat kontrol user
 - `/admin` admin product creator
 - `/admin/products` admin product manager
 - `/admin/products/[id]` admin product editor
@@ -60,6 +100,12 @@ npm run dev
 npm run typecheck
 npm run lint
 npm run build
+```
+
+Or run the full quality gate:
+
+```bash
+npm run check
 ```
 
 ## Supabase Setup
