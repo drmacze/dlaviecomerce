@@ -1,5 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
+type TelegramReplyMarkup = {
+  inline_keyboard: Array<Array<Record<string, unknown>>>;
+};
+
 function getBaseUrl(req: NextApiRequest) {
   const configured = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL;
   if (configured) return configured.replace(/\/$/, '');
@@ -19,20 +23,29 @@ function getTelegramAuthBotToken() {
   return process.env.DLAVIE_TELEGRAM_AUTH_BOT_TOKEN || process.env.DLAVIE_TELEGRAM_OTP_BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN || '';
 }
 
-async function sendTelegramMessage(chatId: number | string, text: string) {
+async function sendTelegramMessage(chatId: number | string, text: string, replyMarkup?: TelegramReplyMarkup) {
   const token = getTelegramAuthBotToken();
   if (!token) throw new Error('Telegram auth bot token belum diset. Pakai DLAVIE_TELEGRAM_AUTH_BOT_TOKEN atau DLAVIE_TELEGRAM_OTP_BOT_TOKEN.');
 
   const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true })
+    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true, reply_markup: replyMarkup })
   });
 
   if (!response.ok) {
     const body = await response.text();
     throw new Error(`Telegram sendMessage failed: ${body}`);
   }
+}
+
+function loginPanelKeyboard(url: string): TelegramReplyMarkup {
+  return {
+    inline_keyboard: [
+      [{ text: 'Open Login Panel', web_app: { url } }],
+      [{ text: 'Open in Browser', url }]
+    ]
+  };
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -54,6 +67,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const baseUrl = getBaseUrl(req);
+    const next = parseNext(text);
     const createResponse = await fetch(`${baseUrl}/api/auth/pairing/create`, {
       method: 'POST',
       headers: {
@@ -64,7 +78,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         channel: 'telegram',
         externalId: String(from.id),
         displayName: [from.first_name, from.last_name].filter(Boolean).join(' ') || from.username || 'Telegram User',
-        next: parseNext(text)
+        next
       })
     });
 
@@ -74,7 +88,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json({ ok: true, pairing: false });
     }
 
-    await sendTelegramMessage(chatId, `Kode login DLAVIE kamu:\n\n<code>${data.code}</code>\n\nMasukkan kode ini di halaman login DLAVIE. Kode berlaku 5 menit.`);
+    const panelUrl = `${baseUrl}/telegram-login?code=${encodeURIComponent(String(data.code))}&channel=telegram&next=${encodeURIComponent(next)}`;
+    await sendTelegramMessage(
+      chatId,
+      `🔐 <b>DLAVIE Secure Login</b>\n\nKode pairing kamu sudah siap:\n\n<code>${data.code}</code>\n\nBuka panel login premium untuk melihat kode, copy, atau langsung verifikasi. Kode berlaku 5 menit.`,
+      loginPanelKeyboard(panelUrl)
+    );
     return res.status(200).json({ ok: true, pairing: true });
   } catch (error) {
     return res.status(200).json({ ok: false, error: error instanceof Error ? error.message : 'Telegram webhook failed' });
