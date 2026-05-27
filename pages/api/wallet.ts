@@ -1,8 +1,17 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { bearerToken, verifySupabaseUser } from '@/lib/auth-server';
 import { createSupabaseServiceClient } from '@/lib/supabase-server';
+import { sendTelegramMessageToAdmins } from '@/lib/telegram';
 
 const allowedManualProviders = new Set(['manual-payment', 'bri', 'dana', 'gopay', 'qris']);
+const rupiah = (value = 0) => `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
+
+function appBaseUrl(req: NextApiRequest) {
+  const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').trim();
+  const proto = String(req.headers['x-forwarded-proto'] || 'https').split(',')[0];
+  if (host) return `${proto}://${host}`.replace(/\/$/, '');
+  return String(process.env.NEXT_PUBLIC_APP_URL || 'https://dlaviecomerce-dlavie.vercel.app').replace(/\/$/, '');
+}
 
 function sanitizeAmount(value: unknown) {
   const amount = Math.floor(Number(value || 0));
@@ -20,6 +29,34 @@ function cleanProofImage(value: unknown) {
   if (!data.startsWith('data:image/')) return '';
   if (data.length > 1_250_000) return 'too-large';
   return data;
+}
+
+async function notifyManualTopup(req: NextApiRequest, input: { id: string; userId: string; email?: string | null; amount: number; provider: string; reference: string; senderName: string; proofNote: string }) {
+  const appUrl = appBaseUrl(req);
+  const key = encodeURIComponent(String(process.env.DLAVIE_ADMIN_ACTION_KEY || process.env.TELEGRAM_SETUP_KEY || ''));
+  const approveUrl = `${appUrl}/api/admin/topups/action?id=${encodeURIComponent(input.id)}&action=approve&key=${key}`;
+  const rejectUrl = `${appUrl}/api/admin/topups/action?id=${encodeURIComponent(input.id)}&action=reject&key=${key}`;
+  return sendTelegramMessageToAdmins([
+    '💰 MANUAL TOPUP BARU - PERLU REVIEW',
+    '',
+    `Amount: ${rupiah(input.amount)}`,
+    `Provider: ${input.provider}`,
+    `Email: ${input.email || '-'}`,
+    `User: ${input.userId}`,
+    `Reference: ${input.reference}`,
+    `Sender: ${input.senderName}`,
+    '',
+    `Note: ${input.proofNote}`,
+    '',
+    'Aksi: cek bukti pembayaran lalu Approve atau Reject.',
+  ].join('\n'), {
+    replyMarkup: {
+      inline_keyboard: [
+        [{ text: '✅ Approve Topup', url: approveUrl }, { text: '🚫 Reject', url: rejectUrl }],
+        [{ text: '💰 Open Topups', url: `${appUrl}/admin/topups` }, { text: '🚀 Secure Gate', url: `${appUrl}/telegram-admin` }],
+      ],
+    },
+  });
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -80,6 +117,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }).select('*').single();
 
     if (created.error) return res.status(500).json({ error: created.error.message });
+
+    notifyManualTopup(req, {
+      id: created.data.id,
+      userId: user.id,
+      email: user.email,
+      amount,
+      provider: safeProvider,
+      reference,
+      senderName,
+      proofNote,
+    }).catch((error) => console.error('Telegram manual topup notification failed:', error));
+
     return res.status(200).json({ transaction: created.data });
   }
 
