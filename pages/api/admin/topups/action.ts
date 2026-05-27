@@ -17,6 +17,11 @@ function rupiah(value = 0) {
   return `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
 }
 
+function validTopupAmount(value: unknown) {
+  const amount = Number(value || 0);
+  return Number.isFinite(amount) && amount >= 10000 && amount <= 1000000;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const key = String(req.query.key || '').trim();
@@ -33,12 +38,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (txResult.error || !txResult.data) return res.status(404).json({ error: txResult.error?.message || 'Topup tidak ditemukan' });
 
     const tx = txResult.data;
-    if (tx.status !== 'pending') return res.status(400).json({ error: 'Topup sudah diproses.' });
+    if (tx.status !== 'pending') return res.status(409).json({ error: `Topup sudah diproses dengan status ${tx.status}.` });
+    if (!validTopupAmount(tx.amount)) return res.status(400).json({ error: 'Nominal topup tidak valid. Minimal Rp 10.000 dan maksimal Rp 1.000.000.' });
 
     const metadata = { ...(tx.metadata || {}), reviewed_by: 'telegram-action', reviewed_at: new Date().toISOString(), review_note: `Processed from Telegram action: ${action}` };
+    const locked = await supabase.from('wallet_transactions').update({ status: 'processing', metadata }).eq('id', id).eq('type', 'topup').eq('status', 'pending').select('*').single();
+    if (locked.error || !locked.data) return res.status(409).json({ error: 'Topup sudah diproses oleh request lain. Refresh data.' });
 
     if (action === 'reject') {
-      const rejected = await supabase.from('wallet_transactions').update({ status: 'rejected', metadata }).eq('id', id).select('*').single();
+      const rejected = await supabase.from('wallet_transactions').update({ status: 'rejected', metadata }).eq('id', id).eq('status', 'processing').select('*').single();
       if (rejected.error) return res.status(500).json({ error: rejected.error.message });
       await sendTelegramMessageToAdmins(['🚫 Topup rejected', '', `Amount: ${rupiah(tx.amount)}`, `User: ${tx.user_id}`, `Ref: ${tx.reference || '-'}`].join('\n'));
       res.writeHead(302, { Location: '/admin/topups' });
@@ -48,17 +56,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const profile = await supabase.from('profiles').select('id,d_balance').eq('id', tx.user_id).single();
     if (profile.error || !profile.data) return res.status(500).json({ error: profile.error?.message || 'Profile tidak ditemukan' });
 
-    const nextBalance = Number(profile.data.d_balance || 0) + Number(tx.amount || 0);
-    const balance = await supabase.from('profiles').update({ d_balance: nextBalance }).eq('id', tx.user_id).select('id,d_balance').single();
-    if (balance.error) return res.status(500).json({ error: balance.error.message });
+    const currentBalance = Number(profile.data.d_balance || 0);
+    const nextBalance = currentBalance + Number(tx.amount || 0);
+    const balance = await supabase.from('profiles').update({ d_balance: nextBalance }).eq('id', tx.user_id).eq('d_balance', currentBalance).select('id,d_balance').single();
+    if (balance.error || !balance.data) return res.status(409).json({ error: 'Saldo user berubah saat approve. Topup dikunci processing, cek manual sebelum ulang.' });
 
-    const approved = await supabase.from('wallet_transactions').update({ status: 'approved', metadata }).eq('id', id).select('*').single();
+    const approvedMeta = { ...metadata, balance_before: currentBalance, balance_after: nextBalance };
+    const approved = await supabase.from('wallet_transactions').update({ status: 'approved', metadata: approvedMeta }).eq('id', id).eq('status', 'processing').select('*').single();
     if (approved.error) return res.status(500).json({ error: approved.error.message });
 
     await sendTelegramMessageToAdmins([
       '✅ Topup approved',
       '',
       `Amount: ${rupiah(tx.amount)}`,
+      `Balance Before: ${rupiah(currentBalance)}`,
       `New Balance: ${rupiah(balance.data.d_balance)}`,
       `User: ${tx.user_id}`,
       `Ref: ${tx.reference || '-'}`,
