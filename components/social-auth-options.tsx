@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { createSupabaseBrowserClient } from '@/lib/supabase-client';
 
 type Notice = { type: 'success' | 'error' | 'info'; text: string };
@@ -54,6 +54,8 @@ function WhatsAppIcon() {
 export function SocialAuthOptions({ nextUrl, disabled, onNotice }: Props) {
   const [busy, setBusy] = useState(false);
   const [pairingChannel, setPairingChannel] = useState<Channel | null>(null);
+  const [pairingCode, setPairingCode] = useState('');
+  const [pairingMessage, setPairingMessage] = useState('');
 
   async function googleLogin() {
     setBusy(true);
@@ -74,7 +76,38 @@ export function SocialAuthOptions({ nextUrl, disabled, onNotice }: Props) {
 
   function startPairing(channel: Channel) {
     setPairingChannel(channel);
-    onNotice({ type: 'info', text: channel === 'telegram' ? 'Buka bot Telegram DLAVIE, ambil kode login, lalu masukkan di web.' : 'Buka bot WhatsApp DLAVIE, ambil kode login, lalu masukkan di web.' });
+    setPairingCode('');
+    setPairingMessage(channel === 'telegram' ? 'Buka bot Telegram DLAVIE, ambil kode login, lalu masukkan di web.' : 'Buka bot WhatsApp DLAVIE, ambil kode login, lalu masukkan di web.');
+  }
+
+  async function verifyPairing(event: FormEvent) {
+    event.preventDefault();
+    if (!pairingChannel) return;
+
+    const code = pairingCode.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (code.length < 6) {
+      setPairingMessage('Kode pairing minimal 6 karakter.');
+      return;
+    }
+
+    setBusy(true);
+    setPairingMessage('Memverifikasi kode pairing...');
+
+    const response = await fetch('/api/auth/pairing/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ channel: pairingChannel, code, next: nextUrl || '/dashboard' })
+    });
+    const data = await response.json().catch(() => ({}));
+    setBusy(false);
+
+    if (!response.ok || !data.loginUrl) {
+      setPairingMessage(data.error || 'Kode salah, expired, atau sudah digunakan.');
+      return;
+    }
+
+    setPairingMessage('Kode valid. Mengalihkan ke sesi login aman...');
+    window.location.href = String(data.loginUrl);
   }
 
   const chip = 'auth-social-chip flex items-center justify-center gap-2 rounded-full px-3 py-2.5 text-xs font-black text-white transition disabled:cursor-not-allowed disabled:opacity-55';
@@ -109,10 +142,12 @@ export function SocialAuthOptions({ nextUrl, disabled, onNotice }: Props) {
               <div><p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#dfff4f]">Pairing Login</p><h3 className="mt-2 text-2xl font-black tracking-tight">Kode {pairingChannel === 'telegram' ? 'Telegram' : 'WhatsApp'}</h3></div>
               <button type="button" onClick={() => setPairingChannel(null)} className="grid h-10 w-10 place-items-center rounded-full bg-white/10 font-black text-white/65 ring-1 ring-white/10">×</button>
             </div>
-            <p className="mt-3 text-sm font-semibold leading-6 text-white/55">Buka bot DLAVIE, minta kode login, lalu masukkan kode tersebut di sini.</p>
+            <p className="mt-3 text-sm font-semibold leading-6 text-white/55">{pairingMessage}</p>
             {botLink && <a href={botLink} target="_blank" rel="noreferrer" className="mt-4 block rounded-[1.2rem] bg-[#dfff4f] px-4 py-3 text-center text-sm font-black text-slate-950">Buka Bot {pairingChannel === 'telegram' ? 'Telegram' : 'WhatsApp'}</a>}
-            <input className="mt-4 w-full rounded-[1.35rem] border border-white/12 bg-white/10 px-4 py-4 text-center text-2xl font-black tracking-[0.34em] text-white outline-none transition focus:border-[#dfff4f]/70" placeholder="DLV123" autoComplete="one-time-code" />
-            <button type="button" onClick={() => onNotice({ type: 'info', text: 'Pairing code backend akan aktif setelah bot mengirim kode ke API DLAVIE.' })} className="mt-3 w-full rounded-[1.25rem] bg-white px-4 py-3 text-sm font-black text-slate-950">Verify & Login</button>
+            <form onSubmit={verifyPairing} className="mt-4">
+              <input value={pairingCode} onChange={(event) => setPairingCode(event.target.value.toUpperCase())} className="w-full rounded-[1.35rem] border border-white/12 bg-white/10 px-4 py-4 text-center text-2xl font-black tracking-[0.34em] text-white outline-none transition focus:border-[#dfff4f]/70" placeholder="DLV123" autoComplete="one-time-code" />
+              <button disabled={busy} className="mt-3 w-full rounded-[1.25rem] bg-white px-4 py-3 text-sm font-black text-slate-950 disabled:opacity-60">{busy ? 'Checking...' : 'Verify & Login'}</button>
+            </form>
           </div>
         </div>
       )}
