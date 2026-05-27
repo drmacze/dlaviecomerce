@@ -7,10 +7,6 @@ type CouponRow = { id: string; discount_type: string; amount: number; min_amount
 
 type ProfileWallet = { id: string; d_balance: number; d_points: number; vip_level: string | null };
 
-function validEmail(value: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-}
-
 function normalizeItems(items: unknown) {
   const rows = Array.isArray(items) ? (items as OrderItemInput[]) : [];
   const grouped = new Map<string, number>();
@@ -39,10 +35,13 @@ function pointsMultiplier(level?: string | null) {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   try {
-    const email = String(req.body?.buyer_email || '').trim().toLowerCase();
+    const user = await verifySupabaseUser(bearerToken(req.headers.authorization));
+    if (!user?.email) return res.status(401).json({ error: 'Login diperlukan untuk membuat order.' });
+
+    const email = user.email.toLowerCase();
     const orderItems = normalizeItems(req.body?.items);
     const paymentMethod = String(req.body?.payment_method || 'manual');
-    if (!validEmail(email) || !orderItems.length) return res.status(400).json({ error: 'Email valid dan items wajib diisi.' });
+    if (!orderItems.length) return res.status(400).json({ error: 'Items wajib diisi.' });
 
     const supabase = createSupabaseServiceClient();
     const ids = orderItems.map((item) => item.product_id);
@@ -71,8 +70,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const total = Math.max(0, subtotal - discount);
     let userProfile: ProfileWallet | null = null;
     if (paymentMethod === 'd_balance') {
-      const user = await verifySupabaseUser(bearerToken(req.headers.authorization));
-      if (!user) return res.status(401).json({ error: 'Login diperlukan untuk membayar dengan D-Balance.' });
       const { data: profile, error: profileError } = await supabase.from('profiles').select('id, d_balance, d_points, vip_level').eq('id', user.id).single();
       if (profileError || !profile) return res.status(401).json({ error: 'Profile wallet tidak ditemukan.' });
       userProfile = profile as ProfileWallet;
