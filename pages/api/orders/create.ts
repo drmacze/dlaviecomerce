@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { bearerToken, verifySupabaseUser } from '@/lib/auth-server';
+import { notifyAdminsNewOrder } from '@/lib/order-telegram';
 import { createSupabaseServiceClient } from '@/lib/supabase-server';
 
 type OrderItemInput = { product_id?: string; qty?: number };
@@ -32,6 +33,13 @@ function pointsMultiplier(level?: string | null) {
   return 1;
 }
 
+function appBaseUrl(req: NextApiRequest) {
+  const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').trim();
+  const proto = String(req.headers['x-forwarded-proto'] || 'https').split(',')[0];
+  if (host) return `${proto}://${host}`.replace(/\/$/, '');
+  return String(process.env.NEXT_PUBLIC_APP_URL || 'https://dlaviecomerce-dlavie.vercel.app').replace(/\/$/, '');
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   try {
@@ -45,11 +53,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const supabase = createSupabaseServiceClient();
     const ids = orderItems.map((item) => item.product_id);
-    const { data: products, error: productsError } = await supabase.from('products').select('id, price').in('id', ids).eq('is_published', true);
+    const { data: products, error: productsError } = await supabase.from('products').select('id, name, price').in('id', ids).eq('is_published', true);
     if (productsError || !products || products.length !== ids.length) return res.status(400).json({ error: 'Produk tidak valid.' });
 
-    const priceMap = new Map(products.map((p) => [String(p.id), Number(p.price || 0)]));
-    const mapped = orderItems.map((item) => ({ product_id: item.product_id, qty: item.qty, price: priceMap.get(item.product_id) || 0 })).filter((item) => item.price > 0);
+    const productMap = new Map(products.map((p) => [String(p.id), { price: Number(p.price || 0), name: String((p as { name?: string }).name || 'Unknown Product') }]));
+    const mapped = orderItems.map((item) => ({ product_id: item.product_id, qty: item.qty, price: productMap.get(item.product_id)?.price || 0, name: productMap.get(item.product_id)?.name || item.product_id })).filter((item) => item.price > 0);
     if (mapped.length !== orderItems.length) return res.status(400).json({ error: 'Produk tidak valid.' });
     const subtotal = mapped.reduce((sum, item) => sum + item.price * item.qty, 0);
 
@@ -80,7 +88,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { data: order, error } = await supabase.from('orders').insert({ buyer_email: email, total_amount: total, status: orderStatus }).select('id').single();
     if (error || !order) return res.status(500).json({ error: error?.message || 'Order gagal dibuat.' });
 
-    const itemResult = await supabase.from('order_items').insert(mapped.map((item) => ({ ...item, order_id: order.id })));
+    const itemResult = await supabase.from('order_items').insert(mapped.map((item) => ({ product_id: item.product_id, qty: item.qty, price: item.price, order_id: order.id })));
     if (itemResult.error) return res.status(500).json({ error: itemResult.error.message });
 
     let pointsEarned = 0;
@@ -98,6 +106,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const { data: coupon } = await supabase.from('coupons').select('redeemed_count').eq('id', couponId).maybeSingle();
       await supabase.from('coupons').update({ redeemed_count: Number(coupon?.redeemed_count || 0) + 1 }).eq('id', couponId);
     }
+
+    notifyAdminsNewOrder({
+      appUrl: appBaseUrl(req),
+      orderId: String(order.id),
+      buyerEmail: email,
+      total,
+      subtotal,
+      discount,
+      status: orderStatus,
+      paymentMethod,
+      couponCode: couponCode || null,
+      items: mapped,
+    }).catch((telegramError) => console.error('Telegram order notification failed:', telegramError));
 
     return res.status(200).json({ orderId: order.id, subtotal, discount, total, paymentMethod, status: orderStatus, pointsEarned });
   } catch (error) {
