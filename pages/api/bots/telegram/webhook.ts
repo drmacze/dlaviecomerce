@@ -15,9 +15,13 @@ function parseNext(text: string) {
   return '/dashboard';
 }
 
+function getTelegramAuthBotToken() {
+  return process.env.DLAVIE_TELEGRAM_AUTH_BOT_TOKEN || '';
+}
+
 async function sendTelegramMessage(chatId: number | string, text: string) {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  if (!token) throw new Error('TELEGRAM_BOT_TOKEN belum diset.');
+  const token = getTelegramAuthBotToken();
+  if (!token) throw new Error('DLAVIE_TELEGRAM_AUTH_BOT_TOKEN belum diset.');
 
   const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
