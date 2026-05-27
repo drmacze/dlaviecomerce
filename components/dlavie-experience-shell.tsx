@@ -1,6 +1,7 @@
 import { MotionConfig } from 'framer-motion';
 import { ReactNode, useEffect } from 'react';
 import { DlavieCommandPalette } from '@/components/dlavie-command-palette';
+import { DlavieMotionObserver } from '@/components/dlavie-motion-observer';
 import { DlaviePageProgress } from '@/components/dlavie-page-progress';
 import { DlavieSiteDock } from '@/components/dlavie-site-dock';
 import { dlavieExperience } from '@/lib/dlavie-experience';
@@ -13,6 +14,7 @@ export function DlavieExperienceShell({ children }: { children: ReactNode }) {
   return (
     <MotionConfig reducedMotion="user" transition={{ duration: dlavieExperience.motion.normal, ease: dlavieExperience.motion.easing }}>
       <DlaviePageProgress />
+      <DlavieMotionObserver />
       <div className="dlavie-experience-shell min-h-screen pb-28 md:pb-32">
         {children}
       </div>
