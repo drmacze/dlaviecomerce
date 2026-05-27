@@ -28,23 +28,34 @@ function normalizeBotUrl(channel: 'whatsapp' | 'telegram', value: string) {
   return raw;
 }
 
+function buildTelegramStart(nextUrl: string) {
+  const target = nextUrl && nextUrl.startsWith('/') ? nextUrl : '/dashboard';
+  if (target === '/dashboard') return 'login_dashboard';
+  if (target === '/wallet') return 'login_wallet';
+  if (target === '/orders') return 'login_orders';
+  if (target === '/checkout') return 'login_checkout';
+  return 'login_dashboard';
+}
+
 function openBotBridge(channel: 'whatsapp' | 'telegram', nextUrl: string, onNotice: Props['onNotice']) {
   const envUrl = channel === 'whatsapp' ? process.env.NEXT_PUBLIC_WHATSAPP_AUTH_URL : process.env.NEXT_PUBLIC_TELEGRAM_AUTH_URL;
-  if (!envUrl) {
-    onNotice({
-      type: 'info',
-      text: channel === 'whatsapp'
-        ? 'Login WhatsApp siap untuk Bot WA DLAVIE. Isi NEXT_PUBLIC_WHATSAPP_AUTH_URL saat bot selesai.'
-        : 'Login Telegram siap untuk Bot Telegram DLAVIE. Isi NEXT_PUBLIC_TELEGRAM_AUTH_URL saat bot selesai.'
-    });
+  const fallbackUrl = channel === 'telegram' ? 'https://t.me/cs_dlaviebot' : '';
+  const targetUrl = envUrl || fallbackUrl;
+
+  if (!targetUrl) {
+    onNotice({ type: 'info', text: 'Login WhatsApp siap untuk Bot WA DLAVIE. Isi NEXT_PUBLIC_WHATSAPP_AUTH_URL saat bot selesai.' });
     return;
   }
 
   try {
-    const url = new URL(normalizeBotUrl(channel, envUrl));
-    url.searchParams.set('next', nextUrl || '/dashboard');
-    url.searchParams.set('callback', callbackUrl(nextUrl));
-    window.location.assign(url.toString());
+    const url = new URL(normalizeBotUrl(channel, targetUrl));
+    if (channel === 'telegram') {
+      url.searchParams.set('start', buildTelegramStart(nextUrl));
+    } else {
+      url.searchParams.set('next', nextUrl || '/dashboard');
+      url.searchParams.set('callback', callbackUrl(nextUrl));
+    }
+    window.location.href = url.toString();
   } catch {
     onNotice({ type: 'error', text: 'URL bot login belum valid. Cek NEXT_PUBLIC_TELEGRAM_AUTH_URL / NEXT_PUBLIC_WHATSAPP_AUTH_URL di Vercel.' });
   }
