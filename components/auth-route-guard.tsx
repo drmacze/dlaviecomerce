@@ -1,4 +1,5 @@
-import { ReactNode, useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { createSupabaseBrowserClient } from '@/lib/supabase-client';
 
@@ -57,7 +58,7 @@ export function AuthRouteGuard({ children, onCheckingChange }: { children: React
     return () => {
       active = false;
     };
-  }, [router.isReady, router.pathname, router.asPath]);
+  }, [router, router.isReady, router.pathname, router.asPath, onCheckingChange]);
 
   if (!allowed) return null;
   return <>{children}</>;
