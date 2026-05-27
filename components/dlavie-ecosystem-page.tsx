@@ -13,7 +13,7 @@ type Props = {
   accent?: string;
 };
 
-export function DlavieEcosystemPage({ eyebrow, title, description, metrics, actions }: Props) {
+export function DlavieEcosystemPage({ eyebrow, title, description, metrics, actions, children }: Props) {
   return (
     <main className="dlavie-lux-page min-h-screen overflow-hidden px-4 py-6 md:px-8">
       <div className="dlavie-mesh" />
