@@ -50,6 +50,20 @@ function targetPlaceholder(type: string) {
   return 'Contoh: 081234567890';
 }
 
+function normalizeTarget(type: string, value: string) {
+  const compact = value.replace(/\s+/g, '');
+  if (type === 'game') return compact.replace(/[^0-9()]/g, '').slice(0, 32);
+  return compact.replace(/\D/g, '').slice(0, type === 'pln' ? 13 : 15);
+}
+
+function targetError(type: string, value: string) {
+  if (!value) return `${targetLabel(type)} wajib diisi.`;
+  if (type === 'game') return /^[0-9]{4,18}(\([0-9]{2,8}\))?$/.test(value) ? '' : 'ID game hanya boleh angka, format server opsional: 12345678(1234).';
+  if (type === 'pln') return /^[0-9]{11,13}$/.test(value) ? '' : 'Nomor meter/ID pelanggan PLN harus 11-13 digit angka.';
+  if (/^08[0-9]{8,13}$/.test(value)) return '';
+  return 'Nomor tujuan harus angka, diawali 08, dan berisi 10-15 digit.';
+}
+
 export default function ProductsPage() {
   const router = useRouter();
   const selectedType = typeof router.query.type === 'string' ? router.query.type : '';
@@ -105,9 +119,11 @@ export default function ProductsPage() {
     setOrderResult(null);
     setOrderError('');
 
-    const cleanTarget = target.trim();
-    if (!cleanTarget) {
-      setOrderError(`${targetLabel(selectedType)} wajib diisi.`);
+    const cleanTarget = normalizeTarget(selectedType, target);
+    const validationError = targetError(selectedType, cleanTarget);
+    if (validationError) {
+      setOrderError(validationError);
+      setTarget(cleanTarget);
       return;
     }
 
@@ -207,7 +223,7 @@ export default function ProductsPage() {
               <span className="grid h-12 w-12 place-items-center rounded-[1.15rem] bg-white shadow-sm ring-1 ring-black/5 transition group-hover:-translate-y-1"><ProductIcon path={service.path} /></span>
               <span className="rounded-full bg-slate-950 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white">Open</span>
             </div>
-            <p className="mt-5 text-xl font-black">{service.label}</p>
+            <p className="mt-5 text-lg font-black">{service.label}</p>
             <p className="mt-1 text-xs font-bold text-slate-500">{service.note}</p>
           </a>)}
         </div> : <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -247,7 +263,8 @@ export default function ProductsPage() {
 
         <label className="mt-4 block">
           <span className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">{targetLabel(selectedType)}</span>
-          <input value={target} onChange={(event) => setTarget(event.target.value)} placeholder={targetPlaceholder(selectedType)} className="mt-2 w-full rounded-[1.2rem] border border-black/5 bg-white/75 px-4 py-3 text-base font-bold text-slate-950 outline-none ring-0 backdrop-blur placeholder:text-slate-400 focus:border-slate-950" />
+          <input value={target} onChange={(event) => { setTarget(normalizeTarget(selectedType, event.target.value)); setOrderError(''); }} inputMode={selectedType === 'game' ? 'text' : 'numeric'} autoComplete="off" maxLength={selectedType === 'game' ? 32 : selectedType === 'pln' ? 13 : 15} pattern={selectedType === 'game' ? '[0-9()]*' : '[0-9]*'} placeholder={targetPlaceholder(selectedType)} className="mt-2 w-full rounded-[1.2rem] border border-black/5 bg-white/75 px-4 py-3 text-base font-bold text-slate-950 outline-none ring-0 backdrop-blur placeholder:text-slate-400 focus:border-slate-950" />
+          <p className="mt-2 text-xs font-bold text-slate-500">{selectedType === 'game' ? 'Hanya angka dan format server opsional.' : 'Hanya angka. Huruf, spasi, dan simbol otomatis ditolak.'}</p>
         </label>
 
         {orderError && <div className="mt-3 rounded-[1.2rem] bg-red-100 px-4 py-3 text-sm font-bold text-red-700 ring-1 ring-red-200">{orderError}</div>}
