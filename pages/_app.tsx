@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { AccountShortcut } from '@/components/account-shortcut';
 import { AmbientBg } from '@/components/ambient-bg';
+import { AuthRouteGuard } from '@/components/auth-route-guard';
 import { DlavieAlertCenter } from '@/components/dlavie-alert-center';
 import { DlavieErrorBoundary } from '@/components/dlavie-error-boundary';
 import { DlavieExperienceShell } from '@/components/dlavie-experience-shell';
@@ -31,6 +32,7 @@ function DlavieLoader({ active }: { active: boolean }) {
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [authChecking, setAuthChecking] = useState(false);
 
   useEffect(() => {
     const start = () => setLoading(true);
@@ -50,12 +52,14 @@ export default function App({ Component, pageProps }: AppProps) {
       <DlavieExperienceShell>
         <AmbientBg />
         <DlavieAlertCenter />
-        <DlavieLoader active={loading} />
+        <DlavieLoader active={loading || authChecking} />
         <AccountShortcut />
         <DlavieErrorBoundary>
-          <div className="relative z-10 transition-opacity duration-300">
-            <Component {...pageProps} />
-          </div>
+          <AuthRouteGuard onCheckingChange={setAuthChecking}>
+            <div className="relative z-10 transition-opacity duration-300">
+              <Component {...pageProps} />
+            </div>
+          </AuthRouteGuard>
         </DlavieErrorBoundary>
       </DlavieExperienceShell>
     </DlavieProviders>
