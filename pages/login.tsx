@@ -9,7 +9,19 @@ type Notice = { type: 'success' | 'error' | 'info'; text: string } | null;
 
 const banner = 'https://cdn.imageurlgenerator.com/uploads/216ff627-b7ab-4e36-a2cf-feeaba760057.mp4';
 
-const getSiteUrl = () => (typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000');
+function getSiteUrl() {
+  const configuredUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL;
+  const runtimeUrl = typeof window !== 'undefined' ? window.location.origin : undefined;
+  return (configuredUrl || runtimeUrl || 'http://localhost:3000').replace(/\/$/, '');
+}
+
+function safeNext(value: unknown) {
+  const raw = Array.isArray(value) ? value[0] : value;
+  if (typeof raw !== 'string' || !raw.startsWith('/')) return '/dashboard';
+  if (raw.startsWith('//')) return '/dashboard';
+  if (raw.startsWith('/login')) return '/dashboard';
+  return raw;
+}
 
 function scorePassword(password: string) {
   let score = 0;
@@ -30,7 +42,8 @@ function scoreLabel(score: number) {
 function authMessage(message?: string) {
   const lower = String(message || '').toLowerCase();
   if (lower.includes('invalid login')) return 'Email atau password tidak cocok.';
-  if (lower.includes('email not confirmed')) return 'Email belum dikonfirmasi. Cek inbox atau kirim ulang konfirmasi.';
+  if (lower.includes('email not confirmed')) return 'Email belum dikonfirmasi. Cek inbox/spam atau kirim ulang konfirmasi.';
+  if (lower.includes('already registered') || lower.includes('already exists')) return 'Email ini sudah terdaftar. Silakan login.';
   if (lower.includes('rate')) return 'Terlalu banyak percobaan. Tunggu sebentar lalu coba lagi.';
   return message || 'Request gagal diproses.';
 }
@@ -45,11 +58,20 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const score = useMemo(() => scorePassword(password), [password]);
   const confirmUrl = `${getSiteUrl()}/auth/confirmed`;
+  const nextUrl = safeNext(router.query.next);
 
   useEffect(() => {
     setEmail('');
     setPassword('');
   }, []);
+
+  useEffect(() => {
+    if (!router.isReady) return;
+    const supabase = createSupabaseBrowserClient();
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session && mode === 'login') router.replace(nextUrl);
+    }).catch(() => null);
+  }, [router.isReady]);
 
   async function recordLoginEvent(accessToken: string) {
     await fetch('/api/security', {
@@ -61,15 +83,16 @@ export default function Login() {
 
   async function submit(event: FormEvent) {
     event.preventDefault();
+    const normalizedEmail = email.trim().toLowerCase();
     setLoading(true);
     setNotice({ type: 'info', text: 'Memproses akses akun...' });
 
     const supabase = createSupabaseBrowserClient();
 
     if (mode === 'reset') {
-      const result = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${getSiteUrl()}/reset-password` });
+      const result = await supabase.auth.resetPasswordForEmail(normalizedEmail, { redirectTo: `${getSiteUrl()}/reset-password` });
       setLoading(false);
-      setNotice(result.error ? { type: 'error', text: authMessage(result.error.message) } : { type: 'success', text: 'Password reset link sudah dikirim. Cek inbox email kamu.' });
+      setNotice(result.error ? { type: 'error', text: authMessage(result.error.message) } : { type: 'success', text: 'Password reset link sudah dikirim. Cek inbox/spam email kamu.' });
       return;
     }
 
@@ -80,8 +103,8 @@ export default function Login() {
     }
 
     const result = mode === 'login'
-      ? await supabase.auth.signInWithPassword({ email, password })
-      : await supabase.auth.signUp({ email, password, options: { emailRedirectTo: confirmUrl } });
+      ? await supabase.auth.signInWithPassword({ email: normalizedEmail, password })
+      : await supabase.auth.signUp({ email: normalizedEmail, password, options: { emailRedirectTo: confirmUrl, data: { source: 'dlavie-web' } } });
 
     setLoading(false);
     if (result.error) {
@@ -90,23 +113,24 @@ export default function Login() {
     }
 
     if (mode === 'signup') {
-      setNotice({ type: 'success', text: 'Akun dibuat. Cek email kamu untuk konfirmasi sebelum login penuh.' });
+      setNotice({ type: 'success', text: `Akun dibuat. Email verifikasi sudah dikirim ke ${normalizedEmail}. Cek Inbox, Spam, atau Promotions.` });
       return;
     }
 
     const accessToken = result.data.session?.access_token;
     if (accessToken) await recordLoginEvent(accessToken);
-    setNotice({ type: 'success', text: 'Login berhasil. Mengalihkan ke Dashboard...' });
-    router.push('/dashboard');
+    setNotice({ type: 'success', text: 'Login berhasil. Mengalihkan...' });
+    router.push(nextUrl);
   }
 
   async function resendConfirmation() {
-    if (!email) return setNotice({ type: 'error', text: 'Masukkan email dulu.' });
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail) return setNotice({ type: 'error', text: 'Masukkan email dulu.' });
     setLoading(true);
     const supabase = createSupabaseBrowserClient();
-    const result = await supabase.auth.resend({ type: 'signup', email, options: { emailRedirectTo: confirmUrl } });
+    const result = await supabase.auth.resend({ type: 'signup', email: normalizedEmail, options: { emailRedirectTo: confirmUrl } });
     setLoading(false);
-    setNotice(result.error ? { type: 'error', text: authMessage(result.error.message) } : { type: 'success', text: 'Email konfirmasi sudah dikirim ulang.' });
+    setNotice(result.error ? { type: 'error', text: authMessage(result.error.message) } : { type: 'success', text: `Email konfirmasi sudah dikirim ulang ke ${normalizedEmail}.` });
   }
 
   const noticeClass = notice?.type === 'error'
@@ -160,13 +184,13 @@ export default function Login() {
               <form onSubmit={submit} className="mt-4" autoComplete="off">
                 <label className="block">
                   <span className="text-[11px] font-black uppercase tracking-[0.18em] text-white/42">Email</span>
-                  <input value={email} onChange={(event) => setEmail(event.target.value)} className="auth-input mt-2 w-full rounded-[1.15rem] px-4 py-3 text-base font-bold" placeholder="nama@email.com" type="email" name="dlavie-login-id" autoComplete="off" autoCorrect="off" autoCapitalize="none" spellCheck={false} inputMode="email" required />
+                  <input value={email} onChange={(event) => setEmail(event.target.value)} className="auth-input mt-2 w-full rounded-[1.15rem] px-4 py-3 text-base font-bold" placeholder="nama@email.com" type="email" name="dlavie-login-id" autoComplete="email" autoCorrect="off" autoCapitalize="none" spellCheck={false} inputMode="email" required />
                 </label>
 
                 {mode !== 'reset' && <label className="mt-4 block">
                   <span className="text-[11px] font-black uppercase tracking-[0.18em] text-white/42">Password</span>
                   <div className="auth-input mt-2 flex rounded-[1.15rem] pr-2 focus-within:border-[#dfff4f]/80">
-                    <input value={password} onChange={(event) => setPassword(event.target.value)} className="w-full rounded-[1.15rem] bg-transparent px-4 py-3 text-base font-bold text-white outline-none placeholder:text-white/30" placeholder="Masukkan password" type={showPassword ? 'text' : 'password'} name="dlavie-login-secret" autoComplete="new-password" autoCorrect="off" autoCapitalize="none" spellCheck={false} required />
+                    <input value={password} onChange={(event) => setPassword(event.target.value)} className="w-full rounded-[1.15rem] bg-transparent px-4 py-3 text-base font-bold text-white outline-none placeholder:text-white/30" placeholder="Masukkan password" type={showPassword ? 'text' : 'password'} name="dlavie-login-secret" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} autoCorrect="off" autoCapitalize="none" spellCheck={false} required />
                     <button type="button" onClick={() => setShowPassword((value) => !value)} className="px-3 text-xs font-black text-white/45 hover:text-white">{showPassword ? 'Hide' : 'Show'}</button>
                   </div>
                   <div className="mt-2 flex items-center gap-2"><div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/12"><div className="h-full rounded-full bg-[#dfff4f] transition-all" style={{ width: `${(score / 5) * 100}%` }} /></div><span className="text-[10px] font-black uppercase tracking-widest text-white/45">{scoreLabel(score)}</span></div>
