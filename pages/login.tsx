@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { DlavieLogo, DlavieMarkWatermark } from '@/components/dlavie-logo';
+import { SocialAuthOptions } from '@/components/social-auth-options';
 import { createSupabaseBrowserClient } from '@/lib/supabase-client';
 
 type Mode = 'login' | 'signup' | 'reset';
@@ -160,7 +161,7 @@ export default function Login() {
           <div className="absolute bottom-5 left-5 right-5 md:bottom-7 md:left-7 md:right-7">
             <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#dfff4f]">DLAVIE Motion Login</p>
             <h1 className="mt-2 max-w-2xl text-4xl font-black leading-[.95] tracking-[-.045em] md:text-6xl">Masuk ke dunia DLAVIE.</h1>
-            <p className="mt-3 max-w-xl text-sm font-semibold leading-6 text-white/68 md:text-base">Satu akses untuk wallet, produk digital, reward, dan dashboard akun.</p>
+            <p className="mt-3 max-w-xl text-sm font-semibold leading-6 text-white/68 md:text-base">Satu akses untuk wallet, produk PPOB, reward, dan dashboard akun.</p>
             <div className="auth-progress mt-5 h-1.5 max-w-sm overflow-hidden rounded-full bg-white/12"><span className="block h-full w-full rounded-full bg-[#dfff4f]" /></div>
           </div>
         </div>
@@ -171,7 +172,7 @@ export default function Login() {
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#dfff4f]">Secure Access</p>
               <h2 className="mt-2 text-3xl font-black tracking-tight">Masuk ke akun kamu.</h2>
-              <p className="mt-3 text-sm font-semibold leading-6 text-white/50">Form login dibuat di dalam box yang sama dengan banner agar terasa seperti satu pengalaman DLAVIE Motion, bukan halaman terpisah.</p>
+              <p className="mt-3 text-sm font-semibold leading-6 text-white/50">Masuk dengan email, Google, atau channel bot DLAVIE untuk WhatsApp dan Telegram.</p>
             </div>
 
             <div>
@@ -180,6 +181,8 @@ export default function Login() {
                   <button key={item} type="button" onClick={() => { setMode(item); setNotice(null); }} className={`flex-1 rounded-full px-3 py-2.5 text-xs font-black capitalize transition md:text-sm ${mode === item ? 'bg-[#dfff4f] text-slate-950' : 'text-white/48 hover:text-white'}`}>{item === 'signup' ? 'Register' : item}</button>
                 ))}
               </div>
+
+              <SocialAuthOptions nextUrl={nextUrl} disabled={loading} onNotice={setNotice} />
 
               <form onSubmit={submit} className="mt-4" autoComplete="off">
                 <label className="block">
