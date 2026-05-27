@@ -34,10 +34,15 @@ function orderLines(items: OrderNotifyItem[]) {
   }).join('\n');
 }
 
+function actionUrl(appUrl: string, orderId: string, status: string) {
+  const key = encodeURIComponent(String(process.env.DLAVIE_ADMIN_ACTION_KEY || process.env.TELEGRAM_SETUP_KEY || ''));
+  return `${appUrl}/api/admin/orders/action?orderId=${encodeURIComponent(orderId)}&status=${encodeURIComponent(status)}&key=${key}`;
+}
+
 function actionKeyboard(appUrl: string, orderId: string) {
   return {
     inline_keyboard: [
-      [{ text: '✅ Mark Paid', callback_data: `order:paid:${orderId}` }, { text: '📦 Complete', callback_data: `order:fulfilled:${orderId}` }],
+      [{ text: '✅ Mark Paid', url: actionUrl(appUrl, orderId, 'paid') }, { text: '📦 Complete', url: actionUrl(appUrl, orderId, 'fulfilled') }],
       [{ text: '🛒 Open Orders', url: `${appUrl}/admin/order-pulse?orderId=${encodeURIComponent(orderId)}` }],
       [{ text: '👑 Admin Hub', url: `${appUrl}/admin/hub` }, { text: '🚀 Secure Gate', url: `${appUrl}/telegram-admin` }],
     ],
