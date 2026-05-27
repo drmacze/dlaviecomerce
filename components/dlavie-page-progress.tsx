@@ -7,9 +7,22 @@ export function DlaviePageProgress() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    let timer: ReturnType<typeof window.setInterval> | null = null;
+    let timer: number | null = null;
+    let hideTimer: number | null = null;
+
+    const clearTimers = () => {
+      if (timer !== null) {
+        window.clearInterval(timer);
+        timer = null;
+      }
+      if (hideTimer !== null) {
+        window.clearTimeout(hideTimer);
+        hideTimer = null;
+      }
+    };
 
     const start = () => {
+      clearTimers();
       setVisible(true);
       setProgress(12);
       timer = window.setInterval(() => {
@@ -18,9 +31,9 @@ export function DlaviePageProgress() {
     };
 
     const done = () => {
-      if (timer) window.clearInterval(timer);
+      clearTimers();
       setProgress(100);
-      window.setTimeout(() => {
+      hideTimer = window.setTimeout(() => {
         setVisible(false);
         setProgress(0);
       }, 420);
@@ -31,7 +44,7 @@ export function DlaviePageProgress() {
     router.events.on('routeChangeError', done);
 
     return () => {
-      if (timer) window.clearInterval(timer);
+      clearTimers();
       router.events.off('routeChangeStart', start);
       router.events.off('routeChangeComplete', done);
       router.events.off('routeChangeError', done);
