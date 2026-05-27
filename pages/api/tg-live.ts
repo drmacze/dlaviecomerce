@@ -80,8 +80,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (text === '/stats' || text === 'stats' || text.includes('📊')) await replyDlavieStats(chatId, appUrl);
-    else if (text === '/payments' || text === '/payment' || text === '/topups' || text === '/manual' || text.includes('payment') || text.includes('topup') || text.includes('💳')) await replyDlaviePayments(chatId, appUrl);
-    else if (text === '/orders' || text.includes('orders') || text.includes('🛒')) await reply(chatId, '🛒 Dlavie Orders Center', buttons(appUrl));
+    else if (text === '/payments' || text === '/payment' || text === '/topups' || text === '/topup' || text === '/manual' || text.includes('payment') || text.includes('topup') || text.includes('💳')) await replyDlaviePayments(chatId, appUrl);
+    else if (text === '/orders' || text === '/order' || text.includes('orders') || text.includes('order') || text.includes('🛒')) await reply(chatId, '🛒 Dlavie Orders Center', buttons(appUrl));
     else if (text === '/panel' || text.includes('panel') || text.includes('🚀')) await reply(chatId, '🚀 Dlavie Secure Admin Panel', buttons(appUrl));
     else if (text === '/hub' || text.includes('hub') || text.includes('👑')) await reply(chatId, '👑 Dlavie Admin Hub', buttons(appUrl));
     else if (text === '/security' || text.includes('security') || text.includes('🛡')) await reply(chatId, ['🛡 Dlavie Security', '', `Admin IDs: ${adminIds().length}`, `Panel: ${appUrl}/telegram-admin`].join('\n'), buttons(appUrl));
