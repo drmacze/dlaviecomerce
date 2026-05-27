@@ -9,13 +9,6 @@ declare global {
       WebApp?: {
         ready?: () => void;
         expand?: () => void;
-        close?: () => void;
-        MainButton?: {
-          text: string;
-          show: () => void;
-          hide: () => void;
-          onClick: (callback: () => void) => void;
-        };
       };
     };
   }
@@ -40,7 +33,7 @@ function formatTime(seconds: number) {
 export default function TelegramLoginMiniApp() {
   const router = useRouter();
   const [seconds, setSeconds] = useState(300);
-  const [status, setStatus] = useState('Kode siap digunakan untuk login aman.');
+  const [status, setStatus] = useState('Secure pairing ready.');
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -62,82 +55,96 @@ export default function TelegramLoginMiniApp() {
     if (!code) return;
     await navigator.clipboard?.writeText(code).catch(() => null);
     setCopied(true);
-    setStatus('Kode berhasil disalin. Tempel di halaman login DLAVIE.');
-    window.setTimeout(() => setCopied(false), 1600);
+    setStatus('Code copied successfully.');
+    window.setTimeout(() => setCopied(false), 1400);
   }
 
   async function verify() {
     if (!code || code.length < 6) {
-      setStatus('Kode tidak ditemukan. Minta kode baru dari bot.');
+      setStatus('Pairing code not found.');
       return;
     }
 
     setLoading(true);
-    setStatus('Memverifikasi kode pairing...');
+    setStatus('Verifying secure session...');
+
     const response = await fetch('/api/auth/pairing/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ channel, code, next })
     });
+
     const data = await response.json().catch(() => ({}));
     setLoading(false);
 
     if (!response.ok || !data.loginUrl) {
-      setStatus(data.error || 'Kode salah, expired, atau sudah digunakan.');
+      setStatus(data.error || 'Verification failed.');
       return;
     }
 
-    setStatus('Kode valid. Mengalihkan ke DLAVIE...');
+    setStatus('Authenticated. Redirecting...');
     window.location.href = String(data.loginUrl);
   }
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#06090f] px-4 py-5 text-white">
+    <main className="min-h-screen overflow-hidden bg-[#050505] px-5 py-6 text-white">
       <style jsx global>{`
-        body{background:#06090f}.tg-mini{position:relative;isolation:isolate}.tg-mini:before{content:'';position:fixed;inset:-20%;z-index:-3;background:radial-gradient(circle at 20% 8%,rgba(223,255,79,.22),transparent 28rem),radial-gradient(circle at 80% 0%,rgba(69,213,255,.24),transparent 28rem),radial-gradient(circle at 60% 90%,rgba(231,40,255,.2),transparent 32rem),linear-gradient(135deg,#05070d,#09111f 45%,#0b0614)}.tg-mini:after{content:'';position:fixed;inset:-24%;z-index:-2;background:conic-gradient(from 160deg,rgba(223,255,79,.34),rgba(69,213,255,.24),rgba(231,40,255,.22),rgba(223,255,79,.34));filter:blur(70px);opacity:.54;animation:tgAura 13s ease-in-out infinite alternate}.code-card{background:linear-gradient(145deg,rgba(255,255,255,.12),rgba(255,255,255,.055));box-shadow:0 30px 90px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.14);backdrop-filter:blur(24px) saturate(150%)}.glow-ring{background:linear-gradient(115deg,rgba(223,255,79,.88),rgba(69,213,255,.58),rgba(231,40,255,.45),rgba(223,255,79,.88));background-size:260% 260%;animation:tgGlow 6.5s ease-in-out infinite}.code-text{letter-spacing:.28em;text-shadow:0 0 26px rgba(223,255,79,.42)}@keyframes tgGlow{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}@keyframes tgAura{from{transform:rotate(0deg) scale(1)}to{transform:rotate(18deg) scale(1.08)}}
+        html,body{background:#050505}body{font-feature-settings:'ss01' on,'cv01' on}.dlv-panel{position:relative;isolation:isolate}.dlv-panel:before{content:'';position:fixed;inset:0;background:radial-gradient(circle at top,rgba(188,255,106,.08),transparent 28%),linear-gradient(180deg,#050505 0%,#090909 100%);z-index:-2}.dlv-panel:after{content:'';position:fixed;inset:-30%;background:radial-gradient(circle at 50% 0%,rgba(255,255,255,.03),transparent 32%);filter:blur(90px);z-index:-1}.glass{background:rgba(255,255,255,.045);backdrop-filter:blur(28px) saturate(120%);border:1px solid rgba(255,255,255,.08);box-shadow:0 30px 80px rgba(0,0,0,.5)}.hero-mask{background:linear-gradient(180deg,rgba(0,0,0,.02),rgba(0,0,0,.72) 75%,#050505)}.soft-ring{box-shadow:0 0 0 1px rgba(255,255,255,.05),0 20px 60px rgba(0,0,0,.45)}.code{letter-spacing:.34em}.primary-btn{background:#f5f5f5;color:#050505}.primary-btn:hover{background:white;transform:translateY(-1px)}.secondary-btn:hover{background:rgba(255,255,255,.09)}
       `}</style>
-      <section className="tg-mini mx-auto flex min-h-[calc(100vh-2.5rem)] max-w-md flex-col justify-center">
-        <div className="glow-ring rounded-[2.1rem] p-[1px]">
-          <div className="code-card overflow-hidden rounded-[2.05rem] border border-white/10">
-            <div className="relative h-56 overflow-hidden rounded-b-[1.6rem] bg-slate-950">
-              <video className="absolute inset-0 h-full w-full object-cover" src={heroVideo} autoPlay muted loop playsInline preload="metadata" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#070a10] via-[#070a10]/28 to-transparent" />
-              <div className="absolute left-4 right-4 top-4 flex items-center justify-between">
-                <span className="rounded-full bg-black/42 px-3 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#dfff4f] ring-1 ring-white/10 backdrop-blur-xl">DLAVIE OTP</span>
-                <span className="rounded-full bg-white/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-white/62 ring-1 ring-white/10 backdrop-blur-xl">Telegram</span>
+
+      <section className="dlv-panel mx-auto flex min-h-[calc(100vh-3rem)] max-w-md items-center justify-center">
+        <div className="glass soft-ring w-full overflow-hidden rounded-[2rem]">
+          <div className="relative h-64 overflow-hidden border-b border-white/10">
+            <video className="absolute inset-0 h-full w-full object-cover" src={heroVideo} autoPlay muted loop playsInline preload="metadata" />
+            <div className="hero-mask absolute inset-0" />
+
+            <div className="absolute left-5 top-5 flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-[#bcff6a]" />
+              <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/58">DLAVIE SECURE ACCESS</span>
+            </div>
+
+            <div className="absolute bottom-6 left-6 right-6">
+              <h1 className="max-w-[14rem] text-[2.4rem] font-semibold leading-[.92] tracking-[-.06em]">Telegram Login Panel</h1>
+              <p className="mt-3 max-w-[18rem] text-sm leading-6 text-white/46">Secure authentication channel for DLAVIE ecosystem.</p>
+            </div>
+          </div>
+
+          <div className="space-y-5 p-6">
+            <div>
+              <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.22em] text-white/34">
+                <span>Pairing Code</span>
+                <span>{copied ? 'Copied' : 'Tap to copy'}</span>
               </div>
-              <div className="absolute bottom-5 left-5 right-5">
-                <h1 className="text-3xl font-black leading-none tracking-[-.045em]">Secure Login Panel</h1>
-                <p className="mt-2 text-sm font-semibold leading-6 text-white/62">Gunakan kode ini untuk masuk ke akun DLAVIE kamu.</p>
+
+              <button onClick={copyCode} className="mt-3 w-full rounded-[1.4rem] border border-white/10 bg-white/[0.03] px-5 py-6 transition hover:bg-white/[0.05]">
+                <span className="code block text-center font-mono text-[2.3rem] font-semibold text-white">{code || '------'}</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-[1.2rem] border border-white/8 bg-white/[0.03] p-4">
+                <p className="text-[10px] uppercase tracking-[0.22em] text-white/32">Session</p>
+                <p className="mt-2 text-sm font-medium text-white/78">Telegram Secure</p>
+              </div>
+
+              <div className="rounded-[1.2rem] border border-white/8 bg-white/[0.03] p-4">
+                <p className="text-[10px] uppercase tracking-[0.22em] text-white/32">Expires</p>
+                <p className="mt-2 text-sm font-medium text-white">{formatTime(seconds)}</p>
               </div>
             </div>
 
-            <div className="p-5">
-              <p className="text-[10px] font-black uppercase tracking-[0.26em] text-white/38">Pairing Code</p>
-              <button onClick={copyCode} className="mt-3 w-full rounded-[1.6rem] bg-white/10 p-5 ring-1 ring-white/10 transition hover:bg-white/14">
-                <span className="code-text block text-center text-4xl font-black text-[#dfff4f]">{code || 'NO CODE'}</span>
-                <span className="mt-2 block text-center text-xs font-black uppercase tracking-[0.18em] text-white/35">{copied ? 'Copied' : 'Tap to copy'}</span>
+            <div className="rounded-[1.2rem] border border-white/8 bg-white/[0.03] p-4 text-sm leading-6 text-white/48">
+              {status}
+            </div>
+
+            <div className="grid gap-3 pt-1">
+              <button onClick={verify} disabled={loading || !code || seconds <= 0} className="primary-btn rounded-[1.2rem] px-5 py-4 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40">
+                {loading ? 'Verifying...' : 'Verify & Continue'}
               </button>
 
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                <div className="rounded-[1.2rem] bg-white/8 p-4 ring-1 ring-white/10">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Expires</p>
-                  <p className="mt-1 text-2xl font-black text-white">{formatTime(seconds)}</p>
-                </div>
-                <div className="rounded-[1.2rem] bg-white/8 p-4 ring-1 ring-white/10">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Status</p>
-                  <p className="mt-1 text-sm font-black text-[#dfff4f]">READY</p>
-                </div>
-              </div>
-
-              <p className="mt-4 rounded-[1.15rem] bg-white/8 p-4 text-sm font-semibold leading-6 text-white/55 ring-1 ring-white/10">{status}</p>
-
-              <div className="mt-4 grid gap-3">
-                <button onClick={verify} disabled={loading || !code || seconds <= 0} className="rounded-[1.25rem] bg-[#dfff4f] px-4 py-4 text-sm font-black text-slate-950 shadow-[0_20px_50px_rgba(223,255,79,.2)] transition hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-50">
-                  {loading ? 'Verifying...' : 'Verify & Login'}
-                </button>
-                <a href={`/login?next=${encodeURIComponent(next)}`} className="rounded-[1.25rem] bg-white/10 px-4 py-4 text-center text-sm font-black text-white ring-1 ring-white/10 transition hover:-translate-y-1">Open DLAVIE Login</a>
-              </div>
+              <a href={`/login?next=${encodeURIComponent(next)}`} className="secondary-btn rounded-[1.2rem] border border-white/10 bg-white/[0.04] px-5 py-4 text-center text-sm font-medium text-white/82 transition">
+                Open Login Page
+              </a>
             </div>
           </div>
         </div>
