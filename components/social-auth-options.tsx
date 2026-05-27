@@ -19,6 +19,15 @@ function callbackUrl(nextUrl: string) {
   return `${getSiteUrl()}/auth/confirmed?next=${encodeURIComponent(nextUrl || '/dashboard')}`;
 }
 
+function normalizeBotUrl(channel: 'whatsapp' | 'telegram', value: string) {
+  const raw = value.trim();
+  if (/^https?:\/\//i.test(raw)) return raw;
+  if (raw.startsWith('t.me/') || raw.startsWith('telegram.me/')) return `https://${raw}`;
+  if (raw.startsWith('@')) return channel === 'telegram' ? `https://t.me/${raw.slice(1)}` : raw;
+  if (channel === 'telegram') return `https://t.me/${raw}`;
+  return raw;
+}
+
 function openBotBridge(channel: 'whatsapp' | 'telegram', nextUrl: string, onNotice: Props['onNotice']) {
   const envUrl = channel === 'whatsapp' ? process.env.NEXT_PUBLIC_WHATSAPP_AUTH_URL : process.env.NEXT_PUBLIC_TELEGRAM_AUTH_URL;
   if (!envUrl) {
@@ -31,10 +40,14 @@ function openBotBridge(channel: 'whatsapp' | 'telegram', nextUrl: string, onNoti
     return;
   }
 
-  const url = new URL(envUrl);
-  url.searchParams.set('next', nextUrl || '/dashboard');
-  url.searchParams.set('callback', callbackUrl(nextUrl));
-  window.location.href = url.toString();
+  try {
+    const url = new URL(normalizeBotUrl(channel, envUrl));
+    url.searchParams.set('next', nextUrl || '/dashboard');
+    url.searchParams.set('callback', callbackUrl(nextUrl));
+    window.location.assign(url.toString());
+  } catch {
+    onNotice({ type: 'error', text: 'URL bot login belum valid. Cek NEXT_PUBLIC_TELEGRAM_AUTH_URL / NEXT_PUBLIC_WHATSAPP_AUTH_URL di Vercel.' });
+  }
 }
 
 export function SocialAuthOptions({ nextUrl, disabled, onNotice }: Props) {
