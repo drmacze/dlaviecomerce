@@ -48,7 +48,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (tx.status !== 'pending') return res.status(409).json({ error: `Topup sudah diproses dengan status ${tx.status}.`, topup: tx });
     if (!validTopupAmount(tx.amount)) return res.status(400).json({ error: 'Nominal topup tidak valid. Minimal Rp 10.000 dan maksimal Rp 1.000.000.' });
 
-    const metadata = { ...(tx.metadata || {}), reviewed_by: admin.email, reviewed_at: new Date().toISOString(), review_note: reviewNote };
+    const metadata = { ...(tx.metadata || {}), reviewed_by: admin.email, reviewed_at: new Date().toISOString(), review_note: reviewNote, admin_action: action };
     const provider = String(tx.provider || '').toLowerCase();
     const manualProvider = provider !== 'midtrans';
     if (manualProvider && (!metadata.sender_name || !metadata.proof_note || !metadata.proof_image_data)) {
@@ -56,10 +56,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (action === 'reject') {
-      const rejected = await supabase.from('wallet_transactions').update({ status: 'rejected', metadata }).eq('id', id).eq('type', 'topup').eq('status', 'pending').select('*').single();
+      const rejected = await supabase.from('wallet_transactions').update({ status: 'failed', metadata: { ...metadata, rejected_at: new Date().toISOString() } }).eq('id', id).eq('type', 'topup').eq('status', 'pending').select('*').single();
       if (rejected.error || !rejected.data) {
         const latest = await supabase.from('wallet_transactions').select('*').eq('id', id).single();
-        return res.status(409).json({ error: `Topup gagal ditolak. Status terbaru: ${latest.data?.status || 'unknown'}.`, topup: latest.data || null });
+        return res.status(409).json({ error: `Topup gagal ditolak. Status terbaru: ${latest.data?.status || 'unknown'}.`, topup: latest.data || null, detail: rejected.error?.message || null });
       }
       return res.status(200).json({ topup: rejected.data });
     }
@@ -69,17 +69,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const currentBalance = Number(profile.data.d_balance || 0);
     const nextBalance = currentBalance + Number(tx.amount || 0);
-    const approvedMeta = { ...metadata, balance_before: currentBalance, balance_after: nextBalance };
+    const successMeta = { ...metadata, balance_before: currentBalance, balance_after: nextBalance, approved_at: new Date().toISOString() };
 
-    const claimed = await supabase.from('wallet_transactions').update({ status: 'approved', metadata: approvedMeta }).eq('id', id).eq('type', 'topup').eq('status', 'pending').select('*').single();
+    const claimed = await supabase.from('wallet_transactions').update({ status: 'success', metadata: successMeta }).eq('id', id).eq('type', 'topup').eq('status', 'pending').select('*').single();
     if (claimed.error || !claimed.data) {
       const latest = await supabase.from('wallet_transactions').select('*').eq('id', id).single();
-      return res.status(409).json({ error: `Topup sudah diproses. Status terbaru: ${latest.data?.status || 'unknown'}.`, topup: latest.data || null });
+      return res.status(409).json({ error: `Topup gagal di-approve. Status terbaru: ${latest.data?.status || 'unknown'}.`, topup: latest.data || null, detail: claimed.error?.message || null });
     }
 
     const balance = await supabase.from('profiles').update({ d_balance: nextBalance }).eq('id', tx.user_id).eq('d_balance', currentBalance).select('id,d_balance').single();
     if (balance.error || !balance.data) {
-      await supabase.from('wallet_transactions').update({ status: 'pending', metadata: { ...metadata, rollback_reason: 'balance_update_failed_after_claim', rollback_at: new Date().toISOString() } }).eq('id', id).eq('status', 'approved');
+      await supabase.from('wallet_transactions').update({ status: 'pending', metadata: { ...metadata, rollback_reason: 'balance_update_failed_after_claim', rollback_at: new Date().toISOString() } }).eq('id', id).eq('status', 'success');
       return res.status(409).json({ error: 'Saldo user berubah saat approve. Transaksi dikembalikan ke pending, refresh lalu coba lagi.' });
     }
 
