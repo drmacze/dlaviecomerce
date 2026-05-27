@@ -16,12 +16,12 @@ function parseNext(text: string) {
 }
 
 function getTelegramAuthBotToken() {
-  return process.env.DLAVIE_TELEGRAM_AUTH_BOT_TOKEN || '';
+  return process.env.DLAVIE_TELEGRAM_AUTH_BOT_TOKEN || process.env.DLAVIE_TELEGRAM_OTP_BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN || '';
 }
 
 async function sendTelegramMessage(chatId: number | string, text: string) {
   const token = getTelegramAuthBotToken();
-  if (!token) throw new Error('DLAVIE_TELEGRAM_AUTH_BOT_TOKEN belum diset.');
+  if (!token) throw new Error('Telegram auth bot token belum diset. Pakai DLAVIE_TELEGRAM_AUTH_BOT_TOKEN atau DLAVIE_TELEGRAM_OTP_BOT_TOKEN.');
 
   const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
@@ -36,6 +36,7 @@ async function sendTelegramMessage(chatId: number | string, text: string) {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method === 'GET') return res.status(200).json({ ok: true, service: 'DLAVIE Telegram OTP webhook' });
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
 
   try {
