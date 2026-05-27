@@ -9,8 +9,6 @@ const privatePrefixes = [
   '/wallet',
   '/orders',
   '/checkout',
-  '/download',
-  '/downloads',
   '/rewards',
   '/checkin',
   '/gift',
