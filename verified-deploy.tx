@@ -1,4 +1,1 @@
-stable ppob product deployment
-source c40d08901ef5aa0d4a4a2c25de479dead901122c
-api https://dlaviecomerce.vercel.app/api/bot/ppob/products?type=pulsa
-review https://dlaviecomerce.vercel.app/products?type=pulsa
+verified deploy telegram order notification
