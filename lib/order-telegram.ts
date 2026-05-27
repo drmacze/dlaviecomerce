@@ -34,6 +34,16 @@ function orderLines(items: OrderNotifyItem[]) {
   }).join('\n');
 }
 
+function actionKeyboard(appUrl: string, orderId: string) {
+  return {
+    inline_keyboard: [
+      [{ text: '✅ Mark Paid', callback_data: `order:paid:${orderId}` }, { text: '📦 Complete', callback_data: `order:fulfilled:${orderId}` }],
+      [{ text: '🛒 Open Orders', url: `${appUrl}/admin/order-pulse?orderId=${encodeURIComponent(orderId)}` }],
+      [{ text: '👑 Admin Hub', url: `${appUrl}/admin/hub` }, { text: '🚀 Secure Gate', url: `${appUrl}/telegram-admin` }],
+    ],
+  };
+}
+
 export async function notifyAdminsNewOrder(input: OrderNotificationInput) {
   const isManual = input.paymentMethod === 'manual' || input.status === 'pending';
   const title = isManual ? '🛒 ORDER MANUAL BARU - PERLU DIPROSES' : '✅ ORDER BARU TERBAYAR';
@@ -51,16 +61,11 @@ export async function notifyAdminsNewOrder(input: OrderNotificationInput) {
     'Items:',
     orderLines(input.items),
     '',
-    isManual ? 'Aksi: cek pembayaran/manual confirmation lalu proses fulfillment.' : 'Aksi: cek fulfillment dan delivery produk.',
+    isManual ? 'Aksi: cek pembayaran/manual confirmation lalu klik Mark Paid atau Complete.' : 'Aksi: cek fulfillment dan delivery produk.',
   ].join('\n');
 
   return sendTelegramMessageToAdmins(text, {
     disableWebPagePreview: true,
-    replyMarkup: {
-      inline_keyboard: [
-        [{ text: '🛒 Open Orders', url: `${input.appUrl}/admin/order-pulse?orderId=${encodeURIComponent(input.orderId)}` }],
-        [{ text: '👑 Admin Hub', url: `${input.appUrl}/admin/hub` }, { text: '🚀 Secure Gate', url: `${input.appUrl}/telegram-admin` }],
-      ],
-    },
+    replyMarkup: actionKeyboard(input.appUrl, input.orderId),
   });
 }
