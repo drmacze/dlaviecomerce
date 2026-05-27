@@ -42,7 +42,7 @@ async function sendTelegramMessage(chatId: number | string, text: string, replyM
 function loginPanelKeyboard(url: string): TelegramReplyMarkup {
   return {
     inline_keyboard: [
-      [{ text: 'Open Login Panel', web_app: { url } }],
+      [{ text: 'Open Secure Login Panel', web_app: { url } }],
       [{ text: 'Open in Browser', url }]
     ]
   };
@@ -62,7 +62,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const shouldCreateCode = text.startsWith('/start') || text.startsWith('/login') || text.toLowerCase().includes('login');
     if (!shouldCreateCode) {
-      await sendTelegramMessage(chatId, 'Ketik <b>/login</b> untuk membuat kode masuk DLAVIE.');
+      await sendTelegramMessage(chatId, 'Ketik <b>/login</b> untuk membuka panel login aman DLAVIE.');
       return res.status(200).json({ ok: true });
     }
 
@@ -84,14 +84,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const data = await createResponse.json().catch(() => ({}));
     if (!createResponse.ok || !data.code) {
-      await sendTelegramMessage(chatId, `Gagal membuat kode login DLAVIE. ${data.error || 'Coba lagi nanti.'}`);
+      await sendTelegramMessage(chatId, `Gagal menyiapkan panel login DLAVIE. ${data.error || 'Coba lagi nanti.'}`);
       return res.status(200).json({ ok: true, pairing: false });
     }
 
     const panelUrl = `${baseUrl}/telegram-login?code=${encodeURIComponent(String(data.code))}&channel=telegram&next=${encodeURIComponent(next)}`;
     await sendTelegramMessage(
       chatId,
-      `🔐 <b>DLAVIE Secure Login</b>\n\nKode pairing kamu sudah siap:\n\n<code>${data.code}</code>\n\nBuka panel login premium untuk melihat kode, copy, atau langsung verifikasi. Kode berlaku 5 menit.`,
+      '🔐 <b>DLAVIE Secure Login</b>\n\nKode login kamu sudah dibuat. Demi keamanan, kode hanya ditampilkan di panel login resmi DLAVIE.\n\nBuka panel di bawah untuk melanjutkan. Kode berlaku 5 menit.',
       loginPanelKeyboard(panelUrl)
     );
     return res.status(200).json({ ok: true, pairing: true });
