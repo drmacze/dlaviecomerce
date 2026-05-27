@@ -12,7 +12,7 @@ export default function Checkout() {
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [discount, setDiscount] = useState(0);
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState('Menyiapkan checkout aman...');
   const [token, setToken] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'manual' | 'd_balance'>('manual');
   const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
@@ -24,8 +24,13 @@ export default function Checkout() {
     supabase.auth.getSession().then(({ data }) => {
       const session = data.session;
       setToken(session?.access_token || '');
-      if (session?.user.email) setEmail(session.user.email);
-    });
+      if (session?.user.email) {
+        setEmail(session.user.email);
+        setStatus('Checkout tersambung ke akun login.');
+      } else {
+        setStatus('Login diperlukan sebelum membuat order.');
+      }
+    }).catch(() => setStatus('Gagal membaca session login. Refresh atau login ulang.'));
   }, []);
 
   async function redeem() {
@@ -37,10 +42,10 @@ export default function Checkout() {
   }
 
   async function submit() {
+    if (!token) return setStatus('Session belum siap. Login ulang sebelum checkout.');
     setStatus(paymentMethod === 'd_balance' ? 'Membayar dengan D-Balance...' : 'Membuat order...');
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers.Authorization = `Bearer ${token}`;
-    const res = await fetch('/api/orders/create', { method: 'POST', headers, body: JSON.stringify({ buyer_email: email, coupon_code: code && discount > 0 ? code : null, payment_method: paymentMethod, items: items.map((item) => ({ product_id: item.id, qty: item.qty })) }) });
+    const headers: Record<string, string> = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
+    const res = await fetch('/api/orders/create', { method: 'POST', headers, body: JSON.stringify({ coupon_code: code && discount > 0 ? code : null, payment_method: paymentMethod, items: items.map((item) => ({ product_id: item.id, qty: item.qty })) }) });
     const data = await res.json();
     if (!res.ok) return setStatus(data.error || 'Order gagal dibuat.');
     clear();
@@ -51,7 +56,7 @@ export default function Checkout() {
     <DlavieEcosystemPage
       eyebrow="DLAVIE CHECKOUT"
       title="Secure checkout untuk produk digital."
-      description="Validasi email, coupon, D-Balance, dan order sebelum masuk ke receipt DLAVIE."
+      description="Validasi akun, coupon, D-Balance, dan order sebelum masuk ke receipt DLAVIE."
       accent="#dfff4f"
       metrics={[
         { label: 'Items', value: String(items.length), hint: `${qty} qty` },
@@ -82,11 +87,10 @@ export default function Checkout() {
             <button onClick={() => setPaymentMethod('manual')} className={`rounded-[1.5rem] p-4 text-left font-black ring-1 ring-black/5 transition ${paymentMethod === 'manual' ? 'bg-slate-950 text-white' : 'bg-white/80 text-slate-950'}`}>Manual / Admin<span className="mt-1 block text-xs font-bold opacity-60">Order pending, admin fulfill.</span></button>
             <button onClick={() => setPaymentMethod('d_balance')} className={`rounded-[1.5rem] p-4 text-left font-black ring-1 ring-black/5 transition ${paymentMethod === 'd_balance' ? 'bg-[#dfff4f] text-slate-950 shadow-sm' : 'bg-white/80 text-slate-950'}`}>D-Balance<span className="mt-1 block text-xs font-bold opacity-60">Instant paid jika saldo cukup.</span></button>
           </div>
-          <input value={email} onChange={(e) => setEmail(e.target.value)} className="mt-5 w-full rounded-full border border-black/5 bg-white/80 p-4 font-semibold outline-none transition focus:ring-4 focus:ring-[#dfff4f]/40" placeholder="Email pembeli" type="email" />
+          <div className="mt-5 rounded-full border border-black/5 bg-white/80 p-4 font-semibold text-slate-500">{email || 'Membaca akun login...'}</div>
           <div className="mt-3 flex gap-2"><input value={code} onChange={(e) => setCode(e.target.value)} className="w-full rounded-full border border-black/5 bg-white/80 p-4 font-semibold outline-none transition focus:ring-4 focus:ring-[#dfff4f]/40" placeholder="Coupon" /><button onClick={redeem} disabled={!items.length || !code} className="rounded-full bg-white/80 px-5 py-3 font-black shadow-sm ring-1 ring-black/5 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50">Redeem</button></div>
-          <button onClick={submit} disabled={!items.length || !email} className="mt-4 w-full rounded-full bg-[#dfff4f] px-5 py-4 font-black text-slate-950 shadow-[0_16px_35px_rgba(120,150,45,.18)] transition hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-50">{paymentMethod === 'd_balance' ? 'Pay with D-Balance' : 'Buat Order'}</button>
+          <button onClick={submit} disabled={!items.length || !token} className="mt-4 w-full rounded-full bg-[#dfff4f] px-5 py-4 font-black text-slate-950 shadow-[0_16px_35px_rgba(120,150,45,.18)] transition hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-50">{paymentMethod === 'd_balance' ? 'Pay with D-Balance' : 'Buat Order'}</button>
           {status && <p className="mt-4 rounded-[1.35rem] bg-white/75 p-4 text-sm font-bold leading-6 text-slate-600 ring-1 ring-black/5">{status}</p>}
-          {paymentMethod === 'd_balance' && !token && <p className="mt-3 rounded-[1.5rem] bg-amber-50 p-4 font-bold text-amber-700 ring-1 ring-amber-900/10">Login diperlukan untuk memakai D-Balance.</p>}
         </section>
       </div>
     </DlavieEcosystemPage>
