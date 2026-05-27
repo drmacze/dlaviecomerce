@@ -34,7 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const botKey = required(botKeyName);
     const appUrl = appBaseUrl(req);
-    const webhookUrl = `${appUrl}/api/tg`;
+    const webhookUrl = `${appUrl}/api/tg-live`;
     const menuUrl = `${appUrl}/telegram-admin`;
 
     const webhook = await telegramPost(botKey, 'setWebhook', { url: webhookUrl });
