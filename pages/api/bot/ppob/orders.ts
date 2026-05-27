@@ -10,6 +10,19 @@ function text(value: unknown) {
   return String(value || '').trim();
 }
 
+function normalizeTarget(type: string, value: string) {
+  const compact = value.replace(/\s+/g, '');
+  if (type === 'game') return compact.replace(/[^0-9()]/g, '').slice(0, 32);
+  return compact.replace(/\D/g, '').slice(0, type === 'pln' ? 13 : 15);
+}
+
+function validateTarget(type: string, target: string) {
+  if (!target) return 'Tujuan transaksi wajib diisi.';
+  if (type === 'game') return /^[0-9]{4,18}(\([0-9]{2,8}\))?$/.test(target) ? '' : 'ID game hanya boleh angka, format server opsional: 12345678(1234).';
+  if (type === 'pln') return /^[0-9]{11,13}$/.test(target) ? '' : 'Nomor meter/ID pelanggan PLN harus 11-13 digit angka.';
+  return /^08[0-9]{8,13}$/.test(target) ? '' : 'Nomor tujuan harus angka, diawali 08, dan berisi 10-15 digit.';
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
 
@@ -18,10 +31,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!user?.id || !user.email) return res.status(401).json({ ok: false, error: 'Login dulu untuk membeli produk.' });
 
     const productCode = text(req.body?.productCode || req.body?.code);
-    const target = text(req.body?.target);
-    const type = text(req.body?.type || 'produk');
+    const type = text(req.body?.type || 'produk').toLowerCase();
+    const target = normalizeTarget(type, text(req.body?.target));
+    const targetValidation = validateTarget(type, target);
     if (!productCode) return res.status(400).json({ ok: false, error: 'Kode produk belum dipilih.' });
-    if (!target) return res.status(400).json({ ok: false, error: 'Tujuan transaksi wajib diisi.' });
+    if (targetValidation) return res.status(400).json({ ok: false, error: targetValidation });
 
     const supabase = createSupabaseServiceClient();
     const { data: product, error: productError } = await supabase
@@ -55,6 +69,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const refId = makeId('PPOB');
     const idempotencyKey = `${user.id}:${product.sku_code}:${target}:${sellingPrice}:${Date.now()}`;
 
+    const balanceUpdate = await supabase
+      .from('profiles')
+      .update({ d_balance: currentBalance - sellingPrice })
+      .eq('id', user.id)
+      .eq('d_balance', currentBalance)
+      .select('id,d_balance')
+      .single();
+
+    if (balanceUpdate.error || !balanceUpdate.data) return res.status(409).json({ ok: false, error: 'Saldo berubah saat transaksi diproses. Refresh wallet lalu coba lagi.' });
+
     const { data: walletTx, error: walletError } = await supabase
       .from('wallet_transactions')
       .insert({
@@ -64,20 +88,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         status: 'success',
         provider: 'dlavie-ppob',
         reference: refId,
-        metadata: { product_code: product.sku_code, product_name: product.product_name, target, category: type }
+        metadata: { product_code: product.sku_code, product_name: product.product_name, target, category: type, balance_before: currentBalance, balance_after: balanceUpdate.data.d_balance }
       })
       .select('id')
       .single();
 
     if (walletError) return res.status(500).json({ ok: false, error: walletError.message });
-
-    const { error: balanceError } = await supabase
-      .from('profiles')
-      .update({ d_balance: currentBalance - sellingPrice })
-      .eq('id', user.id)
-      .eq('d_balance', currentBalance);
-
-    if (balanceError) return res.status(500).json({ ok: false, error: balanceError.message });
 
     const { data: order, error: orderError } = await supabase
       .from('ppob_orders')
@@ -110,14 +126,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       user_id: user.id,
       event_type: 'created',
       message: 'Order PPOB dibuat dari web DLAVIE.',
-      metadata: { ref_id: refId, wallet_transaction_id: walletTx?.id || null, balance_after: currentBalance - sellingPrice }
+      metadata: { ref_id: refId, wallet_transaction_id: walletTx?.id || null, balance_after: balanceUpdate.data.d_balance }
     });
 
     return res.status(201).json({
       ok: true,
       orderNumber: refId,
       order,
-      balanceAfter: currentBalance - sellingPrice,
+      balanceAfter: balanceUpdate.data.d_balance,
       message: 'Order PPOB berhasil dibuat dan saldo D-Balance sudah dipotong.'
     });
   } catch (error) {
