@@ -8,5 +8,11 @@ export function createSupabaseBrowserClient() {
     throw new Error('Supabase public env is missing.');
   }
 
-  return createClient(url, anonKey);
+  return createClient(url, anonKey, {
+    auth: {
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      persistSession: true
+    }
+  });
 }
