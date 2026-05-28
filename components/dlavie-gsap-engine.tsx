@@ -1,37 +1,53 @@
 import { useEffect } from 'react';
 import gsap from 'gsap';
 
+const selector = '.dlavie-kinetic-card,.dlavie-hover-lift,.dlavie-premium-surface,.dlavie-magnetic-cta';
+
 export function DlavieGsapEngine() {
   useEffect(() => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduced) return;
 
-    const cards = gsap.utils.toArray<HTMLElement>('.dlavie-kinetic-card,.dlavie-hover-lift,.dlavie-premium-surface');
-    const cleanups: Array<() => void> = [];
+    const cleanups = new WeakMap<HTMLElement, () => void>();
 
-    cards.forEach((card) => {
-      const move = (event: PointerEvent) => {
-        const rect = card.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-        const rx = (y / rect.height - 0.5) * -5;
-        const ry = (x / rect.width - 0.5) * 5;
-        card.style.setProperty('--mx', `${x}px`);
-        card.style.setProperty('--my', `${y}px`);
-        gsap.to(card, { rotateX: rx, rotateY: ry, y: -4, duration: 0.45, ease: 'power3.out', transformPerspective: 900 });
-      };
-      const leave = () => gsap.to(card, { rotateX: 0, rotateY: 0, y: 0, duration: 0.55, ease: 'elastic.out(1, .55)' });
-      card.addEventListener('pointermove', move);
-      card.addEventListener('pointerleave', leave);
-      cleanups.push(() => {
-        card.removeEventListener('pointermove', move);
-        card.removeEventListener('pointerleave', leave);
+    const enhance = () => {
+      gsap.utils.toArray<HTMLElement>(selector).forEach((node) => {
+        if (cleanups.has(node)) return;
+
+        const move = (event: PointerEvent) => {
+          const rect = node.getBoundingClientRect();
+          const x = event.clientX - rect.left;
+          const y = event.clientY - rect.top;
+          const rx = (y / Math.max(rect.height, 1) - 0.5) * -4.5;
+          const ry = (x / Math.max(rect.width, 1) - 0.5) * 4.5;
+          node.style.setProperty('--mx', `${x}px`);
+          node.style.setProperty('--my', `${y}px`);
+          gsap.to(node, { rotateX: rx, rotateY: ry, y: -4, scale: 1.01, duration: 0.42, ease: 'power3.out', transformPerspective: 900, overwrite: true });
+        };
+
+        const leave = () => {
+          gsap.to(node, { rotateX: 0, rotateY: 0, y: 0, scale: 1, duration: 0.56, ease: 'elastic.out(1,.55)', overwrite: true });
+        };
+
+        node.addEventListener('pointermove', move);
+        node.addEventListener('pointerleave', leave);
+        cleanups.set(node, () => {
+          node.removeEventListener('pointermove', move);
+          node.removeEventListener('pointerleave', leave);
+        });
       });
-    });
 
-    gsap.fromTo('.dlv-reveal.is-visible', { y: 18, opacity: 0, filter: 'blur(10px)' }, { y: 0, opacity: 1, filter: 'blur(0px)', duration: 0.75, stagger: 0.045, ease: 'power3.out', overwrite: true });
+      gsap.fromTo('.dlv-reveal.is-visible', { y: 14, opacity: 0, filter: 'blur(8px)' }, { y: 0, opacity: 1, filter: 'blur(0px)', duration: 0.62, stagger: 0.035, ease: 'power3.out', overwrite: 'auto' });
+    };
 
-    return () => cleanups.forEach((cleanup) => cleanup());
+    enhance();
+    const mutationObserver = new MutationObserver(() => window.requestAnimationFrame(enhance));
+    mutationObserver.observe(document.body, { childList: true, subtree: true });
+
+    return () => {
+      mutationObserver.disconnect();
+      gsap.utils.toArray<HTMLElement>(selector).forEach((node) => cleanups.get(node)?.());
+    };
   }, []);
 
   return null;
