@@ -5,7 +5,7 @@ import { AccountShortcut } from '@/components/account-shortcut';
 import { AmbientBg } from '@/components/ambient-bg';
 import { AuthRouteGuard } from '@/components/auth-route-guard';
 import { DlavieAlertCenter } from '@/components/dlavie-alert-center';
-import { DlavieAssetLoader } from '@/components/dlavie-asset-loader';
+import { DlavieAssetBoot } from '@/components/dlavie-asset-boot';
 import { DlavieErrorBoundary } from '@/components/dlavie-error-boundary';
 import { DlavieExperienceShell } from '@/components/dlavie-experience-shell';
 import { DlavieProviders } from '@/components/dlavie-providers';
@@ -39,7 +39,7 @@ export default function App({ Component, pageProps }: AppProps) {
       <DlavieExperienceShell>
         <AmbientBg />
         <DlavieAlertCenter />
-        <DlavieAssetLoader routeLoading={loading} authChecking={authChecking} />
+        <DlavieAssetBoot routeLoading={loading} authChecking={authChecking} />
         <AccountShortcut />
         <DlavieErrorBoundary>
           <AuthRouteGuard onCheckingChange={setAuthChecking}>
