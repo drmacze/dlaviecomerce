@@ -14,6 +14,7 @@ import '../styles/ambient.css';
 import '../styles/cosmic.css';
 import '../styles/dlavie-system.css';
 import '../styles/dlavie-experience.css';
+import '../styles/dlavie-premium-v2.css';
 import '../styles/auth-motion.css';
 
 export default function App({ Component, pageProps }: AppProps) {
