@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { bearerToken, verifySupabaseUser } from '@/lib/auth-server';
+import { assertTransactionsAllowed } from '@/lib/runtime-server';
 import { createSupabaseServiceClient } from '@/lib/supabase-server';
 import { sendTelegramMessageToAdmins } from '@/lib/telegram';
 
@@ -88,6 +89,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'POST') {
+    const gate = await assertTransactionsAllowed();
+    if (!gate.ok) return res.status(gate.status).json({ error: gate.error });
+
     const amount = sanitizeAmount(req.body?.amount);
     if (amount < 10000) return res.status(400).json({ error: 'Minimum topup Rp 10.000' });
     if (amount > 1000000) return res.status(400).json({ error: 'Maximum topup manual Rp 1.000.000' });
