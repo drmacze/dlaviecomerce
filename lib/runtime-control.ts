@@ -1,14 +1,29 @@
 import { createSupabaseServiceClient } from '@/lib/supabase-server';
 
+type RuntimeValue = {
+  enabled?: boolean;
+  description?: string;
+  reason?: string;
+  title?: string;
+  body?: string;
+  source?: string;
+  created_at?: string;
+};
+
+type RuntimeRow = {
+  key: string;
+  value: RuntimeValue | null;
+  updated_at?: string | null;
+};
+
 type RuntimeFlag = {
   key: string;
   enabled: boolean;
-  description?: string | null;
+  description: string;
   updated_at?: string | null;
 };
 
 type Announcement = {
-  id?: string;
   title: string;
   body: string;
   source?: string | null;
@@ -19,6 +34,7 @@ type Announcement = {
 export type RuntimeState = {
   maintenance: RuntimeFlag;
   beta: RuntimeFlag;
+  announcement: Announcement | null;
   announcements: Announcement[];
 };
 
@@ -28,62 +44,69 @@ export function cleanRuntimeText(value: unknown, max = 1200) {
   return String(value || '').replace(/\r/g, '').trim().slice(0, max);
 }
 
+function flagFromRow(key: string, row?: RuntimeRow): RuntimeFlag {
+  const value = row?.value || {};
+  return {
+    key,
+    enabled: Boolean(value.enabled),
+    description: cleanRuntimeText(value.description || value.reason || ''),
+    updated_at: row?.updated_at || null,
+  };
+}
+
+function announcementFromRow(row?: RuntimeRow): Announcement | null {
+  if (!row?.value?.enabled) return null;
+  const value = row.value;
+  const body = cleanRuntimeText(value.body || value.description || value.reason || '');
+  if (!body) return null;
+  return {
+    title: cleanRuntimeText(value.title || 'Dlavie update selesai', 120),
+    body,
+    source: value.source || 'runtime_announcement',
+    is_active: true,
+    created_at: value.created_at || row.updated_at || null,
+  };
+}
+
 export async function getRuntimeState(): Promise<RuntimeState> {
   const supabase = createSupabaseServiceClient();
   try {
-    const [flagsResult, announcementsResult] = await Promise.all([
-      supabase.from('runtime_flags').select('key,enabled,description,updated_at').in('key', ['maintenance', 'beta']),
-      supabase.from('runtime_announcements').select('id,title,body,source,is_active,created_at').eq('is_active', true).order('created_at', { ascending: false }).limit(5),
-    ]);
-
-    const flags = ((flagsResult.data || []) as RuntimeFlag[]).reduce<Record<string, RuntimeFlag>>((acc, flag) => {
-      acc[flag.key] = flag;
+    const { data, error } = await supabase.from('dlavie_runtime_settings').select('key,value,updated_at').in('key', ['maintenance', 'beta', 'announcement']);
+    if (error) throw error;
+    const rows = ((data || []) as RuntimeRow[]).reduce<Record<string, RuntimeRow>>((acc, row) => {
+      acc[row.key] = row;
       return acc;
     }, {});
-
+    const announcement = announcementFromRow(rows.announcement);
     return {
-      maintenance: flags.maintenance || defaultFlag('maintenance'),
-      beta: flags.beta || defaultFlag('beta'),
-      announcements: (announcementsResult.data || []) as Announcement[],
+      maintenance: flagFromRow('maintenance', rows.maintenance),
+      beta: flagFromRow('beta', rows.beta),
+      announcement,
+      announcements: announcement ? [announcement] : [],
     };
   } catch {
-    return { maintenance: defaultFlag('maintenance'), beta: defaultFlag('beta'), announcements: [] };
+    return { maintenance: defaultFlag('maintenance'), beta: defaultFlag('beta'), announcement: null, announcements: [] };
   }
-}
-
-async function ensureFlag(key: 'maintenance' | 'beta') {
-  const supabase = createSupabaseServiceClient();
-  await supabase.from('runtime_flags').upsert({ key, enabled: false, description: '', updated_at: new Date().toISOString() }, { onConflict: 'key', ignoreDuplicates: true });
 }
 
 export async function setRuntimeFlag(input: { key: 'maintenance' | 'beta'; enabled: boolean; description?: string; actor?: string }) {
   const supabase = createSupabaseServiceClient();
-  await ensureFlag(input.key);
+  const current = await supabase.from('dlavie_runtime_settings').select('value').eq('key', input.key).maybeSingle();
+  const oldValue = (current.data?.value || {}) as RuntimeValue;
+  const wasEnabled = Boolean(oldValue.enabled);
+  const description = cleanRuntimeText(input.description ?? oldValue.description ?? oldValue.reason ?? '');
+  const value = { ...oldValue, enabled: input.enabled, description, reason: description, updated_by: input.actor || 'system' };
 
-  const current = await supabase.from('runtime_flags').select('key,enabled,description').eq('key', input.key).maybeSingle();
-  const previous = (current.data || defaultFlag(input.key)) as RuntimeFlag;
-  const description = cleanRuntimeText(input.description ?? previous.description ?? '');
-  const updatedAt = new Date().toISOString();
-
-  const updated = await supabase.from('runtime_flags').upsert({
-    key: input.key,
-    enabled: input.enabled,
-    description,
-    updated_at: updatedAt,
-    updated_by: input.actor || 'system',
-  }, { onConflict: 'key' }).select('key,enabled,description,updated_at').single();
-
+  const updated = await supabase.from('dlavie_runtime_settings').upsert({ key: input.key, value, updated_at: new Date().toISOString() }).select('key,value,updated_at').single();
   if (updated.error) throw new Error(updated.error.message);
 
-  if (input.key === 'maintenance' && previous.enabled && !input.enabled && description) {
-    await supabase.from('runtime_announcements').insert({
-      title: 'Dlavie update selesai',
-      body: description,
-      source: 'maintenance_release',
-      is_active: true,
-      created_by: input.actor || 'system',
+  if (input.key === 'maintenance' && wasEnabled && !input.enabled && description) {
+    await supabase.from('dlavie_runtime_settings').upsert({
+      key: 'announcement',
+      value: { enabled: true, title: 'Dlavie update selesai', description, body: description, source: 'maintenance_release', created_at: new Date().toISOString(), created_by: input.actor || 'system' },
+      updated_at: new Date().toISOString(),
     });
   }
 
-  return updated.data as RuntimeFlag;
+  return flagFromRow(input.key, updated.data as RuntimeRow);
 }
