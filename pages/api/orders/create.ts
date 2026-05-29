@@ -1,11 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { bearerToken, verifySupabaseUser } from '@/lib/auth-server';
 import { notifyAdminsNewOrder } from '@/lib/order-telegram';
+import { assertTransactionsAllowed } from '@/lib/runtime-server';
 import { createSupabaseServiceClient } from '@/lib/supabase-server';
 
 type OrderItemInput = { product_id?: string; qty?: number };
 type CouponRow = { id: string; discount_type: string; amount: number; min_amount: number; usage_limit: number | null; redeemed_count: number; expires_at: string | null };
-
 type ProfileWallet = { id: string; d_balance: number; d_points: number; vip_level: string | null };
 
 function normalizeItems(items: unknown) {
@@ -43,6 +43,9 @@ function appBaseUrl(req: NextApiRequest) {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   try {
+    const gate = await assertTransactionsAllowed();
+    if (!gate.ok) return res.status(gate.status).json({ error: gate.error });
+
     const user = await verifySupabaseUser(bearerToken(req.headers.authorization));
     if (!user?.email) return res.status(401).json({ error: 'Login diperlukan untuk membuat order.' });
 
@@ -107,19 +110,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       await supabase.from('coupons').update({ redeemed_count: Number(coupon?.redeemed_count || 0) + 1 }).eq('id', couponId);
     }
 
-    notifyAdminsNewOrder({
-      appUrl: appBaseUrl(req),
-      orderId: String(order.id),
-      buyerEmail: email,
-      total,
-      subtotal,
-      discount,
-      status: orderStatus,
-      paymentMethod,
-      couponCode: couponCode || null,
-      items: mapped,
-    }).catch((telegramError) => console.error('Telegram order notification failed:', telegramError));
-
+    notifyAdminsNewOrder({ appUrl: appBaseUrl(req), orderId: String(order.id), buyerEmail: email, total, subtotal, discount, status: orderStatus, paymentMethod, couponCode: couponCode || null, items: mapped }).catch((telegramError) => console.error('Telegram order notification failed:', telegramError));
     return res.status(200).json({ orderId: order.id, subtotal, discount, total, paymentMethod, status: orderStatus, pointsEarned });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Create order failed';
