@@ -13,7 +13,7 @@ function getBotToken() {
 }
 
 export function getAdminChatIds() {
-  return String(process.env.DLAVIE_ADMIN_IDS || process.env.TELEGRAM_ADMIN_CHAT_IDS || '')
+  return String(process.env.DLAVIE_ADMIN_IDS || process.env.TELEGRAM_ADMIN_IDS || process.env.TELEGRAM_ADMIN_CHAT_IDS || '')
     .split(',')
     .map((id) => id.trim())
     .filter(Boolean);
@@ -37,23 +37,30 @@ export async function sendTelegramMessage(
     }),
   });
 
+  const payloadText = await response.text();
+  let payload: unknown = payloadText;
+  try { payload = JSON.parse(payloadText); } catch {}
+
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Telegram sendMessage gagal: ${errorText}`);
+    throw new Error(`Telegram sendMessage gagal untuk chat ${chatId}: ${typeof payload === 'string' ? payload : JSON.stringify(payload)}`);
   }
 
-  return response.json();
+  return payload;
 }
 
 export async function sendTelegramMessageToAdmins(text: string, options: SendTelegramOptions = {}) {
   const chatIds = getAdminChatIds();
-  if (!chatIds.length) return { ok: false, sent: 0, failed: 0, reason: 'DLAVIE_ADMIN_IDS belum diisi.' };
+  if (!chatIds.length) return { ok: false, sent: 0, failed: 0, reason: 'DLAVIE_ADMIN_IDS / TELEGRAM_ADMIN_IDS belum diisi.', details: [] as string[] };
 
   const results = await Promise.allSettled(chatIds.map((chatId) => sendTelegramMessage(chatId, text, options)));
+  const details = results.map((result, index) => result.status === 'fulfilled'
+    ? `sent:${chatIds[index]}`
+    : `failed:${chatIds[index]}:${result.reason instanceof Error ? result.reason.message : String(result.reason)}`);
 
   return {
     ok: results.every((result) => result.status === 'fulfilled'),
     sent: results.filter((result) => result.status === 'fulfilled').length,
     failed: results.filter((result) => result.status === 'rejected').length,
+    details,
   };
 }
