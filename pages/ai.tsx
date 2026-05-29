@@ -1,11 +1,15 @@
 import { useRouter } from 'next/router';
-import { useEffect, useMemo, useState } from 'react';
+import { ReactNode, useEffect, useMemo, useState } from 'react';
 import { dlavieAiPacks, estimateTextUnits, type DlavieAiPack, type DlavieAiPackId } from '@/lib/dlavie-ai-credits';
 import { dlavieAiPlans, type DlavieAiPlan } from '@/lib/dlavie-ai-plans';
 import { createSupabaseBrowserClient } from '@/lib/supabase-client';
 
 type ChatMessage = { role: 'user' | 'assistant'; content: string; planName?: string };
 type StoredChatMessage = { role?: string; content?: string };
+type Screen = 'welcome' | 'onboarding' | 'console';
+type RuntimeMode = 'Lite' | 'Economy' | 'Power' | 'Core';
+type ResponseMode = 'Instant' | 'Thinking';
+type ConsoleTab = 'chat' | 'gems' | 'build' | 'playground' | 'pricing' | 'resources';
 
 type DlavieAiAccess = {
   authenticated: boolean;
@@ -18,43 +22,60 @@ type DlavieAiAccess = {
   aiTokenBalance: number;
 };
 
-const promptIdeas = [
-  'Buatkan strategi landing page produk digital DLAVIE',
-  'Review ide fitur AI untuk marketplace saya',
-  'Bantu debugging komponen React yang lambat',
+const backgroundVideo = 'https://image-link.edgeone.app/1779988010622-t0qa9o.mp4';
+const promptIdeas = ['Bangun landing page produk digital DLAVIE', 'Buat agent support WhatsApp', 'Review arsitektur website saya'];
+const intents = ['Website / App', 'Content & Brand', 'Business Analysis', 'AI Agent', 'Debugging Code', 'Learning & Research'];
+const modes: { id: RuntimeMode; desc: string; multiplier: string }[] = [
+  { id: 'Lite', desc: 'Hemat untuk chat cepat.', multiplier: '0.8x' },
+  { id: 'Economy', desc: 'Seimbang untuk mayoritas tugas.', multiplier: '1x' },
+  { id: 'Power', desc: 'Lebih kuat untuk build dan analisis.', multiplier: '1.6x' },
+  { id: 'Core', desc: 'Untuk agent dan reasoning berat.', multiplier: '2.4x' },
+];
+const models = [
+  { name: 'Dlavie X Lite', badge: 'Fast', use: 'Chat ringan dan ringkasan', cost: '0.7x' },
+  { name: 'Dlavie X Mini', badge: 'Default', use: 'Tugas harian dan support', cost: '1x' },
+  { name: 'Dlavie 1.5', badge: 'Stable', use: 'Planning, UI/UX, analisis', cost: '1.4x' },
+  { name: 'Dlavie 1.5 Preview', badge: 'Preview', use: 'Eksperimen fitur baru', cost: '1.8x' },
+  { name: 'Dlavie X 3', badge: 'Pro', use: 'Coding, agent, arsitektur', cost: '2.2x' },
+  { name: 'Dlavie Architect', badge: 'Soon', use: 'System design dan database', cost: '2x' },
+  { name: 'Dlavie Vision', badge: 'Soon', use: 'Analisis gambar dan layout', cost: '2x' },
+  { name: 'Dlavie Agent Pro', badge: 'Soon', use: 'Workflow multi-step', cost: '3x' },
+];
+const gems = [
+  { name: 'Commerce Strategist', desc: 'Funnel, produk digital, pricing, landing page.' },
+  { name: 'WebDev Pro', desc: 'Next.js, React, debugging, UI/UX, production checklist.' },
+  { name: 'Brand Writer', desc: 'Copywriting, campaign, tone brand DLAVIE.' },
+  { name: 'Agent Builder', desc: 'Trigger, actions, validation, workflow.' },
+];
+const pricingCards = [
+  { name: 'Basic', price: 'Gratis', points: ['Mode Basic', 'Chat cepat', 'Resource standar'] },
+  { name: 'Core', price: 'AI Token', points: ['Thinking mode', 'Build workspace', 'Agent workflow'] },
+  { name: 'Studio', price: 'Custom', points: ['Multi-agent', 'Team workspace', 'Priority support'] },
 ];
 
 function normalizeMessage(message: StoredChatMessage): ChatMessage {
   return { role: message.role === 'assistant' ? 'assistant' : 'user', content: String(message.content || '') };
 }
-
-function formatNumber(value: number) {
-  return Number(value || 0).toLocaleString('id-ID');
-}
-
-function createPlanProgress(access: DlavieAiAccess | null) {
-  if (!access?.dailyQuota) return 0;
-  return Math.min(100, Math.round((access.dailyUsed / access.dailyQuota) * 100));
-}
-
-function packPriceLabel(pack: DlavieAiPack) {
-  return `${formatNumber(pack.priceDBalance)} D Balance`;
-}
-
-function isUnsafeAiReply(value: unknown) {
-  const text = String(value || '').toLowerCase().trim();
-  const credentialPhrase = 'api' + ' key';
-  return text.includes(credentialPhrase) || text.includes('permission_denied') || text.includes('403') || text.startsWith('{"error"') || text.startsWith('{\n  "error"');
-}
-
-function safeAiNotice(value: unknown) {
-  const text = String(value || '').trim();
-  if (!text || isUnsafeAiReply(text)) return 'Dlavie AI sedang bermasalah. Admin perlu memperbarui konfigurasi AI provider.';
-  return text;
+function formatNumber(value: number) { return Number(value || 0).toLocaleString('id-ID'); }
+function packPriceLabel(pack: DlavieAiPack) { return `${formatNumber(pack.priceDBalance)} D Balance`; }
+function createPlanProgress(access: DlavieAiAccess | null) { return access?.dailyQuota ? Math.min(100, Math.round((access.dailyUsed / access.dailyQuota) * 100)) : 0; }
+function cleanNotice(value: unknown) { const text = String(value || '').trim(); return !text || text.startsWith('{') ? 'Dlavie AI sedang bermasalah. Coba lagi sebentar.' : text; }
+function generateResourceKit() {
+  const rows = ['# DLAVIE AI OS RESOURCE KIT', '', 'Generated by Dlavie AI OS.', ''];
+  for (let i = 1; i <= 180; i += 1) rows.push(`## Block ${i}`, '- Goal planner', '- Prompt structure', '- Build checklist', '- Agent workflow note', '- Token planning note', '');
+  return rows.join('\n');
 }
 
 export default function AI() {
   const router = useRouter();
+  const [screen, setScreen] = useState<Screen>('welcome');
+  const [intent, setIntent] = useState('');
+  const [tab, setTab] = useState<ConsoleTab>('chat');
+  const [runtimeMode, setRuntimeMode] = useState<RuntimeMode>('Economy');
+  const [responseMode, setResponseMode] = useState<ResponseMode>('Thinking');
+  const [selectedModel, setSelectedModel] = useState('Dlavie X Mini');
+  const [selectedGem, setSelectedGem] = useState('WebDev Pro');
+  const [planMode, setPlanMode] = useState(false);
   const [sessionId, setSessionId] = useState('');
   const [q, setQ] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -65,280 +86,68 @@ export default function AI() {
 
   const activePlan = dlavieAiPlans[access?.plan || 'basic'];
   const progress = createPlanProgress(access);
-  const creditPacks = useMemo(() => Object.values(dlavieAiPacks), []);
+  const packs = useMemo(() => Object.values(dlavieAiPacks), []);
+  const currentMode = modes.find((mode) => mode.id === runtimeMode) || modes[1];
   const estimatedPromptUnits = q.trim() ? estimateTextUnits(q) * (access?.plan === 'core' ? 2 : 1) : 0;
 
-  async function getAccessToken() {
-    const supabase = createSupabaseBrowserClient();
-    const session = await supabase.auth.getSession();
-    return session.data.session?.access_token;
-  }
+  async function getAccessToken() { const supabase = createSupabaseBrowserClient(); const session = await supabase.auth.getSession(); return session.data.session?.access_token; }
+  async function loadAccess() { const token = await getAccessToken(); const res = await fetch('/api/ai/dlavie-subscription', { headers: token ? { Authorization: `Bearer ${token}` } : {} }); const data = await res.json(); if (res.ok) setAccess(data); }
 
-  async function loadAccess() {
-    const token = await getAccessToken();
-    const res = await fetch('/api/ai/dlavie-subscription', {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
-    const data = await res.json();
-    if (res.ok) setAccess(data);
-  }
-
-  useEffect(() => {
-    loadAccess().catch(() => setNotice('Status Dlavie AI belum bisa dimuat.'));
-  }, []);
-
+  useEffect(() => { loadAccess().catch(() => setNotice('Status Dlavie AI belum bisa dimuat.')); }, []);
   useEffect(() => {
     const targetSession = String(router.query.session || '');
     if (!targetSession) return;
-
+    setScreen('console');
     getAccessToken().then(async (token) => {
       if (!token) return;
       setBusy(true);
       const res = await fetch(`/api/ai/session?sessionId=${targetSession}`, { headers: { Authorization: `Bearer ${token}` } });
       const json = await res.json();
-      if (res.ok) {
-        setSessionId(targetSession);
-        const loaded = Array.isArray(json.messages) ? json.messages.map(normalizeMessage) : [];
-        setMessages(loaded.filter((item: ChatMessage) => !isUnsafeAiReply(item.content)));
-      }
+      if (res.ok) { setSessionId(targetSession); setMessages(Array.isArray(json.messages) ? json.messages.map(normalizeMessage) : []); }
       setBusy(false);
     });
   }, [router.query.session]);
 
+  function startOnboarding() { setScreen('onboarding'); window.setTimeout(() => document.getElementById('dlavie-ai-onboarding')?.scrollIntoView({ behavior: 'smooth' }), 50); }
+  function enterConsole(nextIntent?: string) { if (nextIntent) setIntent(nextIntent); setScreen('console'); window.setTimeout(() => document.getElementById('dlavie-ai-console')?.scrollIntoView({ behavior: 'smooth' }), 50); }
+  function downloadResourceKit() { const blob = new Blob([generateResourceKit()], { type: 'text/markdown;charset=utf-8' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'dlavie-ai-os-resource-kit.md'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); setNotice('Resource kit berhasil dibuat dan mulai diunduh.'); }
+
   async function buyCredits(pack: DlavieAiPack) {
     if (purchaseBusy) return;
-
-    const confirmed = window.confirm(
-      `Beli ${pack.badge}?\n\nBiaya yang dipotong: ${packPriceLabel(pack)}\nSaldo D Balance sekarang: ${formatNumber(access?.dBalance || 0)}\n\nLanjutkan transaksi?`
-    );
-    if (!confirmed) return;
-
-    setPurchaseBusy(pack.id);
-    setNotice('');
-
-    try {
-      const token = await getAccessToken();
-      const res = await fetch('/api/ai/buy-credits', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        body: JSON.stringify({ packId: pack.id }),
-      });
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) throw new Error(safeAiNotice(data.error || 'Pembelian AI Token gagal.'));
-
-      setNotice(`Berhasil: ${data.pack?.badge || pack.badge}. Terpotong ${formatNumber(data.chargedDBalance || pack.priceDBalance)} D Balance. Sisa AI Token ${formatNumber(data.aiTokenBalance)}.`);
-      await loadAccess();
-    } catch (error) {
-      setNotice(error instanceof Error ? safeAiNotice(error.message) : 'Pembelian AI Token gagal.');
-    } finally {
-      setPurchaseBusy(null);
-    }
+    if (!window.confirm(`Beli ${pack.badge}?\n\nBiaya: ${packPriceLabel(pack)}\nSaldo: ${formatNumber(access?.dBalance || 0)} D Balance`)) return;
+    setPurchaseBusy(pack.id); setNotice('');
+    try { const token = await getAccessToken(); const res = await fetch('/api/ai/buy-credits', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ packId: pack.id }) }); const data = await res.json().catch(() => ({})); if (!res.ok) throw new Error(cleanNotice(data.error)); setNotice(`Berhasil membeli ${data.pack?.badge || pack.badge}. Terpotong ${formatNumber(data.chargedDBalance || pack.priceDBalance)} D Balance.`); await loadAccess(); } catch (error) { setNotice(error instanceof Error ? cleanNotice(error.message) : 'Pembelian AI Token gagal.'); } finally { setPurchaseBusy(null); }
   }
 
   async function ask() {
-    const message = q.trim();
-    if (!message || busy) return;
-
-    setBusy(true);
-    setNotice('');
-    setMessages((prev) => [...prev, { role: 'user', content: message }]);
-    setQ('');
-
-    try {
-      const token = await getAccessToken();
-      const res = await fetch('/api/ai/persistent-chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        body: JSON.stringify({ message, sessionId }),
-      });
-      const data = await res.json().catch(() => ({}));
-
-      if (data.sessionId) setSessionId(data.sessionId);
-
-      if (!res.ok) {
-        setNotice(safeAiNotice(data.error || 'Dlavie AI sedang mengalami gangguan.'));
-        await loadAccess().catch(() => undefined);
-        return;
-      }
-
-      if (!data.reply || isUnsafeAiReply(data.reply)) {
-        setNotice('Dlavie AI sedang bermasalah. Admin perlu memperbarui konfigurasi AI provider.');
-        await loadAccess().catch(() => undefined);
-        return;
-      }
-
-      setMessages((prev) => [...prev, { role: 'assistant', content: data.reply, planName: data.planName }]);
-      if (typeof data.chargedTokens === 'number') setNotice(`Dipakai ${formatNumber(data.chargedTokens)} AI Token. Sisa ${formatNumber(data.aiTokenBalance || 0)}.`);
-      await loadAccess().catch(() => undefined);
-    } catch {
-      setNotice('Dlavie AI sedang bermasalah. Coba lagi sebentar.');
-    } finally {
-      setBusy(false);
-    }
+    const message = q.trim(); if (!message || busy) return;
+    setBusy(true); setNotice(''); setMessages((prev) => [...prev, { role: 'user', content: message }]); setQ('');
+    const enrichedMessage = `Dlavie AI OS\nIntent: ${intent || 'General'}\nMode: ${runtimeMode}\nResponse: ${responseMode}\nModel: ${selectedModel}\nGem: ${selectedGem}\nPlan first: ${planMode ? 'Yes' : 'No'}\n\n${message}`;
+    try { const token = await getAccessToken(); const res = await fetch('/api/ai/persistent-chat', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ message: enrichedMessage, sessionId }) }); const data = await res.json().catch(() => ({})); if (data.sessionId) setSessionId(data.sessionId); if (!res.ok) { setNotice(cleanNotice(data.error)); await loadAccess().catch(() => undefined); return; } setMessages((prev) => [...prev, { role: 'assistant', content: data.reply || 'Dlavie AI tidak mengembalikan jawaban.', planName: `${data.planName || activePlan.name} • ${selectedModel}` }]); if (typeof data.chargedTokens === 'number') setNotice(`Dipakai ${formatNumber(data.chargedTokens)} AI Token. Sisa ${formatNumber(data.aiTokenBalance || 0)}.`); await loadAccess().catch(() => undefined); } catch { setNotice('Dlavie AI sedang bermasalah. Coba lagi sebentar.'); } finally { setBusy(false); }
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#05060b] px-4 py-5 text-white md:px-8 md:py-8">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-[-12%] top-[-18%] h-[36rem] w-[36rem] rounded-full bg-[#dfff4f]/18 blur-[110px] animate-pulse" />
-        <div className="absolute right-[-12%] top-[12%] h-[34rem] w-[34rem] rounded-full bg-cyan-400/12 blur-[120px]" />
-        <div className="absolute bottom-[-20%] left-[35%] h-[28rem] w-[28rem] rounded-full bg-violet-500/12 blur-[130px]" />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.035)_1px,transparent_1px)] bg-[size:64px_64px] opacity-30" />
-      </div>
-
-      <section className="relative mx-auto max-w-7xl">
-        <header className="mb-5 rounded-[2rem] border border-white/10 bg-white/[0.055] p-5 shadow-2xl shadow-black/25 backdrop-blur-2xl md:p-6">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#dfff4f]/25 bg-[#dfff4f]/10 px-3 py-1 text-xs font-black uppercase tracking-[0.22em] text-[#dfff4f]">
-                <span className="h-2 w-2 rounded-full bg-[#dfff4f] shadow-[0_0_18px_#dfff4f]" />
-                Dlavie AI Console
-              </div>
-              <h1 className="mt-4 text-4xl font-black tracking-[-.07em] md:text-6xl">AI yang serius untuk ekosistem DLAVIE.</h1>
-              <p className="mt-3 max-w-2xl text-sm font-semibold leading-6 text-white/55 md:text-base">Chat, coding, strategi, dan analisis produk digital dalam satu workspace. AI Token dipakai transparan per percakapan.</p>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[520px]">
-              <div className="rounded-[1.4rem] border border-white/10 bg-black/25 p-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/35">D Balance</p>
-                <p className="mt-2 text-2xl font-black">{formatNumber(access?.dBalance || 0)}</p>
-                <a href="/wallet" className="mt-3 inline-flex rounded-full bg-white px-3 py-2 text-xs font-black text-slate-950">Topup</a>
-              </div>
-              <div className="rounded-[1.4rem] border border-[#dfff4f]/25 bg-[#dfff4f]/10 p-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#dfff4f]">AI Token</p>
-                <p className="mt-2 text-2xl font-black">{formatNumber(access?.aiTokenBalance || 0)}</p>
-                <p className="mt-3 text-xs font-bold text-white/42">Bahan bakar chat</p>
-              </div>
-              <div className="rounded-[1.4rem] border border-white/10 bg-black/25 p-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/35">Mode</p>
-                <p className="mt-2 text-lg font-black">{activePlan.name.replace('Dlavie AI ', '')}</p>
-                <p className="mt-3 text-xs font-bold text-white/42">{access?.dailyUsed || 0}/{access?.dailyQuota || activePlan.dailyQuota} chat hari ini</p>
-              </div>
-            </div>
+    <main className="fixed inset-0 z-[999] overflow-y-auto bg-[#08090d] text-white">
+      {(screen === 'welcome' || screen === 'onboarding') && <Welcome onStart={startOnboarding} onSkip={() => enterConsole()} />}
+      {screen === 'onboarding' && <Onboarding onPick={enterConsole} />}
+      {screen === 'console' && (
+        <section id="dlavie-ai-console" className="min-h-screen bg-[#0b0c10]">
+          <header className="sticky top-0 z-20 border-b border-white/10 bg-[#111217]/90 px-4 py-3 backdrop-blur-2xl"><div className="mx-auto flex max-w-7xl items-center justify-between gap-3"><button onClick={() => setScreen('welcome')} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-black">←</button><b>Dlavie AI OS</b><div className="text-xs font-bold text-white/55">{formatNumber(access?.aiTokenBalance || 0)} Token · {formatNumber(access?.dBalance || 0)} DB</div></div></header>
+          {notice && <div className="mx-auto mt-4 max-w-7xl rounded-2xl border border-[#dfff4f]/25 bg-[#dfff4f]/10 p-4 text-sm font-bold text-[#f1ffc0]">{notice}</div>}
+          <div className="mx-auto grid max-w-7xl gap-4 px-4 py-4 lg:grid-cols-[230px_1fr_330px]">
+            <aside className="space-y-3">{(['chat','gems','build','playground','pricing','resources'] as ConsoleTab[]).map((item) => <button key={item} onClick={() => setTab(item)} className={`w-full rounded-2xl px-4 py-3 text-left text-sm font-black capitalize transition ${tab === item ? 'bg-[#dfff4f] text-slate-950' : 'bg-white/[0.06] text-white/65 hover:bg-white/[0.1]'}`}>{item}</button>)}<div className="rounded-2xl border border-white/10 bg-white/[0.055] p-4"><p className="text-xs font-black uppercase tracking-[0.22em] text-white/35">Intent</p><p className="mt-2 text-sm font-bold text-white/70">{intent || 'General AI workspace'}</p></div></aside>
+            <section className="overflow-hidden rounded-[1.8rem] border border-white/10 bg-white/[0.055] shadow-2xl shadow-black/30">{tab === 'chat' && <ChatPanel messages={messages} busy={busy} q={q} setQ={setQ} ask={ask} selectedModel={selectedModel} activePlan={activePlan.name} estimatedPromptUnits={estimatedPromptUnits} planMode={planMode} setPlanMode={setPlanMode} runtimeMode={runtimeMode} />}{tab === 'gems' && <Panel title="Gems" subtitle="Persona kerja khusus untuk tugas berbeda.">{gems.map((gem) => <button key={gem.name} onClick={() => setSelectedGem(gem.name)} className={`rounded-2xl border p-4 text-left ${selectedGem === gem.name ? 'border-[#dfff4f]/50 bg-[#dfff4f]/10' : 'border-white/10 bg-white/5'}`}><h3 className="font-black">{gem.name}</h3><p className="mt-2 text-sm text-white/48">{gem.desc}</p></button>)}</Panel>}{tab === 'build' && <Panel title="Build" subtitle="Workspace untuk app, website, dan agent."><BuildCard title="Website Builder" text="Struktur landing page, copywriting, dan komponen." /><BuildCard title="Agent Flow" text="Trigger, actions, validation, dan handoff." /><BuildCard title="Automation" text="Workflow admin, support, dan commerce." /></Panel>}{tab === 'playground' && <Panel title="Playground" subtitle="Uji model dan gaya respon.">{models.map((model) => <button key={model.name} onClick={() => setSelectedModel(model.name)} className={`rounded-2xl border p-4 text-left ${selectedModel === model.name ? 'border-blue-400 bg-blue-400/10' : 'border-white/10 bg-white/5'}`}><h3 className="font-black">{model.name} <span className="text-xs text-[#dfff4f]">{model.badge}</span></h3><p className="mt-2 text-sm text-white/50">{model.use}</p><p className="mt-2 text-xs text-white/35">Token: {model.cost}</p></button>)}</Panel>}{tab === 'pricing' && <Panel title="Pricing" subtitle="Card pricing transparan untuk Dlavie AI.">{pricingCards.map((card) => <div key={card.name} className="rounded-3xl border border-white/10 bg-white/[0.055] p-5"><h3 className="text-xl font-black">{card.name}</h3><p className="mt-2 text-3xl font-black">{card.price}</p><ul className="mt-4 space-y-2 text-sm text-white/60">{card.points.map((point) => <li key={point}>✓ {point}</li>)}</ul></div>)}</Panel>}{tab === 'resources' && <Panel title="Download Resource" subtitle="File dibuat langsung dan benar-benar terunduh."><div className="rounded-3xl border border-[#dfff4f]/25 bg-[#dfff4f]/10 p-6"><h3 className="text-2xl font-black">Dlavie AI OS Resource Kit</h3><p className="mt-3 text-sm text-white/55">Berisi blok checklist, model notes, token planning, dan workflow template.</p><button onClick={downloadResourceKit} className="mt-5 rounded-full bg-[#dfff4f] px-5 py-3 text-sm font-black text-slate-950">Download Resource Kit</button></div></Panel>}</section>
+            <aside className="space-y-4"><SideCard title="Agent Modes"><div className="grid grid-cols-2 gap-2">{modes.map((mode) => <button key={mode.id} onClick={() => setRuntimeMode(mode.id)} className={`rounded-2xl p-3 text-left text-sm font-black ${runtimeMode === mode.id ? 'bg-blue-500 text-white' : 'bg-white/8 text-white/55'}`}>{mode.id}<p className="mt-1 text-[11px] opacity-70">{mode.multiplier}</p></button>)}</div><p className="mt-4 text-sm text-white/48">{currentMode.desc}</p></SideCard><SideCard title="AI Settings"><div className="grid grid-cols-2 gap-2">{(['Instant','Thinking'] as ResponseMode[]).map((mode) => <button key={mode} onClick={() => setResponseMode(mode)} className={`rounded-2xl p-3 text-sm font-black ${responseMode === mode ? 'bg-[#dfff4f] text-slate-950' : 'bg-white/8 text-white/55'}`}>{mode}</button>)}</div></SideCard><SideCard title="Model"><select value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} className="mt-3 w-full rounded-2xl border border-white/10 bg-[#202128] p-3 text-sm font-black text-white outline-none">{models.map((model) => <option key={model.name}>{model.name}</option>)}</select></SideCard><SideCard title="Token Store"><div className="mt-3 space-y-2">{packs.map((pack) => <button key={pack.id} onClick={() => buyCredits(pack)} disabled={purchaseBusy !== null || (access?.dBalance || 0) < pack.priceDBalance} className="w-full rounded-2xl bg-white/8 p-3 text-left text-sm font-black disabled:opacity-40"><span>{pack.badge}</span><span className="float-right text-[#dfff4f]">{packPriceLabel(pack)}</span></button>)}</div></SideCard></aside>
           </div>
-        </header>
-
-        {notice && (
-          <div className="mb-5 rounded-[1.4rem] border border-[#dfff4f]/25 bg-[#dfff4f]/10 p-4 text-sm font-bold text-[#f1ffc0] shadow-xl shadow-[#dfff4f]/5">
-            {notice}
-          </div>
-        )}
-
-        <div className="grid gap-5 xl:grid-cols-[1fr_380px]">
-          <section className="min-h-[720px] overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.06] shadow-2xl shadow-black/25 backdrop-blur-2xl">
-            <div className="flex flex-col gap-3 border-b border-white/10 bg-black/20 p-5 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.26em] text-[#dfff4f]">{activePlan.name}</p>
-                <h2 className="mt-1 text-2xl font-black tracking-[-.05em]">Chat Workspace</h2>
-              </div>
-              <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-white/50">
-                <span className="rounded-full bg-white/10 px-3 py-2">{sessionId ? `Session ${sessionId.slice(0, 8)}` : 'New Session'}</span>
-                <a className="rounded-full bg-white/10 px-3 py-2 transition hover:bg-white/15 hover:text-white" href="/ai/history">History</a>
-              </div>
-            </div>
-
-            <div className="flex h-[480px] flex-col gap-4 overflow-y-auto p-5 md:h-[560px]">
-              {!messages.length && (
-                <div className="m-auto max-w-2xl text-center">
-                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[2rem] border border-[#dfff4f]/25 bg-[#dfff4f]/10 text-3xl shadow-[0_0_80px_rgba(223,255,79,.22)]">AI</div>
-                  <h3 className="mt-5 text-3xl font-black tracking-[-.05em]">Mulai dengan satu tujuan.</h3>
-                  <p className="mt-3 text-sm font-semibold leading-6 text-white/50">Pilih contoh prompt atau tulis kebutuhanmu. Dlavie AI akan menjawab sesuai mode aktif dan saldo tokenmu.</p>
-                  <div className="mt-6 grid gap-2 md:grid-cols-3">
-                    {promptIdeas.map((idea) => (
-                      <button key={idea} type="button" onClick={() => setQ(idea)} className="rounded-[1.2rem] border border-white/10 bg-white/[0.06] p-3 text-left text-xs font-bold leading-5 text-white/70 transition hover:border-[#dfff4f]/40 hover:bg-[#dfff4f]/10 hover:text-white">
-                        {idea}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {messages.map((m, i) => {
-                const isUser = m.role === 'user';
-                return (
-                  <div key={`${m.role}-${i}`} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[88%] rounded-[1.4rem] px-4 py-3 shadow-xl ring-1 md:max-w-[74%] ${isUser ? 'bg-[#dfff4f] text-slate-950 ring-[#dfff4f]/30' : 'bg-white text-slate-800 ring-white/15'}`}>
-                      <p className={`text-[10px] font-black uppercase tracking-[0.22em] ${isUser ? 'text-slate-700' : 'text-slate-400'}`}>{isUser ? 'You' : m.planName || activePlan.name}</p>
-                      <p className="mt-2 whitespace-pre-wrap text-sm font-semibold leading-7">{m.content}</p>
-                    </div>
-                  </div>
-                );
-              })}
-
-              {busy && <div className="w-fit rounded-full border border-white/10 bg-white/[0.07] px-4 py-3 text-sm font-bold text-white/55">Dlavie AI sedang berpikir...</div>}
-            </div>
-
-            <div className="border-t border-white/10 bg-black/25 p-4">
-              <textarea
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                className="min-h-28 w-full resize-none rounded-[1.4rem] border border-white/10 bg-white p-4 text-sm font-semibold leading-6 text-slate-950 outline-none transition placeholder:text-slate-400 focus:ring-4 focus:ring-[#dfff4f]/35"
-                placeholder={`Tulis instruksi untuk ${activePlan.name}...`}
-              />
-              <div className="mt-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <p className="text-xs font-bold text-white/42">Estimasi awal: {formatNumber(estimatedPromptUnits)} AI Token. Biaya final mengikuti panjang jawaban.</p>
-                <button onClick={ask} disabled={busy || !q.trim()} className="rounded-full bg-[#dfff4f] px-6 py-3 text-sm font-black text-slate-950 shadow-[0_18px_45px_rgba(223,255,79,.18)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_60px_rgba(223,255,79,.26)] disabled:cursor-not-allowed disabled:opacity-45">
-                  {busy ? 'Memproses...' : 'Kirim ke Dlavie AI'}
-                </button>
-              </div>
-            </div>
-          </section>
-
-          <aside className="space-y-5">
-            <section className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-5 shadow-2xl shadow-black/20 backdrop-blur-2xl">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.24em] text-[#dfff4f]">Token Store</p>
-                  <h2 className="mt-2 text-2xl font-black tracking-[-.04em]">Beli AI Token</h2>
-                </div>
-                <span className="rounded-full bg-white/10 px-3 py-2 text-xs font-black text-white/70">1 DB = 1 Token</span>
-              </div>
-              <p className="mt-3 text-sm font-semibold leading-6 text-white/50">Saldo D Balance dipotong sesuai harga paket. Tidak ada angka singkatan tersembunyi.</p>
-
-              <div className="mt-5 grid gap-3">
-                {creditPacks.map((pack) => {
-                  const insufficient = (access?.dBalance || 0) < pack.priceDBalance;
-                  const disabled = purchaseBusy !== null || insufficient;
-                  return (
-                    <article key={pack.id} className="rounded-[1.5rem] border border-white/10 bg-black/22 p-4 transition hover:border-[#dfff4f]/35 hover:bg-[#dfff4f]/[0.06]">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/35">{pack.name}</p>
-                          <h3 className="mt-1 text-2xl font-black text-white">{pack.badge}</h3>
-                          <p className="mt-2 text-xs font-semibold leading-5 text-white/45">{pack.description}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xs font-bold text-white/40">Harga</p>
-                          <p className="mt-1 text-sm font-black text-[#dfff4f]">{packPriceLabel(pack)}</p>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => buyCredits(pack)}
-                        disabled={disabled}
-                        className="mt-4 w-full rounded-full bg-white px-4 py-3 text-sm font-black text-slate-950 transition hover:-translate-y-0.5 hover:bg-[#dfff4f] disabled:cursor-not-allowed disabled:opacity-45"
-                      >
-                        {purchaseBusy === pack.id ? 'Memproses...' : insufficient ? 'D Balance kurang' : `Beli - ${packPriceLabel(pack)}`}
-                      </button>
-                    </article>
-                  );
-                })}
-              </div>
-            </section>
-
-            <section className="rounded-[2rem] border border-white/10 bg-white/[0.06] p-5 backdrop-blur-2xl">
-              <p className="text-xs font-black uppercase tracking-[0.24em] text-white/38">Mode Aktif</p>
-              <h2 className="mt-2 text-2xl font-black tracking-[-.04em]">{activePlan.name}</h2>
-              <p className="mt-2 text-sm font-semibold leading-6 text-white/50">{activePlan.description}</p>
-              <div className="mt-5 rounded-full bg-white/10 p-1">
-                <div className="h-2 rounded-full bg-[#dfff4f] transition-all" style={{ width: `${progress}%` }} />
-              </div>
-              <p className="mt-3 text-xs font-bold text-white/42">Sisa kuota harian: {formatNumber(access?.remaining || 0)} chat.</p>
-            </section>
-          </aside>
-        </div>
-      </section>
+        </section>
+      )}
     </main>
   );
 }
+
+function Welcome({ onStart, onSkip }: { onStart: () => void; onSkip: () => void }) { return <section className="relative min-h-screen overflow-hidden"><video className="absolute inset-0 h-full w-full object-cover opacity-70" src={backgroundVideo} autoPlay muted loop playsInline /><div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(196,255,63,.28),transparent_34%),linear-gradient(180deg,rgba(4,5,8,.35),rgba(4,5,8,.96))]" /><div className="relative mx-auto flex min-h-screen max-w-6xl flex-col items-center justify-center px-5 text-center"><div className="animate-pulse rounded-full border border-[#dfff4f]/25 bg-[#dfff4f]/10 px-4 py-2 text-xs font-black uppercase tracking-[0.32em] text-[#dfff4f]">Dlavie AI OS</div><h1 className="mt-7 max-w-4xl text-5xl font-black tracking-[-.08em] md:text-8xl">Bangun. Pikirkan. Jalankan.</h1><p className="mt-6 max-w-2xl text-base font-semibold leading-7 text-white/68 md:text-lg">Workspace AI baru untuk agent, build, gems, playground, resource, dan model Dlavie generasi berikutnya.</p><div className="mt-8 flex flex-wrap justify-center gap-3"><button onClick={onStart} className="rounded-full bg-[#dfff4f] px-7 py-4 text-sm font-black text-slate-950 shadow-[0_24px_80px_rgba(223,255,79,.28)]">Mulai Dlavie AI</button><button onClick={onSkip} className="rounded-full border border-white/15 bg-white/10 px-7 py-4 text-sm font-black text-white backdrop-blur-xl">Masuk Console</button></div></div></section>; }
+function Onboarding({ onPick }: { onPick: (intent: string) => void }) { return <section id="dlavie-ai-onboarding" className="min-h-screen bg-[#08090d] px-5 py-16"><div className="mx-auto max-w-5xl"><p className="text-xs font-black uppercase tracking-[0.3em] text-[#dfff4f]">Personalize</p><h2 className="mt-4 text-4xl font-black tracking-[-.06em] md:text-6xl">Kamu menggunakan Dlavie AI untuk apa?</h2><div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">{intents.map((item) => <button key={item} onClick={() => onPick(item)} className="rounded-[1.8rem] border border-white/10 bg-white/[0.055] p-6 text-left transition hover:-translate-y-1 hover:border-[#dfff4f]/40"><span className="text-3xl">✦</span><h3 className="mt-5 text-xl font-black">{item}</h3><p className="mt-2 text-sm text-white/45">Atur workspace AI berdasarkan kebutuhan ini.</p></button>)}</div></div></section>; }
+function ChatPanel(props: { messages: ChatMessage[]; busy: boolean; q: string; setQ: (v: string) => void; ask: () => void; selectedModel: string; activePlan: string; estimatedPromptUnits: number; planMode: boolean; setPlanMode: (v: boolean) => void; runtimeMode: RuntimeMode }) { return <div className="flex min-h-[760px] flex-col"><div className="border-b border-white/10 p-4"><p className="text-xs font-black uppercase tracking-[0.24em] text-[#dfff4f]">{props.activePlan}</p><h2 className="mt-1 text-2xl font-black">Agent Chat</h2></div><div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">{!props.messages.length && <div className="m-auto max-w-xl text-center"><div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-[#dfff4f]/10 text-3xl">AI</div><h3 className="mt-5 text-3xl font-black">Apa yang ingin kamu bangun?</h3><div className="mt-6 grid gap-2 md:grid-cols-3">{promptIdeas.map((idea) => <button key={idea} onClick={() => props.setQ(idea)} className="rounded-2xl border border-white/10 bg-white/5 p-3 text-left text-xs text-white/60">{idea}</button>)}</div></div>}{props.messages.map((m, i) => <div key={`${m.role}-${i}`} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}><div className={`max-w-[86%] rounded-3xl px-4 py-3 text-sm font-semibold leading-7 ${m.role === 'user' ? 'bg-[#19304d] text-blue-100' : 'bg-white text-slate-800'}`}><p className="mb-1 text-[10px] font-black uppercase tracking-[0.22em] opacity-55">{m.role === 'user' ? 'User' : m.planName || props.selectedModel}</p>{m.content}</div></div>)}{props.busy && <p className="w-fit rounded-full bg-white/10 px-4 py-3 text-sm font-bold text-white/55">Dlavie AI mengetik...</p>}</div><div className="border-t border-white/10 bg-black/25 p-3"><textarea value={props.q} onChange={(e) => props.setQ(e.target.value)} className="min-h-28 w-full resize-none rounded-2xl border border-white/10 bg-[#25262d] p-4 text-sm font-semibold text-white outline-none" placeholder={`Make, test, iterate dengan ${props.selectedModel}...`} /><div className="mt-3 flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-2"><button onClick={() => props.setPlanMode(!props.planMode)} className={`rounded-xl px-3 py-2 text-sm font-bold ${props.planMode ? 'bg-[#dfff4f] text-slate-950' : 'bg-white/10 text-white/60'}`}>Plan</button><span className="rounded-xl bg-white/10 px-3 py-2 text-sm font-bold text-white/60">{props.runtimeMode}</span><span className="text-xs font-bold text-white/35">~{formatNumber(props.estimatedPromptUnits)} token awal</span></div><button onClick={props.ask} disabled={props.busy || !props.q.trim()} className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-black text-white disabled:opacity-40">{props.busy ? 'Stop' : 'Run'}</button></div></div></div>; }
+function Panel({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) { return <div className="min-h-[760px] p-5"><p className="text-xs font-black uppercase tracking-[0.26em] text-[#dfff4f]">Dlavie AI OS</p><h2 className="mt-2 text-4xl font-black tracking-[-.06em]">{title}</h2><p className="mt-3 max-w-2xl text-sm text-white/48">{subtitle}</p><div className="mt-6 grid gap-4 md:grid-cols-2">{children}</div></div>; }
+function BuildCard({ title, text }: { title: string; text: string }) { return <div className="rounded-3xl border border-white/10 bg-white/[0.055] p-5"><h3 className="text-xl font-black">{title}</h3><p className="mt-2 text-sm text-white/48">{text}</p><button className="mt-5 rounded-full bg-white px-4 py-2 text-xs font-black text-slate-950">Start build</button></div>; }
+function SideCard({ title, children }: { title: string; children: ReactNode }) { return <div className="rounded-[1.8rem] border border-white/10 bg-white/[0.055] p-4"><p className="text-xs font-black uppercase tracking-[0.22em] text-white/35">{title}</p><div className="mt-3">{children}</div></div>; }
