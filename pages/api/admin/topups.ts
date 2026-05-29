@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { bearerToken, verifySupabaseUser } from '@/lib/auth-server';
+import { auditAndNotifyCommerce } from '@/lib/commerce-audit';
 import { createSupabaseServiceClient } from '@/lib/supabase-server';
 
 function isAdminEmail(email?: string | null) {
@@ -59,8 +60,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const rejected = await supabase.from('wallet_transactions').update({ status: 'failed', metadata: { ...metadata, rejected_at: new Date().toISOString() } }).eq('id', id).eq('type', 'topup').eq('status', 'pending').select('*').single();
       if (rejected.error || !rejected.data) {
         const latest = await supabase.from('wallet_transactions').select('*').eq('id', id).single();
+        await auditAndNotifyCommerce({ action: 'topup_reject_failed', actor: admin.email, targetType: 'wallet_transaction', targetId: String(id), status: 'failed', amount: Number(tx.amount || 0), userId: tx.user_id, reference: tx.reference, metadata: { latest_status: latest.data?.status || 'unknown', error: rejected.error?.message || null } });
         return res.status(409).json({ error: `Topup gagal ditolak. Status terbaru: ${latest.data?.status || 'unknown'}.`, topup: latest.data || null, detail: rejected.error?.message || null });
       }
+      await auditAndNotifyCommerce({ action: 'topup_rejected', actor: admin.email, targetType: 'wallet_transaction', targetId: String(rejected.data.id), status: 'success', amount: Number(rejected.data.amount || 0), userId: rejected.data.user_id, reference: rejected.data.reference, metadata: { provider: rejected.data.provider, review_note: reviewNote } });
       return res.status(200).json({ topup: rejected.data });
     }
 
@@ -74,15 +77,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const claimed = await supabase.from('wallet_transactions').update({ status: 'success', metadata: successMeta }).eq('id', id).eq('type', 'topup').eq('status', 'pending').select('*').single();
     if (claimed.error || !claimed.data) {
       const latest = await supabase.from('wallet_transactions').select('*').eq('id', id).single();
+      await auditAndNotifyCommerce({ action: 'topup_approve_failed', actor: admin.email, targetType: 'wallet_transaction', targetId: String(id), status: 'failed', amount: Number(tx.amount || 0), userId: tx.user_id, reference: tx.reference, metadata: { latest_status: latest.data?.status || 'unknown', error: claimed.error?.message || null } });
       return res.status(409).json({ error: `Topup gagal di-approve. Status terbaru: ${latest.data?.status || 'unknown'}.`, topup: latest.data || null, detail: claimed.error?.message || null });
     }
 
     const balance = await supabase.from('profiles').update({ d_balance: nextBalance }).eq('id', tx.user_id).eq('d_balance', currentBalance).select('id,d_balance').single();
     if (balance.error || !balance.data) {
       await supabase.from('wallet_transactions').update({ status: 'pending', metadata: { ...metadata, rollback_reason: 'balance_update_failed_after_claim', rollback_at: new Date().toISOString() } }).eq('id', id).eq('status', 'success');
+      await auditAndNotifyCommerce({ action: 'topup_approve_rollback', actor: admin.email, targetType: 'wallet_transaction', targetId: String(id), status: 'blocked', amount: Number(tx.amount || 0), userId: tx.user_id, reference: tx.reference, metadata: { balance_before: currentBalance, attempted_balance_after: nextBalance, error: balance.error?.message || null } });
       return res.status(409).json({ error: 'Saldo user berubah saat approve. Transaksi dikembalikan ke pending, refresh lalu coba lagi.' });
     }
 
+    await auditAndNotifyCommerce({ action: 'topup_approved', actor: admin.email, targetType: 'wallet_transaction', targetId: String(claimed.data.id), status: 'success', amount: Number(claimed.data.amount || 0), userId: claimed.data.user_id, reference: claimed.data.reference, metadata: { provider: claimed.data.provider, balance_before: currentBalance, balance_after: nextBalance, review_note: reviewNote } });
     return res.status(200).json({ topup: claimed.data, wallet: balance.data });
   }
 
