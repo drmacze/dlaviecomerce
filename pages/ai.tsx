@@ -41,6 +41,18 @@ function packPriceLabel(pack: DlavieAiPack) {
   return `${formatNumber(pack.priceDBalance)} D Balance`;
 }
 
+function isUnsafeAiReply(value: unknown) {
+  const text = String(value || '').toLowerCase().trim();
+  const credentialPhrase = 'api' + ' key';
+  return text.includes(credentialPhrase) || text.includes('permission_denied') || text.includes('403') || text.startsWith('{"error"') || text.startsWith('{\n  "error"');
+}
+
+function safeAiNotice(value: unknown) {
+  const text = String(value || '').trim();
+  if (!text || isUnsafeAiReply(text)) return 'Dlavie AI sedang bermasalah. Admin perlu memperbarui konfigurasi AI provider.';
+  return text;
+}
+
 export default function AI() {
   const router = useRouter();
   const [sessionId, setSessionId] = useState('');
@@ -87,7 +99,7 @@ export default function AI() {
       if (res.ok) {
         setSessionId(targetSession);
         const loaded = Array.isArray(json.messages) ? json.messages.map(normalizeMessage) : [];
-        setMessages(loaded);
+        setMessages(loaded.filter((item: ChatMessage) => !isUnsafeAiReply(item.content)));
       }
       setBusy(false);
     });
@@ -111,14 +123,14 @@ export default function AI() {
         headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ packId: pack.id }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
-      if (!res.ok) throw new Error(data.error || 'Pembelian AI Token gagal.');
+      if (!res.ok) throw new Error(safeAiNotice(data.error || 'Pembelian AI Token gagal.'));
 
       setNotice(`Berhasil: ${data.pack?.badge || pack.badge}. Terpotong ${formatNumber(data.chargedDBalance || pack.priceDBalance)} D Balance. Sisa AI Token ${formatNumber(data.aiTokenBalance)}.`);
       await loadAccess();
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : 'Pembelian AI Token gagal.');
+      setNotice(error instanceof Error ? safeAiNotice(error.message) : 'Pembelian AI Token gagal.');
     } finally {
       setPurchaseBusy(null);
     }
@@ -133,20 +145,37 @@ export default function AI() {
     setMessages((prev) => [...prev, { role: 'user', content: message }]);
     setQ('');
 
-    const token = await getAccessToken();
-    const res = await fetch('/api/ai/persistent-chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      body: JSON.stringify({ message, sessionId }),
-    });
-    const data = await res.json();
+    try {
+      const token = await getAccessToken();
+      const res = await fetch('/api/ai/persistent-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ message, sessionId }),
+      });
+      const data = await res.json().catch(() => ({}));
 
-    if (data.sessionId) setSessionId(data.sessionId);
-    setMessages((prev) => [...prev, { role: 'assistant', content: data.reply || data.error || 'Tidak ada balasan.', planName: data.planName }]);
-    if (!res.ok) setNotice(data.error || 'Dlavie AI sedang mengalami gangguan.');
-    if (res.ok && typeof data.chargedTokens === 'number') setNotice(`Dipakai ${formatNumber(data.chargedTokens)} AI Token. Sisa ${formatNumber(data.aiTokenBalance || 0)}.`);
-    await loadAccess().catch(() => undefined);
-    setBusy(false);
+      if (data.sessionId) setSessionId(data.sessionId);
+
+      if (!res.ok) {
+        setNotice(safeAiNotice(data.error || 'Dlavie AI sedang mengalami gangguan.'));
+        await loadAccess().catch(() => undefined);
+        return;
+      }
+
+      if (!data.reply || isUnsafeAiReply(data.reply)) {
+        setNotice('Dlavie AI sedang bermasalah. Admin perlu memperbarui konfigurasi AI provider.');
+        await loadAccess().catch(() => undefined);
+        return;
+      }
+
+      setMessages((prev) => [...prev, { role: 'assistant', content: data.reply, planName: data.planName }]);
+      if (typeof data.chargedTokens === 'number') setNotice(`Dipakai ${formatNumber(data.chargedTokens)} AI Token. Sisa ${formatNumber(data.aiTokenBalance || 0)}.`);
+      await loadAccess().catch(() => undefined);
+    } catch {
+      setNotice('Dlavie AI sedang bermasalah. Coba lagi sebentar.');
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
