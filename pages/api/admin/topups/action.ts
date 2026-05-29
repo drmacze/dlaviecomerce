@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { auditAndNotifyCommerce } from '@/lib/commerce-audit';
 import { createSupabaseServiceClient } from '@/lib/supabase-server';
 import { sendTelegramMessageToAdmins } from '@/lib/telegram';
 
@@ -22,7 +23,16 @@ function validTopupAmount(value: unknown) {
   return Number.isFinite(amount) && amount >= 10000 && amount <= 1000000;
 }
 
+function redirectToTopups(res: NextApiResponse) {
+  res.writeHead(302, { Location: '/admin/topups' });
+  return res.end();
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
   try {
     const key = String(req.query.key || '').trim();
     const id = String(req.query.id || '').trim();
@@ -38,19 +48,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (txResult.error || !txResult.data) return res.status(404).json({ error: txResult.error?.message || 'Topup tidak ditemukan' });
 
     const tx = txResult.data;
-    if (tx.status !== 'pending') return res.status(409).json({ error: `Topup sudah diproses dengan status ${tx.status}.` });
+    if (tx.status !== 'pending') {
+      return res.status(409).json({ error: `Topup sudah diproses dengan status ${tx.status}.`, topup: tx });
+    }
     if (!validTopupAmount(tx.amount)) return res.status(400).json({ error: 'Nominal topup tidak valid. Minimal Rp 10.000 dan maksimal Rp 1.000.000.' });
 
-    const metadata = { ...(tx.metadata || {}), reviewed_by: 'telegram-action', reviewed_at: new Date().toISOString(), review_note: `Processed from Telegram action: ${action}` };
-    const locked = await supabase.from('wallet_transactions').update({ status: 'processing', metadata }).eq('id', id).eq('type', 'topup').eq('status', 'pending').select('*').single();
-    if (locked.error || !locked.data) return res.status(409).json({ error: 'Topup sudah diproses oleh request lain. Refresh data.' });
+    const metadata = {
+      ...(tx.metadata || {}),
+      reviewed_by: 'telegram-action',
+      reviewed_at: new Date().toISOString(),
+      review_note: `Processed from Telegram action: ${action}`,
+      admin_action: action,
+    };
 
     if (action === 'reject') {
-      const rejected = await supabase.from('wallet_transactions').update({ status: 'rejected', metadata }).eq('id', id).eq('status', 'processing').select('*').single();
-      if (rejected.error) return res.status(500).json({ error: rejected.error.message });
-      await sendTelegramMessageToAdmins(['🚫 Topup rejected', '', `Amount: ${rupiah(tx.amount)}`, `User: ${tx.user_id}`, `Ref: ${tx.reference || '-'}`].join('\n'));
-      res.writeHead(302, { Location: '/admin/topups' });
-      return res.end();
+      const rejected = await supabase
+        .from('wallet_transactions')
+        .update({ status: 'failed', metadata: { ...metadata, rejected_at: new Date().toISOString() } })
+        .eq('id', id)
+        .eq('type', 'topup')
+        .eq('status', 'pending')
+        .select('*')
+        .single();
+
+      if (rejected.error || !rejected.data) {
+        const latest = await supabase.from('wallet_transactions').select('*').eq('id', id).single();
+        return res.status(409).json({ error: `Topup gagal ditolak. Status terbaru: ${latest.data?.status || 'unknown'}.`, topup: latest.data || null, detail: rejected.error?.message || null });
+      }
+
+      await auditAndNotifyCommerce({ action: 'topup_rejected_telegram', actor: 'telegram-action', targetType: 'wallet_transaction', targetId: String(rejected.data.id), status: 'success', amount: Number(rejected.data.amount || 0), userId: rejected.data.user_id, reference: rejected.data.reference, metadata: { provider: rejected.data.provider } });
+      await sendTelegramMessageToAdmins(['🚫 Topup rejected', '', `Amount: ${rupiah(rejected.data.amount)}`, `User: ${rejected.data.user_id}`, `Ref: ${rejected.data.reference || '-'}`].join('\n'));
+      return redirectToTopups(res);
     }
 
     const profile = await supabase.from('profiles').select('id,d_balance').eq('id', tx.user_id).single();
@@ -58,27 +86,50 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const currentBalance = Number(profile.data.d_balance || 0);
     const nextBalance = currentBalance + Number(tx.amount || 0);
-    const balance = await supabase.from('profiles').update({ d_balance: nextBalance }).eq('id', tx.user_id).eq('d_balance', currentBalance).select('id,d_balance').single();
-    if (balance.error || !balance.data) return res.status(409).json({ error: 'Saldo user berubah saat approve. Topup dikunci processing, cek manual sebelum ulang.' });
+    const successMeta = { ...metadata, balance_before: currentBalance, balance_after: nextBalance, approved_at: new Date().toISOString() };
 
-    const approvedMeta = { ...metadata, balance_before: currentBalance, balance_after: nextBalance };
-    const approved = await supabase.from('wallet_transactions').update({ status: 'approved', metadata: approvedMeta }).eq('id', id).eq('status', 'processing').select('*').single();
-    if (approved.error) return res.status(500).json({ error: approved.error.message });
+    const claimed = await supabase
+      .from('wallet_transactions')
+      .update({ status: 'success', metadata: successMeta })
+      .eq('id', id)
+      .eq('type', 'topup')
+      .eq('status', 'pending')
+      .select('*')
+      .single();
+
+    if (claimed.error || !claimed.data) {
+      const latest = await supabase.from('wallet_transactions').select('*').eq('id', id).single();
+      return res.status(409).json({ error: `Topup gagal di-approve. Status terbaru: ${latest.data?.status || 'unknown'}.`, topup: latest.data || null, detail: claimed.error?.message || null });
+    }
+
+    const balance = await supabase
+      .from('profiles')
+      .update({ d_balance: nextBalance })
+      .eq('id', tx.user_id)
+      .eq('d_balance', currentBalance)
+      .select('id,d_balance')
+      .single();
+
+    if (balance.error || !balance.data) {
+      await supabase.from('wallet_transactions').update({ status: 'pending', metadata: { ...metadata, rollback_reason: 'balance_update_failed_after_claim', rollback_at: new Date().toISOString() } }).eq('id', id).eq('status', 'success');
+      return res.status(409).json({ error: 'Saldo user berubah saat approve. Transaksi dikembalikan ke pending, refresh lalu coba lagi.' });
+    }
+
+    await auditAndNotifyCommerce({ action: 'topup_approved_telegram', actor: 'telegram-action', targetType: 'wallet_transaction', targetId: String(claimed.data.id), status: 'success', amount: Number(claimed.data.amount || 0), userId: claimed.data.user_id, reference: claimed.data.reference, metadata: { provider: claimed.data.provider, balance_before: currentBalance, balance_after: nextBalance } });
 
     await sendTelegramMessageToAdmins([
       '✅ Topup approved',
       '',
-      `Amount: ${rupiah(tx.amount)}`,
+      `Amount: ${rupiah(claimed.data.amount)}`,
       `Balance Before: ${rupiah(currentBalance)}`,
       `New Balance: ${rupiah(balance.data.d_balance)}`,
-      `User: ${tx.user_id}`,
-      `Ref: ${tx.reference || '-'}`,
+      `User: ${claimed.data.user_id}`,
+      `Ref: ${claimed.data.reference || '-'}`,
     ].join('\n'), {
       replyMarkup: { inline_keyboard: [[{ text: '💰 Open Topups', url: `${appBaseUrl(req)}/admin/topups` }], [{ text: '👑 Admin Hub', url: `${appBaseUrl(req)}/admin/hub` }]] },
     });
 
-    res.writeHead(302, { Location: '/admin/topups' });
-    return res.end();
+    return redirectToTopups(res);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Topup action failed';
     return res.status(500).json({ error: message });
