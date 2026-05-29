@@ -4,6 +4,8 @@ import { getDlavieAiPlanConfig, getDlavieAiSystemPrompt, normalizeDlavieAiPlan }
 import { getGeminiClient } from '@/lib/gemini';
 import { createSupabaseServiceClient } from '@/lib/supabase-server';
 
+const todayKey = () => new Date().toISOString().slice(0, 10);
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   try {
@@ -15,16 +17,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const supabase = createSupabaseServiceClient();
     const profile = user?.id
-      ? await supabase.from('profiles').select('dlavie_ai_plan').eq('id', user.id).maybeSingle()
+      ? await supabase
+          .from('profiles')
+          .select('dlavie_ai_plan, dlavie_ai_daily_quota, dlavie_ai_daily_used, dlavie_ai_usage_date')
+          .eq('id', user.id)
+          .maybeSingle()
       : { data: null, error: null };
 
     if (profile.error) return res.status(500).json({ error: profile.error.message });
 
     const plan = normalizeDlavieAiPlan(profile.data?.dlavie_ai_plan);
     const planConfig = getDlavieAiPlanConfig(plan);
+    const usageDate = String(profile.data?.dlavie_ai_usage_date || todayKey()).slice(0, 10);
+    const used = usageDate === todayKey() ? Number(profile.data?.dlavie_ai_daily_used || 0) : 0;
+    const quota = Number(profile.data?.dlavie_ai_daily_quota || planConfig.dailyQuota);
+    const remaining = Math.max(quota - used, 0);
 
     if (message.length > planConfig.maxInputChars) {
       return res.status(413).json({ error: `Pesan terlalu panjang untuk ${planConfig.name}.` });
+    }
+
+    if (user?.id && remaining <= 0) {
+      return res.status(429).json({ error: `Kuota harian ${planConfig.name} sudah habis.`, plan, remaining: 0 });
     }
 
     if (!sessionId) {
@@ -42,7 +56,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const result = await ai.models.generateContent({ model: planConfig.model, contents: `${getDlavieAiSystemPrompt(plan)}\n\nPertanyaan user:\n${message}` });
     const reply = result.text?.trim() || 'Maaf, Dlavie AI belum bisa menjawab itu sekarang.';
     await supabase.from('ai_chat_messages').insert({ session_id: sessionId, role: 'assistant', content: reply, dlavie_ai_plan: plan });
-    return res.status(200).json({ sessionId, reply, plan, planName: planConfig.name });
+
+    if (user?.id) {
+      await supabase
+        .from('profiles')
+        .update({ dlavie_ai_daily_used: used + 1, dlavie_ai_usage_date: todayKey(), last_seen_at: new Date().toISOString() })
+        .eq('id', user.id);
+    }
+
+    return res.status(200).json({ sessionId, reply, plan, planName: planConfig.name, remaining: user?.id ? Math.max(remaining - 1, 0) : remaining });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'AI chat failed';
     return res.status(500).json({ error: message });
