@@ -6,6 +6,8 @@ import { createSupabaseServiceClient } from '@/lib/supabase-server';
 const todayKey = () => new Date().toISOString().slice(0, 10);
 
 type DlavieProfileAccess = {
+  d_balance?: number | null;
+  ai_token_balance?: number | null;
   dlavie_ai_plan?: string | null;
   dlavie_ai_daily_quota?: number | null;
   dlavie_ai_daily_used?: number | null;
@@ -27,6 +29,8 @@ function buildAccess(profile?: DlavieProfileAccess | null, authenticated = false
     dailyUsed,
     remaining: Math.max(dailyQuota - dailyUsed, 0),
     usageDate: todayKey(),
+    dBalance: Number(profile?.d_balance || 0),
+    aiTokenBalance: Number(profile?.ai_token_balance || 0),
     plans: dlavieAiPlans,
   };
 }
@@ -41,7 +45,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const supabase = createSupabaseServiceClient();
     const { data, error } = await supabase
       .from('profiles')
-      .select('dlavie_ai_plan, dlavie_ai_daily_quota, dlavie_ai_daily_used, dlavie_ai_usage_date')
+      .select('d_balance, ai_token_balance, dlavie_ai_plan, dlavie_ai_daily_quota, dlavie_ai_daily_used, dlavie_ai_usage_date')
       .eq('id', user.id)
       .maybeSingle();
 
