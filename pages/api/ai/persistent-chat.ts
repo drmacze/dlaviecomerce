@@ -25,12 +25,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .maybeSingle();
 
     if (profile.error) return res.status(500).json({ error: profile.error.message });
+    if (!profile.data) return res.status(403).json({ error: 'Profil Dlavie belum tersedia. Login ulang atau buka dashboard terlebih dahulu.' });
 
-    const plan = normalizeDlavieAiPlan(profile.data?.dlavie_ai_plan);
+    const plan = normalizeDlavieAiPlan(profile.data.dlavie_ai_plan);
     const planConfig = getDlavieAiPlanConfig(plan);
-    const usageDate = String(profile.data?.dlavie_ai_usage_date || todayKey()).slice(0, 10);
-    const used = usageDate === todayKey() ? Number(profile.data?.dlavie_ai_daily_used || 0) : 0;
-    const quota = Number(profile.data?.dlavie_ai_daily_quota || planConfig.dailyQuota);
+    const usageDate = String(profile.data.dlavie_ai_usage_date || todayKey()).slice(0, 10);
+    const used = usageDate === todayKey() ? Number(profile.data.dlavie_ai_daily_used || 0) : 0;
+    const quota = Number(profile.data.dlavie_ai_daily_quota || planConfig.dailyQuota);
     const remaining = Math.max(quota - used, 0);
 
     if (message.length > planConfig.maxInputChars) {
