@@ -3,6 +3,16 @@ import { NextRequest, NextResponse } from 'next/server';
 const COOKIE_PAYLOAD = 'dlavie_admin_unlock';
 const COOKIE_SIG = 'dlavie_admin_sig';
 
+const maintenanceBypass = [
+  '/maintenance',
+  '/api/runtime/status',
+  '/api/admin/runtime',
+  '/_next',
+  '/favicon.ico',
+  '/robots.txt',
+  '/sitemap.xml'
+];
+
 function base64url(bytes: ArrayBuffer) {
   const raw = String.fromCharCode(...new Uint8Array(bytes));
   return btoa(raw).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
@@ -32,8 +42,30 @@ async function unlocked(req: NextRequest) {
   return data?.scope === 'dlavie-admin' && Number(data.exp || 0) > Math.floor(Date.now() / 1000);
 }
 
+function bypassMaintenance(path: string) {
+  return maintenanceBypass.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
+}
+
+async function maintenanceEnabled(req: NextRequest) {
+  try {
+    const response = await fetch(new URL('/api/runtime/status', req.url), { cache: 'no-store' });
+    const runtime = await response.json().catch(() => null);
+    return Boolean(runtime?.maintenance?.enabled);
+  } catch {
+    return false;
+  }
+}
+
 export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
+
+  if (!bypassMaintenance(path) && await maintenanceEnabled(req)) {
+    const url = req.nextUrl.clone();
+    url.pathname = '/maintenance';
+    url.searchParams.set('from', path);
+    return NextResponse.redirect(url);
+  }
+
   if (!path.startsWith('/admin')) return NextResponse.next();
   if (await unlocked(req)) return NextResponse.next();
   const url = req.nextUrl.clone();
@@ -43,4 +75,6 @@ export async function middleware(req: NextRequest) {
   return NextResponse.redirect(url);
 }
 
-export const config = { matcher: ['/admin/:path*'] };
+export const config = {
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)']
+};
