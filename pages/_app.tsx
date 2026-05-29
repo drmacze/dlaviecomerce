@@ -9,6 +9,7 @@ import { DlavieAssetBoot } from '@/components/dlavie-asset-boot';
 import { DlavieErrorBoundary } from '@/components/dlavie-error-boundary';
 import { DlavieExperienceShell } from '@/components/dlavie-experience-shell';
 import { DlavieProviders } from '@/components/dlavie-providers';
+import { RuntimeControlBanner } from '@/components/runtime-control-banner';
 import '../styles/globals.css';
 import '../styles/ambient.css';
 import '../styles/cosmic.css';
@@ -40,6 +41,7 @@ export default function App({ Component, pageProps }: AppProps) {
       <DlavieExperienceShell>
         <AmbientBg />
         <DlavieAlertCenter />
+        <RuntimeControlBanner />
         <DlavieAssetBoot routeLoading={loading} authChecking={authChecking} />
         <AccountShortcut />
         <DlavieErrorBoundary>
