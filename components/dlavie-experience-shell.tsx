@@ -2,6 +2,7 @@ import { MotionConfig } from 'framer-motion';
 import { ReactNode, useEffect } from 'react';
 import { DlavieCommandPalette } from '@/components/dlavie-command-palette';
 import { DlavieGsapEngine } from '@/components/dlavie-gsap-engine';
+import { DlavieMaterialLayer } from '@/components/dlavie-material-layer';
 import { DlavieMotionObserver } from '@/components/dlavie-motion-observer';
 import { DlaviePageProgress } from '@/components/dlavie-page-progress';
 import { DlavieSiteDock } from '@/components/dlavie-site-dock';
@@ -17,6 +18,7 @@ export function DlavieExperienceShell({ children }: { children: ReactNode }) {
       <DlaviePageProgress />
       <DlavieMotionObserver />
       <DlavieGsapEngine />
+      <DlavieMaterialLayer />
       <div className="dlavie-experience-shell min-h-screen pb-28 md:pb-32">
         {children}
       </div>
