@@ -10,19 +10,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   try {
     const user = await verifySupabaseUser(bearerToken(req.headers.authorization));
-    const email = user?.email?.toLowerCase() || 'guest@lumina.local';
+    if (!user?.id || !user.email) return res.status(401).json({ error: 'Login diperlukan untuk menggunakan Dlavie AI.' });
+
+    const email = user.email.toLowerCase();
     const message = String(req.body?.message || '').trim();
     let sessionId = String(req.body?.sessionId || '').trim();
     if (!message) return res.status(400).json({ error: 'Message is required' });
 
     const supabase = createSupabaseServiceClient();
-    const profile = user?.id
-      ? await supabase
-          .from('profiles')
-          .select('dlavie_ai_plan, dlavie_ai_daily_quota, dlavie_ai_daily_used, dlavie_ai_usage_date')
-          .eq('id', user.id)
-          .maybeSingle()
-      : { data: null, error: null };
+    const profile = await supabase
+      .from('profiles')
+      .select('dlavie_ai_plan, dlavie_ai_daily_quota, dlavie_ai_daily_used, dlavie_ai_usage_date')
+      .eq('id', user.id)
+      .maybeSingle();
 
     if (profile.error) return res.status(500).json({ error: profile.error.message });
 
@@ -37,7 +37,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(413).json({ error: `Pesan terlalu panjang untuk ${planConfig.name}.` });
     }
 
-    if (user?.id && remaining <= 0) {
+    if (remaining <= 0) {
       return res.status(429).json({ error: `Kuota harian ${planConfig.name} sudah habis.`, plan, remaining: 0 });
     }
 
@@ -57,14 +57,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const reply = result.text?.trim() || 'Maaf, Dlavie AI belum bisa menjawab itu sekarang.';
     await supabase.from('ai_chat_messages').insert({ session_id: sessionId, role: 'assistant', content: reply, dlavie_ai_plan: plan });
 
-    if (user?.id) {
-      await supabase
-        .from('profiles')
-        .update({ dlavie_ai_daily_used: used + 1, dlavie_ai_usage_date: todayKey(), last_seen_at: new Date().toISOString() })
-        .eq('id', user.id);
-    }
+    await supabase
+      .from('profiles')
+      .update({ dlavie_ai_daily_used: used + 1, dlavie_ai_usage_date: todayKey(), last_seen_at: new Date().toISOString() })
+      .eq('id', user.id);
 
-    return res.status(200).json({ sessionId, reply, plan, planName: planConfig.name, remaining: user?.id ? Math.max(remaining - 1, 0) : remaining });
+    return res.status(200).json({ sessionId, reply, plan, planName: planConfig.name, remaining: Math.max(remaining - 1, 0) });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'AI chat failed';
     return res.status(500).json({ error: message });
