@@ -9,32 +9,36 @@ export type DlavieAiPack = {
   priceDBalance: number;
   credits: number;
   badge: string;
+  valueLabel: string;
 };
 
 export const dlavieAiPacks: Record<DlavieAiPackId, DlavieAiPack> = {
   starter: {
     id: 'starter',
     name: 'Starter Pack',
-    description: 'Cocok untuk mencoba Dlavie AI Basic dan chat ringan.',
-    priceDBalance: 1000,
+    description: 'Paket ringan untuk mencoba Dlavie AI Basic tanpa komitmen besar.',
+    priceDBalance: 10000,
     credits: 10000,
     badge: '10K AI Token',
+    valueLabel: '1 DB = 1 AI Token',
   },
   smart: {
     id: 'smart',
     name: 'Smart Pack',
-    description: 'Paket seimbang untuk penggunaan rutin dan eksplorasi ide.',
-    priceDBalance: 5000,
+    description: 'Paket seimbang untuk penggunaan rutin, brainstorming, dan produktivitas harian.',
+    priceDBalance: 55000,
     credits: 55000,
     badge: '55K AI Token',
+    valueLabel: '1 DB = 1 AI Token',
   },
   core: {
     id: 'core',
     name: 'Core Pack',
-    description: 'Paket besar untuk Dlavie AI Core, coding, dan workflow serius.',
-    priceDBalance: 10000,
+    description: 'Paket besar untuk Dlavie AI Core, coding, analisis, dan workflow serius.',
+    priceDBalance: 120000,
     credits: 120000,
     badge: '120K AI Token',
+    valueLabel: '1 DB = 1 AI Token',
   },
 };
 
