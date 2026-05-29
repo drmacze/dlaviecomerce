@@ -13,7 +13,7 @@ const privatePrefixes = [
   '/checkin',
   '/gift',
   '/security',
-  '/ai/history',
+  '/ai',
   '/admin'
 ];
 
