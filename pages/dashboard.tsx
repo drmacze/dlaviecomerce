@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import { AccountSystemCard } from '@/components/account-system-card';
-import { DlavieCompactPage } from '@/components/dlavie-compact-page';
 import { createSupabaseBrowserClient } from '@/lib/supabase-client';
 
 type Profile = {
@@ -42,9 +41,9 @@ async function safeJson(res: Response) {
 }
 
 function stateBadge(state: LoadState) {
-  if (state === 'ready') return 'bg-[#dfff4f] text-slate-950';
-  if (state === 'partial') return 'bg-yellow-200 text-slate-950';
-  if (state === 'loading') return 'bg-white/60 text-slate-600 ring-1 ring-black/5';
+  if (state === 'ready') return 'bg-white text-slate-950';
+  if (state === 'partial') return 'bg-amber-200 text-slate-950';
+  if (state === 'loading') return 'bg-white/10 text-white/56 ring-1 ring-white/10';
   return 'bg-red-400 text-white';
 }
 
@@ -98,7 +97,7 @@ export default function DashboardPage() {
 
       if (successCount === 3) {
         setState('ready');
-        setStatus('Akun tersinkron. Semua modul utama siap dipakai.');
+        setStatus('Akun tersinkron. Modul utama siap dipakai.');
       } else if (successCount > 0) {
         setState('partial');
         setStatus('Sebagian data berhasil dimuat. Refresh jika ada modul yang belum lengkap.');
@@ -128,76 +127,99 @@ export default function DashboardPage() {
   const events = security?.events || [];
   const riskEvents = events.filter((event) => event.risk_level !== 'low').length;
   const points = profile?.d_points ?? profile?.l_points ?? 0;
-  const modules = useMemo(() => [
-    { label: 'Wallet', href: '/wallet', desc: 'Saldo, topup, aktivitas', primary: true, tone: '#dfff4f' },
-    { label: 'Orders', href: '/orders', desc: 'Cek status pembelian', tone: '#75b3e5' },
-    { label: 'Downloads', href: '/downloads', desc: 'Akses produk digital', tone: '#c9b6ff' },
-    { label: 'Security', href: '/security', desc: 'Event dan device trust', primary: true, tone: '#dfff4f' },
-    { label: 'Rewards', href: '/rewards', desc: 'D-Points dan vault', tone: '#f8ffbd' },
-    { label: 'Referral', href: '/referral', desc: 'Kode dan komisi', tone: '#ffd6a3' },
-    { label: 'Premium', href: '/premium', desc: 'Benefit VIP', tone: '#75b3e5' },
-    { label: 'Profile', href: '/profile', desc: 'Data akun', tone: '#ffffff' }
+
+  const primaryModules = useMemo(() => [
+    { label: 'Products', href: '/products', desc: 'Beli pulsa, data, PLN, game, dan voucher', tone: 'bg-white text-slate-950' },
+    { label: 'Wallet', href: '/wallet', desc: 'Saldo, topup, dan aktivitas D-Balance', tone: 'bg-[#bcff6a] text-slate-950' },
+    { label: 'Orders', href: '/orders', desc: 'Pantau status transaksi dan receipt', tone: 'bg-white text-slate-950' },
+    { label: 'Security', href: '/security', desc: 'Event login dan trusted device', tone: 'bg-white text-slate-950' }
   ], []);
 
+  const secondaryModules = useMemo(() => [
+    { label: 'Rewards', href: '/rewards', desc: 'D-Points dan benefit' },
+    { label: 'Referral', href: '/referral', desc: 'Kode referral dan komisi' },
+    { label: 'Premium', href: '/premium', desc: 'Benefit VIP' },
+    { label: 'Profile', href: '/profile', desc: 'Data akun' }
+  ], []);
+
+  const stats = [
+    { label: 'Balance', value: rupiah(profile?.d_balance || 0), hint: 'D-Balance' },
+    { label: 'Points', value: String(points), hint: 'Reward' },
+    { label: 'VIP', value: profile?.is_vip || profile?.vip_level ? 'ON' : 'OFF', hint: profile?.vip_level || 'Membership' },
+    { label: 'Security', value: verified ? 'OK' : 'Check', hint: `${riskEvents} risk` }
+  ];
+
   return (
-    <DlavieCompactPage
-      eyebrow="DLAVIE DASHBOARD"
-      title={`${greeting()}, ${name}`}
-      description="Pusat kontrol akun dibuat ringkas: saldo, order, keamanan, reward, dan fitur penting selalu mudah ditemukan."
-      metrics={[
-        { label: 'Balance', value: rupiah(profile?.d_balance || 0), hint: 'D-Balance' },
-        { label: 'Points', value: String(points), hint: 'Reward' },
-        { label: 'VIP', value: profile?.is_vip || profile?.vip_level ? 'ON' : 'OFF', hint: profile?.vip_level || 'Membership' },
-        { label: 'Security', value: verified ? 'OK' : 'Check', hint: `${riskEvents} risk` }
-      ]}
-      actions={[
-        { label: 'Wallet', href: '/wallet', primary: true },
-        { label: 'Orders', href: '/orders' },
-        { label: 'Security', href: '/security' }
-      ]}
-    >
-      <div className="grid gap-4 lg:grid-cols-[1fr_.92fr]">
-        <section className="dlavie-mica dlavie-wave-card relative overflow-hidden rounded-[2rem] p-4 md:p-5">
-          <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-[#dfff4f]/35 blur-3xl dlavie-float-orb" />
-          <div className="pointer-events-none absolute -left-16 bottom-6 h-56 w-56 rounded-full bg-[#75b3e5]/24 blur-3xl" />
-          <div className="relative flex items-start justify-between gap-3">
+    <main className="dlavie-system-page min-h-screen px-3 pb-36 pt-4 text-white md:px-6 md:pt-6">
+      <div className="dlavie-mesh" />
+      <div className="mx-auto max-w-7xl space-y-4">
+        <header className="dlv-reveal rounded-[2rem] border border-white/10 bg-white/[0.045] p-4 shadow-[0_24px_80px_rgba(0,0,0,.34)] backdrop-blur-2xl md:p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Account Core</p>
-              <h2 className="mt-2 break-all text-2xl font-black tracking-tight md:text-3xl">{email}</h2>
-              <p className="mt-2 max-w-xl text-sm font-semibold leading-6 text-slate-600">{status}</p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/36">DLAVIE DASHBOARD</p>
+              <h1 className="mt-2 text-3xl font-semibold leading-none tracking-[-.06em] md:text-5xl">{greeting()}, {name}</h1>
+              <p className="mt-3 max-w-2xl text-sm font-medium leading-6 text-white/48">Pusat kontrol akun: produk, wallet, orders, keamanan, reward, dan profil dibuat mudah ditemukan.</p>
             </div>
-            <span className={`shrink-0 rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-widest ${stateBadge(state)}`}>{state}</span>
+            <span className={`shrink-0 rounded-full px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] ${stateBadge(state)}`}>{state}</span>
           </div>
-          <div className="relative mt-5 grid grid-cols-2 gap-2 md:grid-cols-4">
-            {modules.slice(0, 4).map((module) => <a key={module.href} href={module.href} style={{ '--tone': module.tone } as React.CSSProperties} className={`dlavie-service-glow dlavie-lift rounded-[1.2rem] p-3 text-sm font-black ring-1 ring-black/5 ${module.primary ? 'bg-[#dfff4f] text-slate-950' : 'bg-white/68 text-slate-950 backdrop-blur-xl'}`}>{module.label}<span className="mt-1 block text-[10px] font-bold text-slate-500">{module.desc}</span></a>)}
-          </div>
-          <div className="relative mt-5 flex flex-wrap items-center gap-2">
-            <button onClick={logout} className="rounded-full bg-slate-950 px-5 py-3 text-sm font-black text-white shadow-[0_18px_48px_rgba(16,19,21,.18)] transition hover:-translate-y-1">Logout</button>
-            <a href="/profile" className="rounded-full bg-white/70 px-5 py-3 text-sm font-black text-slate-950 ring-1 ring-black/5 backdrop-blur-xl transition hover:-translate-y-1">Edit profile</a>
-          </div>
+        </header>
+
+        <section className="dlv-reveal grid grid-cols-2 gap-2 md:grid-cols-4">
+          {stats.map((item) => (
+            <div key={item.label} className="rounded-[1.35rem] border border-white/10 bg-white/[0.045] p-4 backdrop-blur-xl">
+              <p className="truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-white/32">{item.label}</p>
+              <p className="mt-2 truncate text-xl font-semibold tracking-[-.04em] text-white md:text-2xl">{item.value}</p>
+              <p className="mt-1 truncate text-xs font-medium text-white/36">{item.hint}</p>
+            </div>
+          ))}
         </section>
 
-        <section className="grid gap-3">
-          <AccountSystemCard status={status} verified={verified} trustedCount={devices.length} eventCount={events.length} />
-          <div className="dlavie-mica rounded-[1.65rem] p-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">Active Modules</p>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              {modules.slice(4).map((module) => <a key={module.href} href={module.href} style={{ '--tone': module.tone } as React.CSSProperties} className="dlavie-service-glow dlavie-lift rounded-[1.12rem] bg-white/70 p-3 text-sm font-black shadow-sm ring-1 ring-black/5 backdrop-blur-xl">{module.label}<span className="mt-1 block text-[10px] font-bold text-slate-400">{module.desc}</span></a>)}
+        <section className="grid gap-4 lg:grid-cols-[0.92fr_1.08fr]">
+          <aside className="dlv-reveal rounded-[2rem] border border-white/10 bg-white/[0.045] p-4 shadow-[0_28px_90px_rgba(0,0,0,.38)] backdrop-blur-2xl md:p-5">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/34">Account Core</p>
+            <h2 className="mt-2 break-all text-2xl font-semibold tracking-[-.04em] text-white">{email}</h2>
+            <p className="mt-3 text-sm font-medium leading-6 text-white/48">{status}</p>
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              {primaryModules.map((module) => (
+                <a key={module.href} href={module.href} className={`rounded-[1.2rem] p-4 text-sm font-semibold transition hover:-translate-y-1 ${module.tone}`}>
+                  {module.label}
+                  <span className="mt-1 block text-[11px] font-medium opacity-60">{module.desc}</span>
+                </a>
+              ))}
             </div>
-          </div>
-          <div className="dlavie-mica rounded-[1.65rem] p-4">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">Security Snapshot</p>
-              <span className="rounded-full bg-[#dfff4f] px-3 py-1.5 text-[10px] font-black text-slate-950">{verified ? 'Verified' : 'Check email'}</span>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button onClick={logout} className="rounded-full border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-semibold text-white/76 transition hover:bg-white/[0.08]">Logout</button>
+              <a href="/profile" className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950">Edit profile</a>
             </div>
-            <div className="mt-3 grid gap-2">
-              <div className="flex items-center justify-between rounded-[1rem] bg-white/72 p-3 text-sm font-bold ring-1 ring-black/5"><span>Risk events</span><span>{riskEvents}</span></div>
-              <div className="flex items-center justify-between rounded-[1rem] bg-white/72 p-3 text-sm font-bold ring-1 ring-black/5"><span>Trusted devices</span><span>{devices.length}</span></div>
-              <div className="rounded-[1rem] bg-white/72 p-3 text-sm font-bold ring-1 ring-black/5"><span className="block text-slate-500">Last sign in</span><span className="mt-1 block text-xs">{formatDate(security?.user?.last_sign_in_at)}</span></div>
+          </aside>
+
+          <section className="dlv-reveal grid gap-3">
+            <AccountSystemCard status={status} verified={verified} trustedCount={devices.length} eventCount={events.length} />
+            <div className="rounded-[2rem] border border-white/10 bg-white/[0.045] p-4 shadow-[0_24px_80px_rgba(0,0,0,.3)] backdrop-blur-2xl md:p-5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/34">More tools</p>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {secondaryModules.map((module) => (
+                  <a key={module.href} href={module.href} className="rounded-[1.15rem] border border-white/10 bg-white/[0.045] p-4 text-sm font-semibold text-white/78 transition hover:-translate-y-1 hover:bg-white/[0.08]">
+                    {module.label}
+                    <span className="mt-1 block text-[11px] font-medium text-white/36">{module.desc}</span>
+                  </a>
+                ))}
+              </div>
             </div>
-          </div>
+            <div className="rounded-[2rem] border border-white/10 bg-white/[0.045] p-4 shadow-[0_24px_80px_rgba(0,0,0,.3)] backdrop-blur-2xl md:p-5">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/34">Security Snapshot</p>
+                <span className="rounded-full bg-white px-3 py-1.5 text-[10px] font-semibold text-slate-950">{verified ? 'Verified' : 'Check email'}</span>
+              </div>
+              <div className="mt-3 grid gap-2">
+                <div className="flex items-center justify-between rounded-[1rem] border border-white/10 bg-black/20 p-3 text-sm font-medium text-white/70"><span>Risk events</span><span>{riskEvents}</span></div>
+                <div className="flex items-center justify-between rounded-[1rem] border border-white/10 bg-black/20 p-3 text-sm font-medium text-white/70"><span>Trusted devices</span><span>{devices.length}</span></div>
+                <div className="rounded-[1rem] border border-white/10 bg-black/20 p-3 text-sm font-medium text-white/70"><span className="block text-white/38">Last sign in</span><span className="mt-1 block text-xs">{formatDate(security?.user?.last_sign_in_at)}</span></div>
+              </div>
+            </div>
+          </section>
         </section>
       </div>
-    </DlavieCompactPage>
+    </main>
   );
 }
