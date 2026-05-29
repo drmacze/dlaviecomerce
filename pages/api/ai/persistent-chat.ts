@@ -6,6 +6,19 @@ import { getGeminiClient } from '@/lib/gemini';
 import { createSupabaseServiceClient } from '@/lib/supabase-server';
 
 const todayKey = () => new Date().toISOString().slice(0, 10);
+const SAFE_AI_PROVIDER_ERROR = 'Dlavie AI sedang tidak dapat memproses jawaban karena koneksi provider AI bermasalah. Admin perlu memperbarui konfigurasi AI provider.';
+
+function looksLikeProviderFailure(value: string) {
+  const text = String(value || '').toLowerCase().trim();
+  const credentialPhrase = 'api' + ' key';
+  return (
+    text.includes(credentialPhrase) ||
+    text.includes('permission_denied') ||
+    text.includes('403') ||
+    text.startsWith('{"error"') ||
+    text.startsWith('{\n  "error"')
+  );
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -25,7 +38,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .eq('id', user.id)
       .maybeSingle();
 
-    if (profile.error) return res.status(500).json({ error: profile.error.message });
+    if (profile.error) return res.status(500).json({ error: 'Profil Dlavie belum bisa dimuat.' });
     if (!profile.data) return res.status(403).json({ error: 'Profil Dlavie belum tersedia. Login ulang atau buka dashboard terlebih dahulu.' });
 
     const plan = normalizeDlavieAiPlan(profile.data.dlavie_ai_plan);
@@ -55,14 +68,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .insert({ user_email: email, title: message.slice(0, 48) || 'Dlavie AI Chat', dlavie_ai_plan: plan })
         .select('id')
         .single();
-      if (created.error || !created.data) return res.status(500).json({ error: created.error?.message || 'Session failed' });
+      if (created.error || !created.data) return res.status(500).json({ error: 'Session Dlavie AI gagal dibuat.' });
       sessionId = created.data.id;
     }
 
     await supabase.from('ai_chat_messages').insert({ session_id: sessionId, role: 'user', content: message, dlavie_ai_plan: plan });
-    const ai = getGeminiClient();
-    const result = await ai.models.generateContent({ model: planConfig.model, contents: `${getDlavieAiSystemPrompt(plan)}\n\nPertanyaan user:\n${message}` });
-    const reply = result.text?.trim() || 'Maaf, Dlavie AI belum bisa menjawab itu sekarang.';
+
+    let reply = '';
+    try {
+      const ai = getGeminiClient();
+      const result = await ai.models.generateContent({ model: planConfig.model, contents: `${getDlavieAiSystemPrompt(plan)}\n\nPertanyaan user:\n${message}` });
+      reply = result.text?.trim() || '';
+    } catch {
+      return res.status(502).json({ error: SAFE_AI_PROVIDER_ERROR, code: 'AI_PROVIDER_UNAVAILABLE', sessionId, plan, planName: planConfig.name });
+    }
+
+    if (!reply || looksLikeProviderFailure(reply)) {
+      return res.status(502).json({ error: SAFE_AI_PROVIDER_ERROR, code: 'AI_PROVIDER_UNAVAILABLE', sessionId, plan, planName: planConfig.name });
+    }
+
     const charge = estimateAiCharge({ message, reply, plan });
     const chargedTokens = Math.min(charge.charged, currentAiTokens);
     const nextAiTokens = Math.max(currentAiTokens - chargedTokens, 0);
@@ -94,8 +118,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     return res.status(200).json({ sessionId, reply, plan, planName: planConfig.name, remaining: Math.max(remaining - 1, 0), aiTokenBalance: nextAiTokens, chargedTokens });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'AI chat failed';
-    return res.status(500).json({ error: message });
+  } catch {
+    return res.status(500).json({ error: 'Dlavie AI sedang bermasalah. Coba lagi sebentar.', code: 'DLAVIE_AI_FAILED' });
   }
 }
