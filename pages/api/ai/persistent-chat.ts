@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { bearerToken, verifySupabaseUser } from '@/lib/auth-server';
+import { estimateAiCharge } from '@/lib/dlavie-ai-credits';
 import { getDlavieAiPlanConfig, getDlavieAiSystemPrompt, normalizeDlavieAiPlan } from '@/lib/dlavie-ai-plans';
 import { getGeminiClient } from '@/lib/gemini';
 import { createSupabaseServiceClient } from '@/lib/supabase-server';
@@ -20,7 +21,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const supabase = createSupabaseServiceClient();
     const profile = await supabase
       .from('profiles')
-      .select('dlavie_ai_plan, dlavie_ai_daily_quota, dlavie_ai_daily_used, dlavie_ai_usage_date')
+      .select('dlavie_ai_plan, dlavie_ai_daily_quota, dlavie_ai_daily_used, dlavie_ai_usage_date, ai_token_balance')
       .eq('id', user.id)
       .maybeSingle();
 
@@ -33,6 +34,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const used = usageDate === todayKey() ? Number(profile.data.dlavie_ai_daily_used || 0) : 0;
     const quota = Number(profile.data.dlavie_ai_daily_quota || planConfig.dailyQuota);
     const remaining = Math.max(quota - used, 0);
+    const currentAiTokens = Number(profile.data.ai_token_balance || 0);
+    const estimatedMinimum = Math.ceil(message.length / 4) * (plan === 'core' ? 2 : 1);
 
     if (message.length > planConfig.maxInputChars) {
       return res.status(413).json({ error: `Pesan terlalu panjang untuk ${planConfig.name}.` });
@@ -40,6 +43,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (remaining <= 0) {
       return res.status(429).json({ error: `Kuota harian ${planConfig.name} sudah habis.`, plan, remaining: 0 });
+    }
+
+    if (currentAiTokens < estimatedMinimum) {
+      return res.status(402).json({ error: 'AI Token tidak cukup. Topup D Balance lalu beli AI Token terlebih dahulu.', plan, aiTokenBalance: currentAiTokens });
     }
 
     if (!sessionId) {
@@ -56,14 +63,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const ai = getGeminiClient();
     const result = await ai.models.generateContent({ model: planConfig.model, contents: `${getDlavieAiSystemPrompt(plan)}\n\nPertanyaan user:\n${message}` });
     const reply = result.text?.trim() || 'Maaf, Dlavie AI belum bisa menjawab itu sekarang.';
+    const charge = estimateAiCharge({ message, reply, plan });
+    const chargedTokens = Math.min(charge.charged, currentAiTokens);
+    const nextAiTokens = Math.max(currentAiTokens - chargedTokens, 0);
+
     await supabase.from('ai_chat_messages').insert({ session_id: sessionId, role: 'assistant', content: reply, dlavie_ai_plan: plan });
 
     await supabase
       .from('profiles')
-      .update({ dlavie_ai_daily_used: used + 1, dlavie_ai_usage_date: todayKey(), last_seen_at: new Date().toISOString() })
+      .update({ ai_token_balance: nextAiTokens, dlavie_ai_daily_used: used + 1, dlavie_ai_usage_date: todayKey(), last_seen_at: new Date().toISOString() })
       .eq('id', user.id);
 
-    return res.status(200).json({ sessionId, reply, plan, planName: planConfig.name, remaining: Math.max(remaining - 1, 0) });
+    await supabase.from('wallet_transactions').insert({
+      user_id: user.id,
+      type: 'ai_token_usage',
+      amount: -chargedTokens,
+      status: 'success',
+      provider: 'dlavie-ai',
+      reference: `ai-use-${sessionId}-${Date.now()}`,
+      metadata: {
+        sessionId,
+        plan,
+        model: planConfig.model,
+        inputUnits: charge.inputUnits,
+        outputUnits: charge.outputUnits,
+        multiplier: charge.multiplier,
+        aiTokenBefore: currentAiTokens,
+        aiTokenAfter: nextAiTokens,
+      },
+    });
+
+    return res.status(200).json({ sessionId, reply, plan, planName: planConfig.name, remaining: Math.max(remaining - 1, 0), aiTokenBalance: nextAiTokens, chargedTokens });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'AI chat failed';
     return res.status(500).json({ error: message });
