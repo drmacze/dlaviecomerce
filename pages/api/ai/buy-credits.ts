@@ -30,12 +30,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(402).json({
         error: `D Balance tidak cukup. Butuh ${pack.priceDBalance.toLocaleString('id-ID')} D Balance.`,
         dBalance: currentDBalance,
+        requiredDBalance: pack.priceDBalance,
       });
     }
 
     const nextDBalance = currentDBalance - pack.priceDBalance;
     const nextAiTokens = currentAiTokens + pack.credits;
 
+    // Guard kondisi saldo agar dua klik cepat tidak menghasilkan update saldo yang saling menimpa.
     const updated = await supabase
       .from('profiles')
       .update({
@@ -44,10 +46,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         last_seen_at: new Date().toISOString(),
       })
       .eq('id', user.id)
+      .eq('d_balance', currentDBalance)
+      .eq('ai_token_balance', currentAiTokens)
       .select('d_balance, ai_token_balance')
-      .single();
+      .maybeSingle();
 
-    if (updated.error || !updated.data) return res.status(500).json({ error: updated.error?.message || 'Pembelian AI Token gagal.' });
+    if (updated.error) return res.status(500).json({ error: updated.error.message });
+    if (!updated.data) return res.status(409).json({ error: 'Saldo berubah saat transaksi diproses. Muat ulang lalu coba lagi.' });
 
     await supabase.from('wallet_transactions').insert({
       user_id: user.id,
@@ -64,12 +69,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         dBalanceAfter: nextDBalance,
         aiTokenBefore: currentAiTokens,
         aiTokenAfter: nextAiTokens,
+        priceDBalance: pack.priceDBalance,
       },
     });
 
     return res.status(200).json({
       success: true,
       pack,
+      chargedDBalance: pack.priceDBalance,
       dBalance: Number(updated.data.d_balance || 0),
       aiTokenBalance: Number(updated.data.ai_token_balance || 0),
     });
