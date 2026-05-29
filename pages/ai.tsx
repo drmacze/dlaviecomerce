@@ -1,5 +1,6 @@
 import { useRouter } from 'next/router';
 import { useEffect, useMemo, useState } from 'react';
+import { dlavieAiPacks, type DlavieAiPackId } from '@/lib/dlavie-ai-credits';
 import { dlavieAiPlans, type DlavieAiPlan } from '@/lib/dlavie-ai-plans';
 import { createSupabaseBrowserClient } from '@/lib/supabase-client';
 
@@ -13,6 +14,8 @@ type DlavieAiAccess = {
   dailyQuota: number;
   dailyUsed: number;
   remaining: number;
+  dBalance: number;
+  aiTokenBalance: number;
 };
 
 function normalizeMessage(message: StoredChatMessage): ChatMessage {
@@ -24,12 +27,17 @@ function createPlanProgress(access: DlavieAiAccess | null) {
   return Math.min(100, Math.round((access.dailyUsed / access.dailyQuota) * 100));
 }
 
+function formatNumber(value: number) {
+  return Number(value || 0).toLocaleString('id-ID');
+}
+
 export default function AI() {
   const router = useRouter();
   const [sessionId, setSessionId] = useState('');
   const [q, setQ] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [busy, setBusy] = useState(false);
+  const [purchaseBusy, setPurchaseBusy] = useState<DlavieAiPackId | null>(null);
   const [access, setAccess] = useState<DlavieAiAccess | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<DlavieAiPlan>('basic');
   const [notice, setNotice] = useState('');
@@ -39,6 +47,7 @@ export default function AI() {
   const progress = createPlanProgress(access);
 
   const planCards = useMemo(() => Object.values(dlavieAiPlans), []);
+  const creditPacks = useMemo(() => Object.values(dlavieAiPacks), []);
 
   async function getAccessToken() {
     const supabase = createSupabaseBrowserClient();
@@ -80,6 +89,32 @@ export default function AI() {
     });
   }, [router.query.session]);
 
+  async function buyCredits(packId: DlavieAiPackId) {
+    if (purchaseBusy) return;
+
+    setPurchaseBusy(packId);
+    setNotice('');
+
+    try {
+      const token = await getAccessToken();
+      const res = await fetch('/api/ai/buy-credits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ packId }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || 'Pembelian AI Token gagal.');
+
+      setNotice(`Berhasil membeli ${data.pack?.badge || 'AI Token'}. Saldo AI Token sekarang ${formatNumber(data.aiTokenBalance)}.`);
+      await loadAccess();
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Pembelian AI Token gagal.');
+    } finally {
+      setPurchaseBusy(null);
+    }
+  }
+
   async function ask() {
     const message = q.trim();
     if (!message || busy) return;
@@ -100,6 +135,7 @@ export default function AI() {
     if (data.sessionId) setSessionId(data.sessionId);
     setMessages((prev) => [...prev, { role: 'assistant', content: data.reply || data.error || 'Tidak ada balasan.', planName: data.planName }]);
     if (!res.ok) setNotice(data.error || 'Dlavie AI sedang mengalami gangguan.');
+    if (res.ok && typeof data.chargedTokens === 'number') setNotice(`Dipakai ${formatNumber(data.chargedTokens)} AI Token. Sisa ${formatNumber(data.aiTokenBalance || 0)}.`);
     await loadAccess().catch(() => undefined);
     setBusy(false);
   }
@@ -139,6 +175,19 @@ export default function AI() {
                 <span className="rounded-full bg-[#dfff4f] px-3 py-2 text-xs font-black text-slate-950">{activePlan.badge}</span>
               </div>
 
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-4">
+                  <p className="text-xs font-black uppercase tracking-[0.22em] text-white/36">D Balance</p>
+                  <p className="mt-2 text-2xl font-black text-white">{formatNumber(access?.dBalance || 0)}</p>
+                  <a className="mt-3 inline-flex rounded-full bg-white px-3 py-2 text-xs font-black text-slate-950" href="/wallet">Topup</a>
+                </div>
+                <div className="rounded-[1.5rem] border border-[#dfff4f]/20 bg-[#dfff4f]/10 p-4">
+                  <p className="text-xs font-black uppercase tracking-[0.22em] text-[#dfff4f]">AI Token</p>
+                  <p className="mt-2 text-2xl font-black text-white">{formatNumber(access?.aiTokenBalance || 0)}</p>
+                  <p className="mt-3 text-xs font-bold text-white/45">Dipakai per chat sesuai panjang input/output.</p>
+                </div>
+              </div>
+
               <div className="mt-5 rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-4">
                 <div className="flex items-center justify-between text-sm font-black text-white/74">
                   <span>Kuota harian</span>
@@ -149,10 +198,38 @@ export default function AI() {
                 </div>
                 <p className="mt-3 text-xs font-bold text-white/42">Sisa: {access?.remaining ?? activePlan.dailyQuota} pesan hari ini.</p>
               </div>
+            </section>
 
-              {!access?.authenticated && (
-                <a className="mt-5 block rounded-full bg-[#dfff4f] px-5 py-3 text-center text-sm font-black text-slate-950 shadow-[0_16px_35px_rgba(120,150,45,.22)]" href="/login?next=/ai">Login untuk menyimpan plan</a>
-              )}
+            <section className="dlavie-glass rounded-[2rem] p-5">
+              <p className="text-xs font-black uppercase tracking-[0.28em] text-[#dfff4f]">AI Token Store</p>
+              <h2 className="mt-2 text-2xl font-black tracking-[-.04em] text-white">Beli AI Token pakai D Balance</h2>
+              <p className="mt-2 text-sm font-semibold leading-6 text-white/55">Topup D Balance terlebih dahulu, lalu konversikan menjadi AI Token untuk memakai Dlavie AI.</p>
+
+              <div className="mt-4 grid gap-3">
+                {creditPacks.map((pack) => {
+                  const disabled = purchaseBusy !== null || (access?.dBalance || 0) < pack.priceDBalance;
+                  return (
+                    <div key={pack.id} className="rounded-[1.6rem] border border-white/10 bg-white/[0.035] p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-xs font-black uppercase tracking-[0.2em] text-white/36">{pack.badge}</p>
+                          <h3 className="mt-1 text-xl font-black text-white">{pack.name}</h3>
+                          <p className="mt-2 text-sm font-semibold leading-6 text-white/55">{pack.description}</p>
+                        </div>
+                        <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-black text-white/70">{formatNumber(pack.priceDBalance)} DB</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => buyCredits(pack.id)}
+                        disabled={disabled}
+                        className="mt-4 w-full rounded-full bg-[#dfff4f] px-4 py-3 text-sm font-black text-slate-950 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-45"
+                      >
+                        {purchaseBusy === pack.id ? 'Memproses...' : disabled ? 'D Balance kurang' : 'Beli Paket'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             </section>
 
             <section className="dlavie-glass rounded-[2rem] p-5">
