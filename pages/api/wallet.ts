@@ -3,6 +3,14 @@ import { bearerToken, verifySupabaseUser } from '@/lib/auth-server';
 import { createSupabaseServiceClient } from '@/lib/supabase-server';
 import { sendTelegramMessageToAdmins } from '@/lib/telegram';
 
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '3mb',
+    },
+  },
+};
+
 const allowedManualProviders = new Set(['manual-payment', 'bri', 'dana', 'gopay', 'qris']);
 const rupiah = (value = 0) => `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
 
@@ -27,7 +35,7 @@ function cleanProofImage(value: unknown) {
   const data = String(value || '');
   if (!data) return '';
   if (!data.startsWith('data:image/')) return '';
-  if (data.length > 1_250_000) return 'too-large';
+  if (data.length > 2_600_000) return 'too-large';
   return data;
 }
 
@@ -94,7 +102,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (senderName.length < 3) return res.status(400).json({ error: 'Nama pengirim wajib diisi minimal 3 karakter.' });
     if (proofNote.length < 6) return res.status(400).json({ error: 'Catatan bukti pembayaran wajib diisi.' });
     if (!proofImageData) return res.status(400).json({ error: 'Upload bukti pembayaran dari galeri wajib diisi.' });
-    if (proofImageData === 'too-large') return res.status(400).json({ error: 'Ukuran bukti gambar terlalu besar. Maksimal sekitar 900KB.' });
+    if (proofImageData === 'too-large') return res.status(400).json({ error: 'Ukuran bukti gambar terlalu besar. Kompres/screenshot ulang lalu upload kembali.' });
 
     const reference = `DLV-MANUAL-${Date.now()}-${user.id.slice(0, 6)}`;
     const created = await supabase.from('wallet_transactions').insert({
