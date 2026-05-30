@@ -1,0 +1,7 @@
+# Replit metadata is only for Replit workspaces and should not influence Vercel builds.
+.replit
+replit.md
+
+# Local/editor artifacts.
+.DS_Store
+*.log

@@ -1,70 +1,85 @@
-import { Switch, Route, Router as WouterRouter } from 'wouter';
-import { DlavieProviders } from '@/components/dlavie-providers';
-import { DlavieExperienceShell } from '@/components/dlavie-experience-shell';
-import { AmbientBg } from '@/components/ambient-bg';
-import { DlavieAlertCenter } from '@/components/dlavie-alert-center';
-import { RuntimeControlBanner } from '@/components/runtime-control-banner';
-import { DlavieAssetBoot } from '@/components/dlavie-asset-boot';
-import { AccountShortcut } from '@/components/account-shortcut';
-import { DlavieErrorBoundary } from '@/components/dlavie-error-boundary';
-import { AuthRouteGuard } from '@/components/auth-route-guard';
+import { Switch, Route, Router as WouterRouter } from "wouter";
+import { DlavieProviders } from "@/components/dlavie-providers";
+import { DlavieExperienceShell } from "@/components/dlavie-experience-shell";
+import { AmbientBg } from "@/components/ambient-bg";
+import { DlavieAlertCenter } from "@/components/dlavie-alert-center";
+import { RuntimeControlBanner } from "@/components/runtime-control-banner";
+import { DlavieAssetBoot } from "@/components/dlavie-asset-boot";
+import { AccountShortcut } from "@/components/account-shortcut";
+import { DlavieErrorBoundary } from "@/components/dlavie-error-boundary";
+import { AuthRouteGuard } from "@/components/auth-route-guard";
 
-import Home from '@/pages/index';
-import Login from '@/pages/login';
-import Dashboard from '@/pages/dashboard';
-import Products from '@/pages/products';
-import ProductDetail from '@/pages/product/[slug]';
-import Cart from '@/pages/cart';
-import Checkout from '@/pages/checkout';
-import Orders from '@/pages/orders';
-import OrderSuccess from '@/pages/order/success';
-import Wallet from '@/pages/wallet';
-import WalletFinish from '@/pages/wallet/finish';
-import Profile from '@/pages/profile';
-import Security from '@/pages/security';
-import Rewards from '@/pages/rewards';
-import Referral from '@/pages/referral';
-import Affiliate from '@/pages/affiliate';
-import Premium from '@/pages/premium';
-import Gift from '@/pages/gift';
-import Checkin from '@/pages/checkin';
-import Ai from '@/pages/ai';
-import AiHistory from '@/pages/ai/history';
-import Panel from '@/pages/panel';
-import AdminDashboard from '@/pages/admin';
-import AdminHub from '@/pages/admin/hub';
-import AdminOrders from '@/pages/admin/orders';
-import AdminPanelOrders from '@/pages/admin/panel-orders';
-import AdminProducts from '@/pages/admin/products';
-import AdminProductEdit from '@/pages/admin/products/[id]';
-import AdminUsers from '@/pages/admin/users';
-import AdminTopups from '@/pages/admin/topups';
-import AdminCoupons from '@/pages/admin/coupons';
-import AdminReferrals from '@/pages/admin/referrals';
-import AdminSecurity from '@/pages/admin/security';
-import AdminSignal from '@/pages/admin/signal';
-import AdminSec from '@/pages/admin/sec';
-import AdminIntelligence from '@/pages/admin/intelligence';
-import AdminOrderPulse from '@/pages/admin/order-pulse';
-import AuthConfirmed from '@/pages/auth/confirmed';
-import ResetPassword from '@/pages/reset-password';
-import TelegramLogin from '@/pages/telegram-login';
-import TelegramAdmin from '@/pages/telegram-admin';
-import Ppob from '@/pages/ppob';
-import PpobOrders from '@/pages/ppob/orders';
-import Maintenance from '@/pages/maintenance';
-import PreviewAmbient from '@/pages/preview/ambient';
-import NotFound from '@/pages/not-found';
+import { lazy, Suspense, type ReactNode } from "react";
 
-import './styles/globals.css';
-import './styles/ambient.css';
-import './styles/cosmic.css';
-import './styles/dlavie-system.css';
-import './styles/dlavie-experience.css';
-import './styles/dlavie-premium-v2.css';
-import './styles/auth-motion.css';
+const Home = lazy(() => import("@/pages/index"));
+const Login = lazy(() => import("@/pages/login"));
+const Dashboard = lazy(() => import("@/pages/dashboard"));
+const Products = lazy(() => import("@/pages/products"));
+const ProductDetail = lazy(() => import("@/pages/product/[slug]"));
+const Cart = lazy(() => import("@/pages/cart"));
+const Checkout = lazy(() => import("@/pages/checkout"));
+const Orders = lazy(() => import("@/pages/orders"));
+const OrderSuccess = lazy(() => import("@/pages/order/success"));
+const Wallet = lazy(() => import("@/pages/wallet"));
+const WalletFinish = lazy(() => import("@/pages/wallet/finish"));
+const Profile = lazy(() => import("@/pages/profile"));
+const Security = lazy(() => import("@/pages/security"));
+const Rewards = lazy(() => import("@/pages/rewards"));
+const Referral = lazy(() => import("@/pages/referral"));
+const Affiliate = lazy(() => import("@/pages/affiliate"));
+const Premium = lazy(() => import("@/pages/premium"));
+const Gift = lazy(() => import("@/pages/gift"));
+const Checkin = lazy(() => import("@/pages/checkin"));
+const Ai = lazy(() => import("@/pages/ai"));
+const AiHistory = lazy(() => import("@/pages/ai/history"));
+const Panel = lazy(() => import("@/pages/panel"));
+const AdminDashboard = lazy(() => import("@/pages/admin"));
+const AdminHub = lazy(() => import("@/pages/admin/hub"));
+const AdminOrders = lazy(() => import("@/pages/admin/orders"));
+const AdminPanelOrders = lazy(() => import("@/pages/admin/panel-orders"));
+const AdminProducts = lazy(() => import("@/pages/admin/products"));
+const AdminProductEdit = lazy(() => import("@/pages/admin/products/[id]"));
+const AdminUsers = lazy(() => import("@/pages/admin/users"));
+const AdminTopups = lazy(() => import("@/pages/admin/topups"));
+const AdminCoupons = lazy(() => import("@/pages/admin/coupons"));
+const AdminReferrals = lazy(() => import("@/pages/admin/referrals"));
+const AdminSecurity = lazy(() => import("@/pages/admin/security"));
+const AdminSignal = lazy(() => import("@/pages/admin/signal"));
+const AdminSec = lazy(() => import("@/pages/admin/sec"));
+const AdminIntelligence = lazy(() => import("@/pages/admin/intelligence"));
+const AdminOrderPulse = lazy(() => import("@/pages/admin/order-pulse"));
+const AuthConfirmed = lazy(() => import("@/pages/auth/confirmed"));
+const ResetPassword = lazy(() => import("@/pages/reset-password"));
+const TelegramLogin = lazy(() => import("@/pages/telegram-login"));
+const TelegramAdmin = lazy(() => import("@/pages/telegram-admin"));
+const Ppob = lazy(() => import("@/pages/ppob"));
+const PpobOrders = lazy(() => import("@/pages/ppob/orders"));
+const Maintenance = lazy(() => import("@/pages/maintenance"));
+const PreviewAmbient = lazy(() => import("@/pages/preview/ambient"));
+const NotFound = lazy(() => import("@/pages/not-found"));
 
-function AppShell({ children }: { children: React.ReactNode }) {
+function RouteFallback() {
+  return (
+    <main className="grid min-h-screen place-items-center bg-[#f4f8ed] p-6 text-slate-950">
+      <div className="rounded-[2rem] bg-white/80 px-6 py-5 text-center shadow-[0_20px_70px_rgba(15,23,42,.12)] ring-1 ring-black/5">
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">
+          DLAVIE
+        </p>
+        <p className="mt-2 text-sm font-black">Memuat halaman...</p>
+      </div>
+    </main>
+  );
+}
+
+import "./styles/globals.css";
+import "./styles/ambient.css";
+import "./styles/cosmic.css";
+import "./styles/dlavie-system.css";
+import "./styles/dlavie-experience.css";
+import "./styles/dlavie-premium-v2.css";
+import "./styles/auth-motion.css";
+
+function AppShell({ children }: { children: ReactNode }) {
   return (
     <DlavieProviders>
       <DlavieExperienceShell>
@@ -140,9 +155,11 @@ function Router() {
 
 export default function App() {
   return (
-    <WouterRouter base={import.meta.env.BASE_URL?.replace(/\/$/, '') || ''}>
+    <WouterRouter base={import.meta.env.BASE_URL?.replace(/\/$/, "") || ""}>
       <AppShell>
-        <Router />
+        <Suspense fallback={<RouteFallback />}>
+          <Router />
+        </Suspense>
       </AppShell>
     </WouterRouter>
   );
