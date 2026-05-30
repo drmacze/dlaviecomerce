@@ -39,7 +39,12 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "src"),
-      "@assets": path.resolve(import.meta.dirname, "..", "..", "attached_assets"),
+      "@assets": path.resolve(
+        import.meta.dirname,
+        "..",
+        "..",
+        "attached_assets",
+      ),
     },
     dedupe: ["react", "react-dom"],
   },
@@ -47,6 +52,29 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+          if (id.includes("@react-three/drei")) return "vendor-three-drei";
+          if (id.includes("@react-three/fiber")) return "vendor-three-fiber";
+          if (id.includes("three")) return "vendor-three";
+          if (id.includes("@supabase")) return "vendor-supabase";
+          if (id.includes("@tanstack")) return "vendor-query";
+          if (id.includes("framer-motion") || id.includes("gsap"))
+            return "vendor-motion";
+          if (
+            id.includes("react") ||
+            id.includes("scheduler") ||
+            id.includes("use-sync-external-store") ||
+            id.includes("@radix-ui")
+          )
+            return "vendor-react";
+          return "vendor-ui";
+        },
+      },
+    },
   },
   server: {
     port,

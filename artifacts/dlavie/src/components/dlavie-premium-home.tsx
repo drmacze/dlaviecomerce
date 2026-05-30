@@ -1,60 +1,149 @@
+import {
+  Bot,
+  ChevronRight,
+  Clock3,
+  Gift,
+  Package,
+  ReceiptText,
+  Shield,
+  WalletCards,
+} from "lucide-react";
+
 const services = [
-  { label: 'Produk', note: 'Pulsa, data, PLN, game, dan voucher digital dalam alur transaksi yang rapi.', href: '/products' },
-  { label: 'Wallet', note: 'Kelola D-Balance, top up, dan pembayaran dari satu ruang yang aman.', href: '/wallet' },
-  { label: 'Orders', note: 'Pantau status transaksi, riwayat pembelian, dan proses fulfillment.', href: '/orders' },
-  { label: 'Rewards', note: 'Akses benefit, poin, dan level pelanggan dengan tampilan yang lebih jelas.', href: '/rewards' }
+  {
+    label: "Produk Digital",
+    note: "Pulsa, data, token PLN, game, voucher, dan layanan harian.",
+    href: "/products",
+    icon: Package,
+    accent: "#c7a329",
+  },
+  {
+    label: "Smart Wallet",
+    note: "Top up, balance, payment, dan kontrol transaksi dalam satu ruang.",
+    href: "/wallet",
+    icon: WalletCards,
+    accent: "#3f75a2",
+  },
+  {
+    label: "Order Radar",
+    note: "Pantau status transaksi dan fulfillment dengan timeline yang jelas.",
+    href: "/orders",
+    icon: ReceiptText,
+    accent: "#ac531e",
+  },
+  {
+    label: "Rewards Club",
+    note: "Poin, referral, check-in, dan benefit pelanggan loyal.",
+    href: "/rewards",
+    icon: Gift,
+    accent: "#dfff4f",
+  },
 ];
 
-const trust = [
-  { value: '24/7', label: 'Access' },
-  { value: 'PPOB', label: 'Ready' },
-  { value: 'D-Balance', label: 'Wallet' }
+const timeline = [
+  {
+    step: "01",
+    title: "Browse",
+    copy: "Kategori ringkas dan kartu produk besar.",
+  },
+  { step: "02", title: "Pay", copy: "Wallet dan checkout terasa cepat." },
+  { step: "03", title: "Track", copy: "Status order tetap terlihat jelas." },
 ];
 
 export function DlaviePremiumHome() {
   return (
-    <section className="dlavie-glass dlavie-edge-flow relative mt-5 overflow-hidden rounded-[2.8rem] p-6 md:p-10">
-      <div className="pointer-events-none absolute right-10 top-10 hidden items-center gap-2 rounded-full border border-white/10 bg-white/[0.035] px-3 py-2 text-[10px] uppercase tracking-[0.22em] text-white/38 md:flex">
-        <span className="dlavie-accent-dot" />
-        Online
+    <section className="grid gap-5 lg:grid-cols-[1.1fr_.9fr]">
+      <div className="dlv-glass-card dlv-scroll-reveal rounded-[2.3rem] p-5 sm:p-7">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#c7a329]">
+              Commerce cockpit
+            </p>
+            <h2 className="mt-3 max-w-2xl text-4xl font-black leading-[0.95] tracking-[-0.06em] text-white sm:text-5xl">
+              Semua flow utama dibuat seperti kartu aplikasi mobile premium.
+            </h2>
+          </div>
+          <a
+            href="/ai"
+            className="dlv-dark-button dlv-magnetic inline-flex items-center gap-2 rounded-full px-4 py-3 text-xs font-black transition hover:-translate-y-1"
+          >
+            <Bot className="h-4 w-4 text-[#c7a329]" /> AI Assist
+          </a>
+        </div>
+
+        <div className="mt-7 grid gap-3 sm:grid-cols-2">
+          {services.map((service) => {
+            const Icon = service.icon;
+            return (
+              <a
+                key={service.href}
+                href={service.href}
+                className="dlv-product-card group rounded-[1.65rem] p-4"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div
+                    className="grid h-12 w-12 place-items-center rounded-[1.1rem] border border-white/10 bg-white/[0.06]"
+                    style={{ color: service.accent }}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-white/28 transition group-hover:translate-x-1 group-hover:text-[#c7a329]" />
+                </div>
+                <p className="mt-5 text-xl font-black tracking-[-0.04em] text-white">
+                  {service.label}
+                </p>
+                <p className="mt-2 text-sm font-semibold leading-6 text-[#c3b49d]/62">
+                  {service.note}
+                </p>
+              </a>
+            );
+          })}
+        </div>
       </div>
-      <div className="relative z-10 grid gap-10 lg:grid-cols-[1.08fr_.92fr] lg:items-center">
-        <div className="dlv-reveal">
-          <div className="mb-6 inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2">
-            <span className="dlavie-accent-dot" />
-            <span className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/52">DLAVIE Pay</span>
+
+      <aside className="dlv-command-card dlv-scroll-reveal rounded-[2.3rem] p-5 sm:p-7">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#c3b49d]/58">
+              Live transaction path
+            </p>
+            <h3 className="mt-2 text-3xl font-black tracking-[-0.06em] text-white">
+              Flow yang mudah dibaca.
+            </h3>
           </div>
-          <h1 className="dlv-text-balance max-w-3xl text-[3.4rem] font-semibold leading-[.9] tracking-[-.07em] text-white md:text-7xl">
-            Transaksi digital yang terasa tenang, cepat, dan terkendali.
-          </h1>
-          <p className="dlv-text-balance mt-6 max-w-2xl text-base font-medium leading-8 text-white/52 md:text-lg">
-            DLAVIE menyatukan produk PPOB, wallet, order tracking, dan reward dalam satu pengalaman yang bersih. Dibangun untuk transaksi harian tanpa tampilan yang berisik.
-          </p>
-          <div className="mt-7 flex flex-wrap gap-3">
-            <a href="/products" className="dlavie-magnetic-cta rounded-[1.25rem] bg-white px-5 py-4 text-sm font-semibold text-[#050505] shadow-[0_20px_55px_rgba(0,0,0,.28)] transition hover:-translate-y-1">Buka Produk</a>
-            <a href="/wallet" className="rounded-[1.25rem] border border-white/10 bg-white/[0.04] px-5 py-4 text-sm font-semibold text-white/82 transition hover:-translate-y-1 hover:bg-white/[0.08]">Isi Wallet</a>
-          </div>
-          <div className="mt-8 grid max-w-xl grid-cols-3 gap-3">
-            {trust.map((item) => (
-              <div key={item.label} className="rounded-[1.2rem] border border-white/10 bg-white/[0.035] p-4">
-                <p className="text-xl font-semibold tracking-[-.04em] text-white">{item.value}</p>
-                <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/34">{item.label}</p>
-              </div>
-            ))}
+          <div className="grid h-14 w-14 place-items-center rounded-2xl bg-[#c7a329]/18 text-[#f4d675] ring-1 ring-[#c7a329]/24">
+            <Clock3 className="h-6 w-6" />
           </div>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {services.map((service) => (
-            <a key={service.href} href={service.href} className="dlv-reveal dlavie-kinetic-card dlavie-premium-surface rounded-[1.65rem] p-5">
-              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-[1.1rem] border border-white/10 bg-white/[0.045]">
-                <svg viewBox="0 0 24 24" className="h-5 w-5 text-white/72" fill="none" stroke="currentColor" strokeWidth="2.1"><path d="M5 7h14M7 7v10a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V7M9 11h6M10 15h4" /></svg>
+
+        <div className="mt-7 space-y-3">
+          {timeline.map((item) => (
+            <div
+              key={item.step}
+              className="flex gap-4 rounded-[1.45rem] border border-white/10 bg-white/[0.045] p-4"
+            >
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/[0.08] text-xs font-black text-[#c7a329]">
+                {item.step}
+              </span>
+              <div>
+                <p className="font-black text-white">{item.title}</p>
+                <p className="mt-1 text-sm font-semibold leading-6 text-[#c3b49d]/62">
+                  {item.copy}
+                </p>
               </div>
-              <p className="text-lg font-semibold tracking-[-.03em] text-white">{service.label}</p>
-              <p className="mt-2 text-sm font-medium leading-6 text-white/46">{service.note}</p>
-            </a>
+            </div>
           ))}
         </div>
-      </div>
+
+        <div className="dlv-shimmer mt-5 rounded-[1.7rem] border border-[#c7a329]/22 bg-[#c7a329]/12 p-4">
+          <div className="flex items-center gap-3">
+            <Shield className="h-5 w-5 text-[#f4d675]" />
+            <p className="text-sm font-black text-white">
+              Protected checkout, readable status, dan motion yang tetap ringan.
+            </p>
+          </div>
+        </div>
+      </aside>
     </section>
   );
 }
