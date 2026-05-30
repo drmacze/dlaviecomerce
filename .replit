@@ -28,5 +28,9 @@ VITE_ADMIN_EMAILS = "dlavietech@gmail.com"
 VITE_APP_URL = "https://dlaviecomerce.vercel.app/"
 
 [[ports]]
+localPort = 8080
+externalPort = 8080
+
+[[ports]]
 localPort = 22867
 externalPort = 80
