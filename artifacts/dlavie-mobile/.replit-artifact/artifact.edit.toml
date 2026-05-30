@@ -1,0 +1,21 @@
+kind = "mobile"
+  previewPath = "/dlavie-mobile/"
+  title = "DLAVIE Mobile"
+  version = "1.0.0"
+  id = "artifacts/dlavie-mobile"
+
+  [[services]]
+  name = "expo"
+  paths = ["/dlavie-mobile/"]
+  localPort = 8082
+
+  [services.development]
+  run = "pnpm --filter @workspace/dlavie-mobile run dev"
+
+  [services.production]
+  build = ["pnpm", "--filter", "@workspace/dlavie-mobile", "run", "build"]
+  run = ["pnpm", "--filter", "@workspace/dlavie-mobile", "run", "serve"]
+
+  [services.env]
+  PORT = "8082"
+  

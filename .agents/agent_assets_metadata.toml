@@ -1,0 +1,8 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "kzAFYMZme82uapARfTElA"
+uri = "file://artifacts/dlavie-mobile/assets/images/icon.png"
+type = "image"
+title = "dlavie-mobile-app-icon"

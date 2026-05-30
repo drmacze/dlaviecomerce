@@ -11,6 +11,27 @@ env = { "CI" = "true" }
 [workflows]
 runButton = "Project"
 
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "artifacts/dlavie-mobile: expo"
+
+[[workflows.workflow]]
+name = "artifacts/dlavie-mobile: expo"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm --filter @workspace/dlavie-mobile run dev"
+waitForPort = 8099
+
 [agent]
 stack = "PNPM_WORKSPACE"
 expertMode = true
@@ -26,10 +47,16 @@ VITE_SUPABASE_URL = "https://lofqqeneoyxpnpkpjcri.supabase.co"
 VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvZnFxZW5lb3l4cG5wa3BqY3JpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMzU4NzMsImV4cCI6MjA5NDgxMTg3M30.VHVr2w3esZBjYBl5OUjMFL4EyM915w3VVK0CrreGUnQ"
 VITE_ADMIN_EMAILS = "dlavietech@gmail.com"
 VITE_APP_URL = "https://dlaviecomerce.vercel.app/"
+EXPO_PUBLIC_SUPABASE_URL = "https://lofqqeneoyxpnpkpjcri.supabase.co"
+EXPO_PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvZnFxZW5lb3l4cG5wa3BqY3JpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMzU4NzMsImV4cCI6MjA5NDgxMTg3M30.VHVr2w3esZBjYBl5OUjMFL4EyM915w3VVK0CrreGUnQ"
 
 [[ports]]
 localPort = 8080
 externalPort = 8080
+
+[[ports]]
+localPort = 8099
+externalPort = 8099
 
 [[ports]]
 localPort = 22867
