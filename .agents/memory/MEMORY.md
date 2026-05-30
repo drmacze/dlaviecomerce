@@ -1,0 +1,1 @@
+- [DLAVIE Vite Migration](dlavie-vite-migration.md) — Next.js → Vite+React migration patterns, key gotchas with Tailwind v3 vs v4 CSS and WebGL in sandbox.

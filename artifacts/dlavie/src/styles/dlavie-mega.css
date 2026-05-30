@@ -1,0 +1,22 @@
+.dlavie-mega-grid { background-size: 42px 42px; }
+.dlavie-pulse-blob { animation: dlavieMegaBlob 9s ease-in-out infinite alternate; }
+.dlavie-orbit-core { animation: dlavieMegaOrbit 18s linear infinite; }
+.dlavie-orbit-reverse { animation: dlavieMegaOrbitReverse 26s linear infinite; }
+.dlavie-scanline { animation: dlavieScan 3.2s ease-in-out infinite; }
+.dlavie-float-chip { animation: dlavieChipFloat 5.8s ease-in-out infinite; }
+.dlavie-liquid-button { position: relative; overflow: hidden; }
+
+@keyframes dlavieMegaBlob {
+  0% { transform: translate3d(0,0,0) scale(1); }
+  100% { transform: translate3d(-32px,24px,0) scale(1.14); }
+}
+@keyframes dlavieMegaOrbit { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes dlavieMegaOrbitReverse { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+@keyframes dlavieScan {
+  0%,100% { transform: translateY(-110%); opacity: 0; }
+  50% { transform: translateY(110%); opacity: .65; }
+}
+@keyframes dlavieChipFloat {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}

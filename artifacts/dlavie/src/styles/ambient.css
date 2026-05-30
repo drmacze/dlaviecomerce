@@ -1,0 +1,63 @@
+.ambient-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: #f8fafc;
+}
+
+.ambient-base {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(216,226,255,.58), transparent 34rem),
+    radial-gradient(circle at 82% 10%, rgba(255,222,243,.52), transparent 32rem),
+    linear-gradient(135deg, rgba(248,250,252,.94), rgba(239,246,255,.9) 42%, rgba(250,245,255,.88));
+}
+
+.aurora-container {
+  position: absolute;
+  inset: -12vh -8vw;
+  width: 116vw;
+  height: 124vh;
+  opacity: .86;
+  mix-blend-mode: multiply;
+  transform: translateZ(0);
+}
+
+.aurora-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+.ambient-grid {
+  position: absolute;
+  inset: 0;
+  opacity: .11;
+  background-image:
+    linear-gradient(rgba(16,19,21,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16,19,21,.035) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: radial-gradient(circle at center, black, transparent 76%);
+}
+
+@media (prefers-color-scheme: dark) {
+  .ambient-bg { background: #020617; }
+  .ambient-base {
+    background:
+      radial-gradient(circle at 18% 12%, rgba(30,64,175,.36), transparent 34rem),
+      radial-gradient(circle at 82% 10%, rgba(88,28,135,.34), transparent 32rem),
+      linear-gradient(135deg, #020617, #071018 48%, #101827);
+  }
+  .aurora-container {
+    opacity: .62;
+    mix-blend-mode: screen;
+  }
+  .ambient-grid { opacity: .08; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-container { opacity: .34; }
+}
