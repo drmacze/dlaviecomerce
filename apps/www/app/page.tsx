@@ -1,9 +1,11 @@
 import { SmoothScrollProvider } from '../components/SmoothScrollProvider';
+import { DlavieGalaxy } from '../components/DlavieGalaxy';
 
 export default function Page() {
   return (
     <SmoothScrollProvider>
       <main className="dlv-page">
+        <DlavieGalaxy />
         <section className="dlv-hero">
           <div className="dlv-shell dlv-hero-grid">
             <div>
