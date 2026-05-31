@@ -16,3 +16,12 @@ if (import.meta.env.DEV) {
 }
 
 createRoot(document.getElementById("root")!).render(<App />);
+
+
+if ("serviceWorker" in navigator && import.meta.env.PROD) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/dlavie-ai-sw.js")
+      .catch(() => undefined);
+  });
+}
