@@ -5,46 +5,41 @@ import { RevealSection } from '../components/motion/RevealSection';
 import { SmoothScrollProvider } from '../components/SmoothScrollProvider';
 import { TopNav } from '../components/TopNav';
 
-const ecosystemCards = [
+const ecosystemNodes = [
   {
     code: 'COM',
-    eyebrow: '01 / Commerce OS',
-    title: 'Dlavie Commerce',
-    status: 'rails online',
-    meta: 'PPOB · Orders · Provider logs',
-    copy: 'PPOB and digital commerce infrastructure built for reliable transactions, catalog control, and provider visibility.',
+    title: 'Commerce',
+    axis: 'Transaction rails',
+    copy: 'PPOB catalog, provider logs, order states, and checkout-ready commerce flows.',
+    meta: 'PPOB · Orders · Providers',
   },
   {
     code: 'AI',
-    eyebrow: '02 / Intelligence layer',
-    title: 'Dlavie AI',
-    status: 'workspace active',
+    title: 'AI',
+    axis: 'Intelligence layer',
+    copy: 'Workspace tools, prompt systems, automations, and assistant-powered workflows.',
     meta: 'Prompts · Agents · Automation',
-    copy: 'AI workspace and automation tools for creators, students, sellers, and operators who need faster digital workflows.',
   },
   {
     code: 'ACC',
-    eyebrow: '03 / Identity graph',
-    title: 'Dlavie Account',
-    status: 'identity synced',
+    title: 'Account',
+    axis: 'Identity graph',
+    copy: 'Unified login, roles, profile mapping, and product access across the ecosystem.',
     meta: 'Auth · Profiles · Roles',
-    copy: 'One secure identity layer for every product inside the Dlavie ecosystem, from user profiles to product permissions.',
   },
   {
     code: 'AUTO',
-    eyebrow: '04 / Automation fabric',
-    title: 'Dlavie Automation',
-    status: 'signals live',
-    meta: 'Triggers · Flows · Schedules',
-    copy: 'Workflow orchestration for repeatable operations, reminders, multi-product actions, and system-level signals.',
+    title: 'Automation',
+    axis: 'Signal fabric',
+    copy: 'Triggers, schedules, reminders, and cross-product system events.',
+    meta: 'Triggers · Flows · Events',
   },
   {
     code: 'ADM',
-    eyebrow: '05 / Admin command',
-    title: 'Dlavie Admin',
-    status: 'ops ready',
-    meta: 'Audit · Provider control · Governance',
-    copy: 'Operational dashboards for support, commerce observability, provider control, and ecosystem governance.',
+    title: 'Admin',
+    axis: 'Operating cockpit',
+    copy: 'Support visibility, provider control, audit logs, and governance surfaces.',
+    meta: 'Ops · Audit · Control',
   },
 ];
 
@@ -59,31 +54,47 @@ export default function Page() {
         <DlavieCinematicScroll />
         <DlavieMarquee />
 
-        <section className="dlv-ecosystem-section" id="ecosystem" data-scroll-section aria-labelledby="ecosystem-title">
-          <div className="dlv-shell">
-            <RevealSection className="dlv-section-kicker">Connected product constellation</RevealSection>
-            <div className="dlv-section-heading">
-              <RevealSection as="h2" id="ecosystem-title">One parent brand, multiple products for modern digital life.</RevealSection>
+        <section className="dlv-ecosystem-section dlv-holo-ecosystem" id="ecosystem" data-scroll-section aria-labelledby="ecosystem-title">
+          <div className="dlv-shell dlv-holo-shell">
+            <div className="dlv-holo-copy">
+              <RevealSection className="dlv-section-kicker">Holographic ecosystem</RevealSection>
+              <RevealSection as="h2" id="ecosystem-title">One luminous command field, not another stack of cards.</RevealSection>
               <RevealSection as="p" delay={0.12}>
-                Dlavie unifies commerce, AI, account identity, automation, and admin systems into a premium ecosystem
-                designed to scale from everyday transactions to intelligent business workflows.
+                DLavie connects commerce, AI, account identity, automation, and admin operations as product nodes around one parent core.
               </RevealSection>
             </div>
 
-            <div className="dlv-ecosystem-grid">
-              {ecosystemCards.map((card, index) => (
-                <article className="dlv-ecosystem-card" key={card.title} data-motion="depth-card" data-delay={index * 0.06}>
-                  <div className="dlv-ecosystem-card-head">
-                    <i aria-hidden="true">{card.code}</i>
-                    <em>{card.status}</em>
-                  </div>
-                  <span>{card.eyebrow}</span>
-                  <h3>{card.title}</h3>
-                  <p>{card.copy}</p>
-                  <small>{card.meta}</small>
+            <div className="dlv-holo-field" aria-label="DLavie connected product constellation">
+              <div className="dlv-holo-core" aria-hidden="true">
+                <span>DL</span>
+                <b>Core</b>
+              </div>
+              <span className="dlv-holo-orbit orbit-a" aria-hidden="true" />
+              <span className="dlv-holo-orbit orbit-b" aria-hidden="true" />
+              <span className="dlv-holo-orbit orbit-c" aria-hidden="true" />
+              <span className="dlv-holo-scan" aria-hidden="true" />
+
+              {ecosystemNodes.map((node, index) => (
+                <article className={`dlv-holo-node node-${index + 1}`} key={node.code} data-motion="depth-card" data-depth="0.7">
+                  <span>{node.code}</span>
+                  <strong>{node.title}</strong>
+                  <small>{node.axis}</small>
+                  <p>{node.copy}</p>
+                  <em>{node.meta}</em>
                 </article>
               ))}
             </div>
+
+            <aside className="dlv-holo-brief" aria-label="DLavie ecosystem capability summary">
+              <span>System status</span>
+              <strong>Parent surface online</strong>
+              <p>Instead of presenting every product as a separate block, the official site now frames DLavie as a connected holographic operating layer.</p>
+              <div className="dlv-holo-metrics">
+                <div><b>05</b><small>product nodes</small></div>
+                <div><b>01</b><small>parent core</small></div>
+                <div><b>∞</b><small>workflow paths</small></div>
+              </div>
+            </aside>
           </div>
         </section>
 
