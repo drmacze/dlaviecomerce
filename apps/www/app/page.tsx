@@ -6,11 +6,46 @@ import { SmoothScrollProvider } from '../components/SmoothScrollProvider';
 import { TopNav } from '../components/TopNav';
 
 const ecosystemCards = [
-  { eyebrow: '01 / Commerce OS', title: 'Dlavie Commerce', copy: 'PPOB and digital commerce infrastructure built for reliable digital transactions.' },
-  { eyebrow: '02 / Intelligence layer', title: 'Dlavie AI', copy: 'AI workspace and automation tools for creators, students, and sellers.' },
-  { eyebrow: '03 / Identity graph', title: 'Dlavie Account', copy: 'One secure identity layer for every product inside the Dlavie ecosystem.' },
-  { eyebrow: '04 / Automation fabric', title: 'Dlavie Automation', copy: 'Workflow orchestration for repeatable operations, reminders, and multi-product actions.' },
-  { eyebrow: '05 / Admin command', title: 'Dlavie Admin', copy: 'Operational dashboards for support, commerce observability, and ecosystem governance.' },
+  {
+    code: 'COM',
+    eyebrow: '01 / Commerce OS',
+    title: 'Dlavie Commerce',
+    status: 'rails online',
+    meta: 'PPOB · Orders · Provider logs',
+    copy: 'PPOB and digital commerce infrastructure built for reliable transactions, catalog control, and provider visibility.',
+  },
+  {
+    code: 'AI',
+    eyebrow: '02 / Intelligence layer',
+    title: 'Dlavie AI',
+    status: 'workspace active',
+    meta: 'Prompts · Agents · Automation',
+    copy: 'AI workspace and automation tools for creators, students, sellers, and operators who need faster digital workflows.',
+  },
+  {
+    code: 'ACC',
+    eyebrow: '03 / Identity graph',
+    title: 'Dlavie Account',
+    status: 'identity synced',
+    meta: 'Auth · Profiles · Roles',
+    copy: 'One secure identity layer for every product inside the Dlavie ecosystem, from user profiles to product permissions.',
+  },
+  {
+    code: 'AUTO',
+    eyebrow: '04 / Automation fabric',
+    title: 'Dlavie Automation',
+    status: 'signals live',
+    meta: 'Triggers · Flows · Schedules',
+    copy: 'Workflow orchestration for repeatable operations, reminders, multi-product actions, and system-level signals.',
+  },
+  {
+    code: 'ADM',
+    eyebrow: '05 / Admin command',
+    title: 'Dlavie Admin',
+    status: 'ops ready',
+    meta: 'Audit · Provider control · Governance',
+    copy: 'Operational dashboards for support, commerce observability, provider control, and ecosystem governance.',
+  },
 ];
 
 const roadmapItems = ['Cubic identity system', 'Unified checkout rails', 'AI workspace automation', 'Partner admin cockpit'];
@@ -38,9 +73,14 @@ export default function Page() {
             <div className="dlv-ecosystem-grid">
               {ecosystemCards.map((card, index) => (
                 <article className="dlv-ecosystem-card" key={card.title} data-motion="depth-card" data-delay={index * 0.06}>
+                  <div className="dlv-ecosystem-card-head">
+                    <i aria-hidden="true">{card.code}</i>
+                    <em>{card.status}</em>
+                  </div>
                   <span>{card.eyebrow}</span>
                   <h3>{card.title}</h3>
                   <p>{card.copy}</p>
+                  <small>{card.meta}</small>
                 </article>
               ))}
             </div>
