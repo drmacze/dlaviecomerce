@@ -1,13 +1,13 @@
 :root {
-  --dlv-holo-ink: rgba(246, 249, 255, 0.9);
+  --dlv-holo-ink: rgba(246, 249, 255, 0.92);
   --dlv-holo-muted: rgba(214, 226, 245, 0.66);
   --dlv-holo-soft: rgba(125, 249, 255, 0.14);
-  --dlv-holo-cyan: rgba(42, 221, 255, 0.88);
-  --dlv-holo-violet: rgba(150, 105, 255, 0.78);
+  --dlv-holo-cyan: rgba(42, 221, 255, 0.92);
+  --dlv-holo-violet: rgba(150, 105, 255, 0.82);
   --dlv-holo-magenta: rgba(255, 92, 208, 0.5);
   --dlv-holo-line: rgba(125, 249, 255, 0.26);
   --dlv-holo-core: rgba(10, 14, 30, 0.72);
-  --dlv-holo-glow: 0 0 34px rgba(42, 221, 255, 0.28), 0 0 70px rgba(150, 105, 255, 0.18);
+  --dlv-holo-glow: 0 0 34px rgba(42, 221, 255, 0.3), 0 0 76px rgba(150, 105, 255, 0.2);
 }
 
 .dlv-cinema-chapter,
@@ -101,8 +101,7 @@
 }
 
 .dlv-cinema-chapter-topline,
-.dlv-cinema-card-head,
-.dlv-ecosystem-card-head {
+.dlv-cinema-card-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -178,7 +177,6 @@
 .dlv-cinema-chapter p,
 .dlv-cinema-card p,
 .dlv-cinema-launch p,
-.dlv-holo-node p,
 .dlv-holo-copy p,
 .dlv-holo-brief p {
   color: var(--dlv-holo-muted);
@@ -259,21 +257,21 @@
 .dlv-holo-ecosystem {
   position: relative;
   overflow: hidden;
-  padding-block: clamp(4.5rem, 10vw, 8rem);
+  min-height: 100svh;
+  padding-block: clamp(3.5rem, 9vw, 7rem);
 }
 
 .dlv-holo-ecosystem::before {
   position: absolute;
-  inset: 4% -12% auto;
-  height: 64%;
+  inset: 0;
   pointer-events: none;
   content: "";
   background:
-    radial-gradient(circle at 50% 35%, rgba(42, 221, 255, 0.16), transparent 28%),
-    radial-gradient(circle at 62% 48%, rgba(150, 105, 255, 0.2), transparent 34%),
-    radial-gradient(circle at 32% 72%, rgba(255, 92, 208, 0.08), transparent 30%);
-  opacity: 0.82;
-  filter: blur(8px);
+    radial-gradient(circle at 50% 48%, rgba(42, 221, 255, 0.18), transparent 18rem),
+    radial-gradient(circle at 58% 52%, rgba(150, 105, 255, 0.22), transparent 22rem),
+    radial-gradient(circle at 44% 42%, rgba(255, 92, 208, 0.08), transparent 19rem),
+    linear-gradient(180deg, rgba(3, 5, 13, 0), rgba(3, 5, 13, 0.72));
+  opacity: 0.95;
 }
 
 .dlv-holo-shell {
@@ -285,13 +283,13 @@
 }
 
 .dlv-holo-copy h2 {
-  max-width: 11ch;
+  max-width: 10ch;
 }
 
 .dlv-holo-copy p {
-  max-width: 36rem;
-  font-size: clamp(1rem, 1.7vw, 1.2rem);
-  line-height: 1.8;
+  max-width: 34rem;
+  font-size: clamp(1rem, 1.7vw, 1.16rem);
+  line-height: 1.78;
 }
 
 .dlv-holo-field {
@@ -300,10 +298,10 @@
   border: 1px solid rgba(125, 249, 255, 0.14);
   border-radius: 50%;
   background:
-    radial-gradient(circle at 50% 50%, rgba(42, 221, 255, 0.08), transparent 24%),
-    radial-gradient(circle at 50% 50%, rgba(150, 105, 255, 0.1), transparent 42%),
-    rgba(4, 6, 16, 0.28);
-  box-shadow: inset 0 0 80px rgba(42, 221, 255, 0.055), 0 0 110px rgba(150, 105, 255, 0.08);
+    radial-gradient(circle at 50% 50%, rgba(42, 221, 255, 0.16), transparent 16%),
+    radial-gradient(circle at 50% 50%, rgba(150, 105, 255, 0.15), transparent 34%),
+    rgba(4, 6, 16, 0.18);
+  box-shadow: inset 0 0 80px rgba(42, 221, 255, 0.08), 0 0 120px rgba(150, 105, 255, 0.12);
   transform-style: preserve-3d;
 }
 
@@ -316,12 +314,12 @@
   width: clamp(8.2rem, 16vw, 12.5rem);
   height: clamp(8.2rem, 16vw, 12.5rem);
   place-items: center;
-  border: 1px solid rgba(125, 249, 255, 0.32);
+  border: 1px solid rgba(125, 249, 255, 0.42);
   border-radius: 50%;
   background:
-    radial-gradient(circle at 34% 24%, rgba(255, 255, 255, 0.8), transparent 12%),
-    radial-gradient(circle at 52% 54%, rgba(42, 221, 255, 0.4), rgba(150, 105, 255, 0.28) 42%, rgba(4, 6, 16, 0.72) 68%);
-  box-shadow: var(--dlv-holo-glow), inset 0 0 38px rgba(255, 255, 255, 0.08);
+    radial-gradient(circle at 34% 24%, rgba(255, 255, 255, 0.86), transparent 12%),
+    radial-gradient(circle at 52% 54%, rgba(42, 221, 255, 0.55), rgba(150, 105, 255, 0.38) 42%, rgba(4, 6, 16, 0.72) 68%);
+  box-shadow: var(--dlv-holo-glow), 0 0 120px rgba(42, 221, 255, 0.22), inset 0 0 42px rgba(255, 255, 255, 0.1);
   transform: translate(-50%, -50%);
 }
 
@@ -344,64 +342,82 @@
 .dlv-holo-orbit {
   position: absolute;
   inset: 12%;
-  border: 1px solid rgba(125, 249, 255, 0.18);
+  border: 1px solid rgba(125, 249, 255, 0.24);
   border-radius: 50%;
   transform: rotateX(68deg) rotateZ(var(--orbit-rotate, 0deg));
-  box-shadow: 0 0 34px rgba(42, 221, 255, 0.09);
+  box-shadow: 0 0 34px rgba(42, 221, 255, 0.13);
 }
 
 .orbit-b {
   inset: 21%;
   --orbit-rotate: 62deg;
-  border-color: rgba(150, 105, 255, 0.22);
+  border-color: rgba(150, 105, 255, 0.28);
 }
 
 .orbit-c {
   inset: 31%;
   --orbit-rotate: -44deg;
-  border-color: rgba(255, 92, 208, 0.16);
+  border-color: rgba(255, 92, 208, 0.2);
+}
+
+.dlv-holo-scan,
+.dlv-holo-beam {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(42, 221, 255, 0.72), transparent);
+  box-shadow: 0 0 30px rgba(42, 221, 255, 0.38);
+  opacity: 0.74;
 }
 
 .dlv-holo-scan {
-  position: absolute;
   top: 50%;
   left: 5%;
-  z-index: 2;
   width: 90%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(42, 221, 255, 0.65), transparent);
-  box-shadow: 0 0 30px rgba(42, 221, 255, 0.36);
-  opacity: 0.66;
 }
+
+.dlv-holo-beam {
+  top: 50%;
+  left: 50%;
+  width: 42%;
+  height: 1px;
+  transform-origin: left center;
+}
+
+.beam-a { transform: rotate(24deg); }
+.beam-b { transform: rotate(146deg); }
+.beam-c { transform: rotate(266deg); }
 
 .dlv-holo-node {
   position: absolute;
   z-index: 5;
-  width: min(16rem, 42%);
+  width: min(14rem, 38%);
   border: 1px solid rgba(125, 249, 255, 0.22);
-  border-radius: 1.25rem;
-  padding: 0.9rem 0.95rem;
-  background: linear-gradient(145deg, rgba(42, 221, 255, 0.07), rgba(150, 105, 255, 0.05)), rgba(4, 6, 16, 0.48);
-  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(5px);
+  border-radius: 1.1rem;
+  padding: 0.75rem 0.8rem;
+  background: linear-gradient(145deg, rgba(42, 221, 255, 0.055), rgba(150, 105, 255, 0.04)), rgba(4, 6, 16, 0.34);
+  box-shadow: 0 16px 54px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(4px);
 }
 
 .dlv-holo-node strong {
   display: block;
-  margin-top: 0.45rem;
+  margin-top: 0.34rem;
   color: var(--dlv-holo-ink);
-  font-size: clamp(1.05rem, 2vw, 1.4rem);
+  font-size: clamp(0.95rem, 1.7vw, 1.28rem);
   letter-spacing: -0.055em;
 }
 
 .dlv-holo-node p {
-  margin: 0.5rem 0 0;
-  font-size: 0.78rem;
-  line-height: 1.48;
+  margin: 0.42rem 0 0;
+  color: rgba(214, 226, 245, 0.54);
+  font-size: 0.72rem;
+  line-height: 1.42;
 }
 
 .dlv-holo-node em {
-  margin-top: 0.65rem;
+  margin-top: 0.56rem;
 }
 
 .node-1 { top: 9%; left: 50%; transform: translateX(-50%); }
@@ -520,7 +536,7 @@
   }
 
   .dlv-holo-node {
-    width: min(17rem, 78%);
+    width: min(15rem, 72%);
   }
 
   .node-1 { top: 4%; left: 50%; }
@@ -531,6 +547,114 @@
 }
 
 @media (max-width: 640px) {
+  .dlv-holo-ecosystem {
+    min-height: 118svh;
+    padding-block: 3rem 4rem;
+  }
+
+  .dlv-holo-shell {
+    gap: 1rem;
+  }
+
+  .dlv-holo-copy {
+    position: relative;
+    z-index: 6;
+    max-width: 92vw;
+  }
+
+  .dlv-holo-copy h2 {
+    max-width: 9ch;
+    font-size: clamp(2.45rem, 12vw, 3.75rem);
+    letter-spacing: -0.09em;
+    line-height: 0.92;
+  }
+
+  .dlv-holo-copy p {
+    max-width: 20rem;
+    font-size: 1rem;
+    line-height: 1.75;
+  }
+
+  .dlv-holo-field {
+    order: -1;
+    min-height: 34rem;
+    margin-top: -1rem;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .dlv-holo-field::after {
+    opacity: 0.08;
+  }
+
+  .dlv-holo-core {
+    top: 48%;
+    width: 10.5rem;
+    height: 10.5rem;
+  }
+
+  .dlv-holo-orbit {
+    inset: 18%;
+    opacity: 0.9;
+  }
+
+  .orbit-b { inset: 27%; }
+  .orbit-c { inset: 36%; }
+
+  .dlv-holo-beam {
+    width: 44%;
+    opacity: 0.38;
+  }
+
+  .dlv-holo-node {
+    display: grid;
+    width: auto;
+    min-width: 4.3rem;
+    max-width: 7.2rem;
+    min-height: 4.3rem;
+    place-items: center;
+    border-radius: 999px;
+    padding: 0.45rem;
+    text-align: center;
+    background: radial-gradient(circle at 50% 20%, rgba(255, 255, 255, 0.14), transparent 34%), rgba(5, 10, 24, 0.46);
+    box-shadow: 0 0 28px rgba(42, 221, 255, 0.16), inset 0 0 18px rgba(42, 221, 255, 0.08);
+  }
+
+  .dlv-holo-node span {
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+  }
+
+  .dlv-holo-node strong {
+    margin-top: 0.12rem;
+    font-size: 0.82rem;
+    letter-spacing: -0.04em;
+  }
+
+  .dlv-holo-node small,
+  .dlv-holo-node p,
+  .dlv-holo-node em {
+    display: none;
+  }
+
+  .node-1 { top: 6%; left: 50%; transform: translateX(-50%); }
+  .node-2 { top: 35%; right: 4%; }
+  .node-3 { right: 16%; bottom: 8%; }
+  .node-4 { bottom: 8%; left: 16%; }
+  .node-5 { top: 35%; left: 4%; }
+
+  .dlv-holo-brief {
+    margin-top: 1rem;
+    border-left: 0;
+    border-top: 1px solid rgba(125, 249, 255, 0.22);
+    padding: 1rem 0 0;
+  }
+
+  .dlv-holo-brief p {
+    max-width: 21rem;
+  }
+
   .dlv-cinema-chapter {
     border-radius: 1.35rem;
     padding: 1rem;
@@ -551,28 +675,4 @@
     height: min(58vw, 14rem);
     margin: 2.5rem auto;
   }
-
-  .dlv-holo-field {
-    min-height: 48rem;
-    border: 0;
-    background: transparent;
-  }
-
-  .dlv-holo-core {
-    top: 47%;
-    width: 9rem;
-    height: 9rem;
-  }
-
-  .dlv-holo-node {
-    width: min(18rem, 84vw);
-    border-radius: 1rem;
-    padding: 0.85rem;
-  }
-
-  .node-1 { top: 0; left: 50%; }
-  .node-2 { top: 17%; right: 0; }
-  .node-3 { right: 0; bottom: 21%; }
-  .node-4 { bottom: 5%; left: 0; }
-  .node-5 { top: 34%; left: 0; }
 }
