@@ -143,15 +143,9 @@ function haptic(pattern: number | number[] = 12) {
 }
 
 function useSystemTheme() {
-  const [dark, setDark] = useState(true);
-  useEffect(() => {
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const apply = () => setDark(media.matches);
-    apply();
-    media.addEventListener("change", apply);
-    return () => media.removeEventListener("change", apply);
-  }, []);
-  return dark;
+  // DLAVIE AI now keeps a premium dark glass shell even on devices set to light mode.
+  // The previous auto-light version made the workspace look washed out and less professional.
+  return true;
 }
 
 async function getAccessToken() {
@@ -563,23 +557,35 @@ export default function AI() {
 function OnboardingScreen({ data, setData, save, skip }: { data: Onboarding; setData: (data: Onboarding) => void; save: () => void; skip: () => void }) {
   return (
     <motion.main className="dlv-ai-onboarding" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -18 }}>
-      <div className="dlv-ai-bento">
-        <motion.section className="dlv-ai-bento-card hero" initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
-          <Sparkles className="h-9 w-9 text-violet-300" />
-          <p className="dlv-ai-eyebrow">Welcome to</p>
-          <h1 className="dlv-ai-super-title">Dlavie AI</h1>
-          <p>Workspace split-pane premium dengan WebGL aura, memory onboarding, rate limiter, dan chat persistent Supabase-ready.</p>
-        </motion.section>
-        <BentoInput label="Tujuan menggunakan Dlavie?" value={data.purpose} setValue={(purpose) => setData({ ...data, purpose })} options={["Bangun bisnis", "Belajar coding", "Konten brand", "Analisis data"]} />
-        <BentoInput label="Profesi Anda saat ini?" value={data.profession} setValue={(profession) => setData({ ...data, profession })} options={["Founder", "Developer", "Designer", "Marketer"]} />
-        <BentoInput label="Tahu dari mana?" value={data.source} setValue={(source) => setData({ ...data, source })} options={["Google", "Instagram", "Teman", "Website DLAVIE"]} />
-        <section className="dlv-ai-bento-card wide">
-          <div className="flex flex-wrap items-center gap-3">
-            <button className="dlv-ai-primary magnetic" onClick={save}><Check className="h-5 w-5" /> Simpan & Masuk Workspace</button>
-            <button className="dlv-ai-ghost" onClick={skip}>Lewati dulu</button>
+      <div className="dlv-ai-onboarding-shell">
+        <motion.section className="dlv-ai-hero-panel" initial={{ y: 26, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.58, ease: [0.16, 1, 0.3, 1] }}>
+          <div className="dlv-ai-hero-orbit" aria-hidden="true"><Sparkles /></div>
+          <p className="dlv-ai-eyebrow">Dlavie intelligence workspace</p>
+          <h1 className="dlv-ai-super-title">AI yang tenang, rapi, dan siap bekerja.</h1>
+          <p className="dlv-ai-hero-copy">Masuk ke workspace modern untuk chat, analisis bisnis, coding, riset, dan workflow commerce tanpa tampilan yang berisik.</p>
+          <div className="dlv-ai-hero-metrics">
+            <span><strong>10</strong> chat/jam free</span>
+            <span><strong>5</strong> context window</span>
+            <span><strong>3</strong> model tier</span>
           </div>
-          <p className="mt-4 text-sm text-white/55">Jawaban ini disuntikkan sebagai konteks tersembunyi supaya Dlavie AI mengingat tujuan, profesi, dan kebutuhan Anda.</p>
-        </section>
+        </motion.section>
+        <motion.aside className="dlv-ai-onboarding-card" initial={{ x: 28, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.08, duration: 0.58, ease: [0.16, 1, 0.3, 1] }}>
+          <div className="dlv-ai-form-header">
+            <span className="dlv-ai-form-mark"><Bot className="h-5 w-5" /></span>
+            <div>
+              <p className="dlv-ai-eyebrow">Personal setup</p>
+              <h2>Sesuaikan Dlavie AI</h2>
+            </div>
+          </div>
+          <BentoInput label="Tujuan utama" value={data.purpose} setValue={(purpose) => setData({ ...data, purpose })} options={["Bangun bisnis", "Belajar coding", "Konten brand", "Analisis data"]} />
+          <BentoInput label="Profesi saat ini" value={data.profession} setValue={(profession) => setData({ ...data, profession })} options={["Founder", "Developer", "Designer", "Marketer"]} />
+          <BentoInput label="Mengetahui dari" value={data.source} setValue={(source) => setData({ ...data, source })} options={["Google", "Instagram", "Teman", "Website DLAVIE"]} />
+          <div className="dlv-ai-action-row">
+            <button className="dlv-ai-primary magnetic" onClick={save}><Check className="h-5 w-5" /> Masuk Workspace</button>
+            <button className="dlv-ai-ghost" onClick={skip}>Lewati</button>
+          </div>
+          <p className="dlv-ai-form-note">Jawaban dipakai sebagai konteks privat agar respons AI lebih sesuai dengan kebutuhan Anda.</p>
+        </motion.aside>
       </div>
     </motion.main>
   );
@@ -587,9 +593,9 @@ function OnboardingScreen({ data, setData, save, skip }: { data: Onboarding; set
 
 function BentoInput({ label, value, setValue, options }: { label: string; value: string; setValue: (value: string) => void; options: string[] }) {
   return (
-    <section className="dlv-ai-bento-card">
-      <p className="font-black text-white">{label}</p>
-      <div className="mt-4 flex flex-wrap gap-2">
+    <section className="dlv-ai-fieldset">
+      <p>{label}</p>
+      <div>
         {options.map((option) => (
           <button key={option} onClick={() => setValue(option)} className={`dlv-ai-chip ${value === option ? "active" : ""}`}>{option}</button>
         ))}
