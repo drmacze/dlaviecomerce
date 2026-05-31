@@ -49,7 +49,7 @@ function ShaderPlane({ reduced }: { reduced: boolean }) {
     material.current.uniforms.uDirection.value = cssNumber('--dlv-scroll-direction', 1);
     material.current.uniforms.uZoom.value = reduced ? 0 : zoom;
     material.current.uniforms.uSection.value = cssNumber('--dlv-active-section');
-    material.current.uniforms.uIntensity.value = reduced ? 0.22 : 0.58 + velocity * 0.26 + zoom * 0.18;
+    material.current.uniforms.uIntensity.value = reduced ? 0.22 : 0.62 + velocity * 0.22 + zoom * 0.16;
     material.current.uniforms.uMouse.value.set(pointer.x * 0.5 + 0.5, pointer.y * 0.5 + 0.5);
     material.current.uniforms.uResolution.value.set(size.width, size.height);
   });
@@ -65,15 +65,13 @@ function ShaderPlane({ reduced }: { reduced: boolean }) {
 export function DlavieShaderBackdrop({ className = '' }: { className?: string }) {
   const [available, setAvailable] = useState(false);
   const [reduced, setReduced] = useState(true);
-  const [compact, setCompact] = useState(true);
 
   useEffect(() => {
     setAvailable(isWebGLAvailable());
     setReduced(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-    setCompact(window.matchMedia('(max-width: 780px)').matches || navigator.webdriver);
   }, []);
 
-  if (!available || compact) return <WebGLFallback />;
+  if (!available) return <WebGLFallback />;
 
   return (
     <div className={`dlv-shader-backdrop ${className}`} aria-hidden="true">
