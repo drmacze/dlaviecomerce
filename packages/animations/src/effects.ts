@@ -9,15 +9,27 @@ export function createReveal(root: Element | Document = document) {
       const y = Number(element.dataset.y ?? 34);
       gsap.fromTo(
         element,
-        { autoAlpha: 0, y, filter: 'blur(10px)' },
+        {
+          autoAlpha: 0,
+          y,
+          scale: 0.985,
+          clipPath: 'inset(0 0 18% 0 round 1rem)',
+        },
         {
           autoAlpha: 1,
           y: 0,
-          filter: 'blur(0px)',
+          scale: 1,
+          clipPath: 'inset(0 0 0% 0 round 1rem)',
           duration: motionTokens.duration.slow,
           delay,
           ease: motionTokens.ease.premium,
-          scrollTrigger: { trigger: element, start: 'top 84%', toggleActions: 'play none none reverse' },
+          scrollTrigger: {
+            trigger: element,
+            start: 'top 86%',
+            end: 'top 42%',
+            scrub: 0.55,
+            invalidateOnRefresh: true,
+          },
         },
       );
     });
@@ -46,33 +58,34 @@ export function createDepthCards(root: Element | Document = document) {
   const ctx = gsap.context(() => {
     gsap.utils.toArray<HTMLElement>('[data-motion="depth-card"]', root).forEach((element, index) => {
       const side = index % 2 === 0 ? -1 : 1;
+      const depth = Number(element.dataset.depth ?? 1);
       gsap.fromTo(
         element,
         {
-          autoAlpha: 0.34,
-          y: 88,
-          x: side * 26,
-          scale: 0.88,
-          rotateX: 12,
-          rotateY: side * -8,
-          filter: 'blur(10px)',
-          clipPath: 'inset(12% 8% 12% 8% round 1.65rem)',
+          autoAlpha: 0.52,
+          y: 78 * depth,
+          x: side * 30,
+          scale: 0.9,
+          rotateX: 10,
+          rotateY: side * -7,
+          skewY: side * 0.6,
+          clipPath: 'inset(10% 6% 10% 6% round 1.65rem)',
         },
         {
           autoAlpha: 1,
-          y: -18,
-          x: side * -10,
+          y: -14,
+          x: side * -8,
           scale: 1,
-          rotateX: -2,
-          rotateY: side * 3,
-          filter: 'blur(0px)',
+          rotateX: -1.25,
+          rotateY: side * 2.2,
+          skewY: 0,
           clipPath: 'inset(0% 0% 0% 0% round 1.65rem)',
           ease: 'none',
           scrollTrigger: {
             trigger: element,
-            start: 'top 96%',
-            end: 'bottom 18%',
-            scrub: 0.8,
+            start: 'top 97%',
+            end: 'bottom 20%',
+            scrub: 0.7,
             invalidateOnRefresh: true,
           },
         },
