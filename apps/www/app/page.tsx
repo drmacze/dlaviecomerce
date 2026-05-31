@@ -6,41 +6,11 @@ import { SmoothScrollProvider } from '../components/SmoothScrollProvider';
 import { TopNav } from '../components/TopNav';
 
 const ecosystemNodes = [
-  {
-    code: 'COM',
-    title: 'Commerce',
-    axis: 'Transaction rails',
-    copy: 'PPOB catalog, provider logs, order states, and checkout-ready commerce flows.',
-    meta: 'PPOB · Orders · Providers',
-  },
-  {
-    code: 'AI',
-    title: 'AI',
-    axis: 'Intelligence layer',
-    copy: 'Workspace tools, prompt systems, automations, and assistant-powered workflows.',
-    meta: 'Prompts · Agents · Automation',
-  },
-  {
-    code: 'ACC',
-    title: 'Account',
-    axis: 'Identity graph',
-    copy: 'Unified login, roles, profile mapping, and product access across the ecosystem.',
-    meta: 'Auth · Profiles · Roles',
-  },
-  {
-    code: 'AUTO',
-    title: 'Automation',
-    axis: 'Signal fabric',
-    copy: 'Triggers, schedules, reminders, and cross-product system events.',
-    meta: 'Triggers · Flows · Events',
-  },
-  {
-    code: 'ADM',
-    title: 'Admin',
-    axis: 'Operating cockpit',
-    copy: 'Support visibility, provider control, audit logs, and governance surfaces.',
-    meta: 'Ops · Audit · Control',
-  },
+  { code: 'COM', title: 'Commerce', axis: 'Transaction rails', copy: 'PPOB catalog, provider logs, order states, and checkout-ready commerce flows.', meta: 'PPOB · Orders · Providers' },
+  { code: 'AI', title: 'AI', axis: 'Intelligence layer', copy: 'Workspace tools, prompt systems, automations, and assistant-powered workflows.', meta: 'Prompts · Agents · Automation' },
+  { code: 'ACC', title: 'Account', axis: 'Identity graph', copy: 'Unified login, roles, profile mapping, and product access across the ecosystem.', meta: 'Auth · Profiles · Roles' },
+  { code: 'AUTO', title: 'Automation', axis: 'Signal fabric', copy: 'Triggers, schedules, reminders, and cross-product system events.', meta: 'Triggers · Flows · Events' },
+  { code: 'ADM', title: 'Admin', axis: 'Operating cockpit', copy: 'Support visibility, provider control, audit logs, and governance surfaces.', meta: 'Ops · Audit · Control' },
 ];
 
 const roadmapItems = ['Cubic identity system', 'Unified checkout rails', 'AI workspace automation', 'Partner admin cockpit'];
@@ -58,9 +28,9 @@ export default function Page() {
           <div className="dlv-shell dlv-holo-shell">
             <div className="dlv-holo-copy">
               <RevealSection className="dlv-section-kicker">Holographic ecosystem</RevealSection>
-              <RevealSection as="h2" id="ecosystem-title">One luminous command field, not another stack of cards.</RevealSection>
+              <RevealSection as="h2" id="ecosystem-title">DLavie products orbit one living core.</RevealSection>
               <RevealSection as="p" delay={0.12}>
-                DLavie connects commerce, AI, account identity, automation, and admin operations as product nodes around one parent core.
+                Commerce, AI, Account, Automation, and Admin appear as luminous product nodes inside a single parent-brand field.
               </RevealSection>
             </div>
 
@@ -73,6 +43,9 @@ export default function Page() {
               <span className="dlv-holo-orbit orbit-b" aria-hidden="true" />
               <span className="dlv-holo-orbit orbit-c" aria-hidden="true" />
               <span className="dlv-holo-scan" aria-hidden="true" />
+              <span className="dlv-holo-beam beam-a" aria-hidden="true" />
+              <span className="dlv-holo-beam beam-b" aria-hidden="true" />
+              <span className="dlv-holo-beam beam-c" aria-hidden="true" />
 
               {ecosystemNodes.map((node, index) => (
                 <article className={`dlv-holo-node node-${index + 1}`} key={node.code} data-motion="depth-card" data-depth="0.7">
@@ -88,7 +61,7 @@ export default function Page() {
             <aside className="dlv-holo-brief" aria-label="DLavie ecosystem capability summary">
               <span>System status</span>
               <strong>Parent surface online</strong>
-              <p>Instead of presenting every product as a separate block, the official site now frames DLavie as a connected holographic operating layer.</p>
+              <p>The official site now frames DLavie as a connected holographic operating layer, not a stack of repeated panels.</p>
               <div className="dlv-holo-metrics">
                 <div><b>05</b><small>product nodes</small></div>
                 <div><b>01</b><small>parent core</small></div>
