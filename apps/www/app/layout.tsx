@@ -2,13 +2,13 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Dlavie — Digital life, simplified.',
-  description: 'Dlavie parent technology brand for commerce, AI, and automation.',
+  title: 'Dlavie — Crafting digital ecosystems for modern life.',
+  description: 'Dlavie is a parent technology brand building commerce, AI, and automation products.',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="id">
+    <html lang="en">
       <body>{children}</body>
     </html>
   );

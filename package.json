@@ -6,7 +6,7 @@
   "packageManager": "pnpm@10.24.0",
   "scripts": {
     "dev": "pnpm -r --parallel --filter ./apps/** --if-present run dev",
-    "build": "pnpm run typecheck && pnpm -r --if-present run build",
+    "build": "pnpm run typecheck && pnpm -r --filter=./artifacts/** --filter=./apps/** --filter=./packages/** --filter=./scripts --filter=!@workspace/dlavie-mobile --if-present run build",
     "lint": "pnpm -r --if-present run lint",
     "test": "pnpm -r --if-present run test",
     "typecheck:libs": "tsc --build",
