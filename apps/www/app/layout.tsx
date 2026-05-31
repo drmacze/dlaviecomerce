@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import './cinematic-polish.css';
 
 export const metadata: Metadata = {
   title: 'Dlavie — Crafting digital ecosystems for modern life.',
