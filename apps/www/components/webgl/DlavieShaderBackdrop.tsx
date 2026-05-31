@@ -17,19 +17,39 @@ function isWebGLAvailable() {
   }
 }
 
+function cssNumber(name: string, fallback = 0) {
+  if (typeof window === 'undefined') return fallback;
+  const value = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name));
+  return Number.isFinite(value) ? value : fallback;
+}
+
 function ShaderPlane({ reduced }: { reduced: boolean }) {
   const material = useRef<ShaderMaterial>(null);
   const { size, pointer } = useThree();
   const uniforms = useMemo(() => ({
     uTime: { value: 0 },
-    uIntensity: { value: reduced ? 0.18 : 0.72 },
+    uScroll: { value: 0 },
+    uVelocity: { value: 0 },
+    uDirection: { value: 1 },
+    uZoom: { value: 0 },
+    uSection: { value: 0 },
+    uIntensity: { value: reduced ? 0.2 : 0.72 },
     uMouse: { value: new Vector2(0.5, 0.5) },
     uResolution: { value: new Vector2(1, 1) },
   }), [reduced]);
 
   useFrame(({ clock }) => {
     if (!material.current) return;
+    const velocity = cssNumber('--dlv-scroll-velocity');
+    const scroll = cssNumber('--dlv-scroll-progress');
+    const zoom = cssNumber('--dlv-zoom-progress');
     material.current.uniforms.uTime.value = reduced ? 0.0 : clock.getElapsedTime();
+    material.current.uniforms.uScroll.value = scroll;
+    material.current.uniforms.uVelocity.value = reduced ? 0 : velocity;
+    material.current.uniforms.uDirection.value = cssNumber('--dlv-scroll-direction', 1);
+    material.current.uniforms.uZoom.value = reduced ? 0 : zoom;
+    material.current.uniforms.uSection.value = cssNumber('--dlv-active-section');
+    material.current.uniforms.uIntensity.value = reduced ? 0.22 : 0.58 + velocity * 0.26 + zoom * 0.18;
     material.current.uniforms.uMouse.value.set(pointer.x * 0.5 + 0.5, pointer.y * 0.5 + 0.5);
     material.current.uniforms.uResolution.value.set(size.width, size.height);
   });
@@ -45,13 +65,15 @@ function ShaderPlane({ reduced }: { reduced: boolean }) {
 export function DlavieShaderBackdrop({ className = '' }: { className?: string }) {
   const [available, setAvailable] = useState(false);
   const [reduced, setReduced] = useState(true);
+  const [compact, setCompact] = useState(true);
 
   useEffect(() => {
     setAvailable(isWebGLAvailable());
     setReduced(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    setCompact(window.matchMedia('(max-width: 780px)').matches || navigator.webdriver);
   }, []);
 
-  if (!available) return <WebGLFallback />;
+  if (!available || compact) return <WebGLFallback />;
 
   return (
     <div className={`dlv-shader-backdrop ${className}`} aria-hidden="true">

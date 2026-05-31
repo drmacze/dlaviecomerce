@@ -1,5 +1,6 @@
 import { DlavieMarquee } from '../components/DlavieMarquee';
 import { HeroShowcase } from '../components/HeroShowcase';
+import { DlavieCinematicScroll } from '../components/sections/DlavieCinematicScroll';
 import { RevealSection } from '../components/motion/RevealSection';
 import { SmoothScrollProvider } from '../components/SmoothScrollProvider';
 import { TopNav } from '../components/TopNav';
@@ -20,9 +21,10 @@ export default function Page() {
       <main className="dlv-page">
         <TopNav />
         <HeroShowcase />
+        <DlavieCinematicScroll />
         <DlavieMarquee />
 
-        <section className="dlv-ecosystem-section" id="ecosystem" aria-labelledby="ecosystem-title">
+        <section className="dlv-ecosystem-section" id="ecosystem" data-scroll-section aria-labelledby="ecosystem-title">
           <div className="dlv-shell">
             <RevealSection className="dlv-section-kicker">Connected product constellation</RevealSection>
             <div className="dlv-section-heading">
@@ -35,7 +37,7 @@ export default function Page() {
 
             <div className="dlv-ecosystem-grid">
               {ecosystemCards.map((card, index) => (
-                <article className="dlv-ecosystem-card" key={card.title} data-motion="reveal" data-delay={index * 0.06}>
+                <article className="dlv-ecosystem-card" key={card.title} data-motion="depth-card" data-delay={index * 0.06}>
                   <span>{card.eyebrow}</span>
                   <h3>{card.title}</h3>
                   <p>{card.copy}</p>
@@ -45,7 +47,7 @@ export default function Page() {
           </div>
         </section>
 
-        <section className="dlv-roadmap-section" id="roadmap" aria-labelledby="roadmap-title">
+        <section className="dlv-roadmap-section" id="roadmap" data-scroll-section aria-labelledby="roadmap-title">
           <div className="dlv-shell dlv-roadmap-grid">
             <div className="dlv-roadmap-copy">
               <RevealSection className="dlv-section-kicker">Product rail / 2026 rhythm</RevealSection>
@@ -57,7 +59,7 @@ export default function Page() {
             </div>
             <div className="dlv-product-rail" aria-label="Dlavie roadmap rail">
               {roadmapItems.map((item, index) => (
-                <div className="dlv-rail-item" key={item} data-motion="reveal" data-delay={index * 0.08}>
+                <div className="dlv-rail-item" key={item} data-motion="depth-card" data-delay={index * 0.08}>
                   <span>{String(index + 1).padStart(2, '0')}</span>
                   <strong>{item}</strong>
                 </div>

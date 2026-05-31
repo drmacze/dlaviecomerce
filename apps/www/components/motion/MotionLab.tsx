@@ -1,5 +1,6 @@
 'use client';
 
+import type { DlavieScrollState } from '@dlavie/animations';
 import { Draggable, Flip, gsap, Observer, registerDlavieGsap, scrollToTarget, ScrollTrigger } from '@dlavie/animations';
 import { useEffect, useRef, useState } from 'react';
 import { DlavieShaderBackdrop } from '../webgl/DlavieShaderBackdrop';
@@ -27,12 +28,21 @@ export function MotionLab() {
   const puck = useRef<HTMLDivElement>(null);
   const [flipped, setFlipped] = useState(false);
   const [events, setEvents] = useState(0);
+  const [scrollState, setScrollState] = useState<Pick<DlavieScrollState, 'progress' | 'direction' | 'normalizedVelocity' | 'activeSectionIndex'>>({ progress: 0, direction: 1, normalizedVelocity: 0, activeSectionIndex: 0 });
 
   useEffect(() => {
     registerDlavieGsap();
     if (!root.current) return;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduce) return;
+
+    const onScrollState = (event: Event) => {
+      const detail = (event as CustomEvent<DlavieScrollState>).detail;
+      if (detail) {
+        setScrollState({ progress: detail.progress, direction: detail.direction, normalizedVelocity: detail.normalizedVelocity, activeSectionIndex: detail.activeSectionIndex });
+      }
+    };
+    window.addEventListener('dlavie:scroll-state', onScrollState);
 
     const observer = Observer.create({
       target: root.current,
@@ -45,6 +55,7 @@ export function MotionLab() {
     const ctx = gsap.context(() => {
       gsap.from('.dlv-lab-hero h1, .dlv-lab-hero p, .dlv-lab-actions', { autoAlpha: 0, y: 28, stagger: 0.09, duration: 0.9, ease: 'dlaviePremium' });
       gsap.from('.dlv-lab-row', { autoAlpha: 0, y: 24, stagger: 0.045, duration: 0.7, ease: 'dlaviePremium', scrollTrigger: { trigger: '.dlv-lab-matrix', start: 'top 78%' } });
+      gsap.fromTo('.dlv-lab-scrub-card', { z: -360, scale: 0.64, rotateX: 18, autoAlpha: 0.42 }, { z: 120, scale: 1.08, rotateX: -4, autoAlpha: 1, ease: 'none', scrollTrigger: { trigger: '.dlv-lab-scrub-demo', start: 'top top', end: 'bottom bottom', scrub: 0.8, invalidateOnRefresh: true } });
       gsap.to('.dlv-lab-orb', { motionPath: { path: '#dlv-lab-path', align: '#dlv-lab-path', alignOrigin: [0.5, 0.5] }, duration: 5.8, repeat: -1, ease: 'none' });
       gsap.fromTo('#dlv-lab-path', { drawSVG: '0% 0%' }, { drawSVG: '0% 100%', duration: 2.2, ease: 'dlaviePremium', scrollTrigger: { trigger: '.dlv-lab-path-card', start: 'top 74%' } });
       gsap.to('.dlv-lab-pulse', { scale: 1.08, repeat: -1, yoyo: true, duration: 0.9, ease: 'rough({ template: power2.out, strength: 0.35, points: 12, taper: none, randomize: true, clamp: false })' });
@@ -57,6 +68,7 @@ export function MotionLab() {
     return () => {
       ctx.revert();
       observer.kill();
+      window.removeEventListener('dlavie:scroll-state', onScrollState);
     };
   }, []);
 
@@ -73,12 +85,24 @@ export function MotionLab() {
       <section className="dlv-lab-hero">
         <a className="dlv-lab-back" href="/">← Back to Dlavie</a>
         <p className="dlv-section-kicker"><ScrambleText text="Motion engine validation" /></p>
-        <h1>Phase 1.2 Motion Lab</h1>
-        <p>Internal proof route for GSAP plugins, Lenis synchronization, WebGL shader ambience, and Webflow-style data-motion conventions.</p>
+        <h1>Phase 1.3 Motion Lab</h1>
+        <p>Internal proof route for scrubbed ScrollTrigger timelines, Lenis velocity/direction, shader uniforms, pinned zoom depth, and Webflow-style data-motion conventions.</p>
         <div className="dlv-lab-actions">
           <MagneticButton className="dlv-button primary" href="#matrix">View coverage matrix</MagneticButton>
           <button className="dlv-lab-button" type="button" onClick={() => scrollToTarget('#playground', 84)}>ScrollTo playground</button>
           <span className="dlv-lab-counter">Observer events: {events}</span>
+        </div>
+        <div className="dlv-lab-monitor" aria-label="Live Lenis and shader state">
+          <span>Progress <strong>{scrollState.progress.toFixed(2)}</strong></span>
+          <span>Velocity <strong>{scrollState.normalizedVelocity.toFixed(2)}</strong></span>
+          <span>Direction <strong>{scrollState.direction > 0 ? 'Down' : 'Up'}</strong></span>
+          <span>Section <strong>{scrollState.activeSectionIndex}</strong></span>
+        </div>
+      </section>
+
+      <section className="dlv-lab-scrub-demo" aria-label="Pinned scroll scrub demo">
+        <div className="dlv-lab-scrub-pin">
+          <div className="dlv-lab-scrub-card">Pinned zoom</div>
         </div>
       </section>
 

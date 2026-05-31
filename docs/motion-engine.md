@@ -91,3 +91,66 @@ Future sections can opt into motion through designer-friendly attributes:
 - Antialiasing is disabled on the shader backdrop and enabled only on the hero stage.
 - Dev-only GSAP helpers are not loaded on the homepage.
 - ScrollSmoother is not activated, avoiding duplicate transform layers.
+
+## Phase 1.3 Visual Review Fixes
+
+### Why Phase 1.2 was not enough
+
+Phase 1.2 proved that GSAP, Lenis, React Three Fiber, and GLSL were installed and functional, but the homepage still behaved like a normal vertical landing page. Most homepage motion was either entrance-only or subtle enough to be visually missed. The ecosystem and rail cards were not strongly tied to scroll position, the shader only reacted to time and pointer data, and the menu button had no open state or overlay.
+
+### Root causes found
+
+- Homepage ScrollTriggers were mostly reveal helpers; ecosystem cards used `once: true`, so upward scroll could not reverse them.
+- Only a few elements used `scrub: true`, and there was no long pinned sequence to make scroll feel like the page engine.
+- Lenis was synced to ScrollTrigger, but velocity, direction, active section, and progress were not exposed as reusable CSS/custom-event state.
+- Shader uniforms only included time, mouse, intensity, and resolution. There was no `uScroll`, `uVelocity`, `uDirection`, `uZoom`, or `uSection`.
+- The hamburger button rendered as a plain icon button with no `aria-expanded`, no state, no dropdown, and no Escape/outside-click behavior.
+- Text animation happened mostly on load; there was not enough scroll-scrubbed masking/depth typography.
+
+### What changed in Phase 1.3
+
+- Added a central scroll state in `packages/animations/src/scroll-engine.ts` that exposes progress, direction, velocity, normalized velocity, active section index, and reduced-motion state.
+- Added CSS variables: `--dlv-scroll-progress`, `--dlv-scroll-velocity`, `--dlv-scroll-direction`, `--dlv-section-progress`, `--dlv-hero-depth`, `--dlv-shader-intensity`, and `--dlv-zoom-progress`.
+- Added `DlavieCinematicScroll`, a 430% scrubbed pinned sequence with four chapters: Enter the Core, Digital Ecosystem, Intelligence Layer, and Launch Surface.
+- Added `createDepthCards()` so ecosystem cards and roadmap rail items follow scroll with depth transforms rather than one-time reveals.
+- Upgraded `DlavieShaderBackdrop` and `DlavieHolographicField` to animate uniforms from scroll progress, velocity, direction, zoom, section, pointer, time, intensity, and resolution.
+- Rebuilt the navigation menu button as an accessible animated hamburger with `aria-expanded`, a premium dropdown/dialog panel, outside-click close, Escape close, and link-close behavior.
+- Updated `/motion-lab` with a live Lenis/shader state monitor and a pinned scrub zoom demo.
+
+### Scroll-scrubbed timelines and upward reversal
+
+The main homepage sequence uses GSAP `ScrollTrigger` with `scrub`, `pin`, `anticipatePin`, and `invalidateOnRefresh`. Because element transforms are tied directly to scroll progress instead of permanent class toggles, scrolling down advances the sequence and scrolling up reverses it automatically. The same approach is used for depth cards, marquee movement, hero depth, nav compaction, text masks, and Motion Lab scrub demos.
+
+### Lenis velocity/direction feeding the shader
+
+`syncLenisWithScrollTrigger()` listens to Lenis scroll events, computes normalized velocity and direction, writes CSS variables, dispatches a `dlavie:scroll-state` event, and then updates ScrollTrigger. The WebGL shader reads those CSS variables every frame and maps them into uniforms:
+
+- `uScroll`
+- `uVelocity`
+- `uDirection`
+- `uZoom`
+- `uSection`
+- `uMouse`
+- `uTime`
+- `uIntensity`
+- `uResolution`
+
+### Card parallax and depth motion
+
+Cards with `data-motion="depth-card"` now use scrubbed timelines. They start offset in X/Y, scaled down, rotated in 3D, clipped, blurred, and partially transparent; as scroll progresses they move into place. Because the animation is scrubbed, cards visibly follow scroll downward and reverse upward.
+
+### Pinned zoom sequence
+
+`DlavieCinematicScroll` creates a camera-like depth experience by pinning the section and animating the Cubic Core stage scale/rotation, card Z-depth, chapter text, large split typography, launch panel, and shader CSS variables over a long scroll distance. This creates a visible zoom/depth transition inspired by premium smooth-scroll sites while keeping the Dlavie identity and original content.
+
+### Navigation menu fix
+
+The right menu control is now a custom three-line hamburger button rather than a static icon. It exposes `aria-expanded`, toggles an animated overlay, closes on link click, closes on Escape, closes on outside click, and avoids layout shift by using a fixed overlay layer.
+
+### Mobile performance strategy
+
+Desktop receives the pinned cinematic sequence. Mobile keeps the same content but simplifies the sequence into scroll-scrubbed cards and normal document flow to avoid pinning/jank on small screens. WebGL DPR remains capped, shader complexity remains lightweight, particle counts stay modest, and transforms/opacity are preferred over layout properties.
+
+### Reduced-motion strategy
+
+Reduced-motion users bypass the heavy pinned timelines and receive readable static content with simplified polish. Important text remains DOM text, and decorative canvas layers remain `aria-hidden` with premium CSS fallbacks.

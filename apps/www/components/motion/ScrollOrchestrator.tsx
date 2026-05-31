@@ -1,6 +1,6 @@
 'use client';
 
-import { createParallax, createReveal, gsap, Observer, registerDlavieGsap, ScrollTrigger, syncLenisWithScrollTrigger } from '@dlavie/animations';
+import { createDepthCards, createParallax, createReveal, gsap, Observer, registerDlavieGsap, syncLenisWithScrollTrigger } from '@dlavie/animations';
 import { useLenis } from 'lenis/react';
 import { useEffect } from 'react';
 
@@ -22,39 +22,72 @@ export function ScrollOrchestrator() {
 
     const cleanupReveal = createReveal(document);
     const cleanupParallax = createParallax(document);
+    const cleanupDepthCards = createDepthCards(document);
     const observer = Observer.create({
       target: window,
       type: 'wheel,touch,pointer',
-      tolerance: 12,
+      tolerance: 10,
       onChangeY: (self) => {
-        document.documentElement.style.setProperty('--dlv-scroll-energy', String(Math.min(1, Math.abs(self.velocityY) / 2600)));
+        const energy = Math.min(1, Math.abs(self.velocityY) / 2400);
+        document.documentElement.style.setProperty('--dlv-scroll-energy', String(energy));
+        document.documentElement.style.setProperty('--dlv-scroll-velocity', String(energy));
       },
       onStop: () => document.documentElement.style.setProperty('--dlv-scroll-energy', '0'),
     });
 
-    const ctx = gsap.context(() => {
-      gsap.fromTo('.dlv-top-nav', { y: -22, autoAlpha: 0, scale: 0.98 }, { y: 0, autoAlpha: 1, scale: 1, duration: 0.9, ease: 'dlaviePremium', delay: 0.12 });
-      gsap.to('.dlv-marquee-track', {
-        xPercent: -8,
-        ease: 'none',
-        scrollTrigger: { trigger: '.dlv-marquee', start: 'top bottom', end: 'bottom top', scrub: 0.65 },
+    const mm = gsap.matchMedia();
+    mm.add('(min-width: 781px)', () => {
+      const ctx = gsap.context(() => {
+        gsap.fromTo('.dlv-top-nav', { y: -24, autoAlpha: 0, scale: 0.98 }, { y: 0, autoAlpha: 1, scale: 1, duration: 0.9, ease: 'dlaviePremium', delay: 0.08 });
+        gsap.to('.dlv-marquee-track', {
+          xPercent: -12,
+          scale: 1.045,
+          ease: 'none',
+          scrollTrigger: { trigger: '.dlv-marquee', start: 'top bottom', end: 'bottom top', scrub: 0.65, invalidateOnRefresh: true },
+        });
+        gsap.to('.dlv-top-nav', {
+          '--nav-compact': 1,
+          '--nav-glow': 1,
+          scrollTrigger: { trigger: '.dlv-page', start: '8% top', end: '28% top', scrub: true, invalidateOnRefresh: true },
+        });
+        gsap.to('.dlv-hero-card', {
+          yPercent: -8,
+          scale: 0.955,
+          rotateX: 4,
+          filter: 'blur(1.5px)',
+          ease: 'none',
+          scrollTrigger: { trigger: '.dlv-hero', start: 'top top', end: 'bottom top', scrub: true, invalidateOnRefresh: true },
+        });
+        gsap.to('.dlv-title', {
+          yPercent: -18,
+          scale: 0.94,
+          opacity: 0.58,
+          ease: 'none',
+          scrollTrigger: { trigger: '.dlv-hero', start: '28% top', end: 'bottom top', scrub: true, invalidateOnRefresh: true },
+        });
       });
-      gsap.to('.dlv-top-nav', {
-        '--nav-compact': 1,
-        scrollTrigger: { trigger: '.dlv-hero', start: '18% top', end: 'bottom top', scrub: true },
+      return () => ctx.revert();
+    });
+
+    mm.add('(max-width: 780px)', () => {
+      const ctx = gsap.context(() => {
+        gsap.fromTo('.dlv-top-nav', { y: -20, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.75, ease: 'dlaviePremium' });
+        gsap.to('.dlv-hero-card', {
+          yPercent: -4,
+          scale: 0.982,
+          ease: 'none',
+          scrollTrigger: { trigger: '.dlv-hero', start: 'top top', end: 'bottom top', scrub: true, invalidateOnRefresh: true },
+        });
       });
-      ScrollTrigger.batch('.dlv-ecosystem-card', {
-        start: 'top 82%',
-        once: true,
-        onEnter: (batch) => gsap.fromTo(batch, { autoAlpha: 0, y: 44, rotateX: -8 }, { autoAlpha: 1, y: 0, rotateX: 0, stagger: 0.11, duration: 0.9, ease: 'dlaviePremium' }),
-      });
+      return () => ctx.revert();
     });
 
     return () => {
-      ctx.revert();
+      mm.revert();
       observer.kill();
       cleanupReveal();
       cleanupParallax();
+      cleanupDepthCards();
     };
   }, []);
 

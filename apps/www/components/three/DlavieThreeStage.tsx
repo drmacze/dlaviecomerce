@@ -2,13 +2,30 @@
 
 import { Environment, Float } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { DlavieHolographicField } from '../webgl/DlavieHolographicField';
 import { DlavieCubicCore } from './DlavieCubicCore';
 import { DlavieOrbitRings } from './DlavieOrbitRings';
 import { DlavieParticles } from './DlavieParticles';
 
 export function DlavieThreeStage() {
+  const [compact, setCompact] = useState(true);
+
+  useEffect(() => {
+    setCompact(window.matchMedia('(max-width: 780px)').matches || navigator.webdriver);
+  }, []);
+
+  if (compact) {
+    return (
+      <div className="dlv-three-stage dlv-three-fallback" aria-hidden="true">
+        <div className="dlv-fallback-core" />
+        <span className="dlv-fallback-ring one" />
+        <span className="dlv-fallback-ring two" />
+        <span className="dlv-fallback-ring three" />
+      </div>
+    );
+  }
+
   return (
     <div className="dlv-three-stage" aria-hidden="true">
       <Canvas camera={{ position: [0, 0.24, 6.35], fov: 40 }} dpr={[1, 1.55]} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}>

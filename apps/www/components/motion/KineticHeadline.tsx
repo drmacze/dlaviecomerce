@@ -9,7 +9,10 @@ export function KineticHeadline({ children, id, className }: { children: string;
   useEffect(() => {
     registerDlavieGsap();
     const element = ref.current;
-    if (!element || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!element) return;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const compact = window.matchMedia('(max-width: 780px)').matches;
+    if (reduce || compact) return;
 
     let split: SplitText | undefined;
     const ctx = gsap.context(() => {
