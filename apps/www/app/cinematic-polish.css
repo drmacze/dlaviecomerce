@@ -136,3 +136,32 @@ button { font: inherit; }
   font-size: clamp(1.5rem, 3.7vw, 2.25rem);
   letter-spacing: -.06em;
 }
+
+.dlv-cloud-hero-main {
+  position: absolute;
+  top: 18svh;
+  left: 50%;
+  z-index: 4;
+  display: grid;
+  width: min(48rem, calc(100% - 2rem));
+  justify-items: center;
+  text-align: center;
+  transform: translateX(-50%);
+}
+
+.dlv-cloud-hero-main h1 {
+  margin: 1.6rem 0 0;
+  font-size: clamp(4.5rem, 12vw, 8rem);
+  font-weight: 720;
+  letter-spacing: -.09em;
+  line-height: .9;
+}
+
+.dlv-cloud-hero-main p {
+  max-width: 46rem;
+  margin: 1.5rem 0 0;
+  color: rgba(7, 9, 17, .86);
+  font-size: clamp(1.55rem, 4vw, 2.8rem);
+  letter-spacing: -.045em;
+  line-height: 1.18;
+}
