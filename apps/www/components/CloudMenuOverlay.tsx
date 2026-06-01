@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { gsap, scrollToTarget } from '@dlavie/animations';
+import { gsap, registerDlavieGsap, scrollToTarget } from '@dlavie/animations';
 
 const menuItems = [
   { href: '#top', label: 'DlavieOS', meta: 'AI operating surface' },
@@ -16,6 +16,7 @@ export function CloudMenuOverlay({ open, onClose }: { open: boolean; onClose: ()
   const panel = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    registerDlavieGsap();
     const overlayEl = overlay.current;
     const panelEl = panel.current;
     if (!overlayEl || !panelEl) return;
