@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ScrollTrigger } from '@dlavie/animations';
 import { MainNav } from '../components/navigation/MainNav';
 import { DlavieLoader } from '../components/loading/DlavieLoader';
+import { CopyProtection } from '../components/security/CopyProtection';
 import { ShaderStage } from '../visuals/ShaderStage';
 import { HeroScene } from '../sections/HeroScene';
 import { IdentityScene } from '../sections/IdentityScene';
@@ -14,6 +15,7 @@ import { AutomationScene } from '../sections/AutomationScene';
 import { FinalCtaScene } from '../sections/FinalCtaScene';
 import { createLenis } from '../motion/createLenis';
 import { createScrollScenes } from '../motion/createScrollScene';
+import { playDlavieClink, setupDlavieClink } from '../lib/audio/dlavieClink';
 
 const MIN_LOADER_MS = 1050;
 const MAX_LOADER_MS = 3000;
@@ -64,6 +66,9 @@ export function AppShell() {
   const rootRef = useRef<HTMLDivElement>(null);
   const [isLoaderLeaving, setIsLoaderLeaving] = useState(false);
   const [isLoaderMounted, setIsLoaderMounted] = useState(true);
+  const hasPlayedLoaderClinkRef = useRef(false);
+
+  useEffect(() => setupDlavieClink(), []);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -103,6 +108,13 @@ export function AppShell() {
   }, []);
 
   useEffect(() => {
+    if (!isLoaderLeaving || !isLoaderMounted || hasPlayedLoaderClinkRef.current) return;
+
+    hasPlayedLoaderClinkRef.current = true;
+    playDlavieClink();
+  }, [isLoaderLeaving, isLoaderMounted]);
+
+  useEffect(() => {
     if (!isLoaderLeaving) return;
 
     const refreshAfterFade = window.setTimeout(() => {
@@ -114,7 +126,8 @@ export function AppShell() {
 
   return (
     <>
-      <div ref={rootRef} className="dlavie-cinematic-app">
+      <CopyProtection />
+      <div ref={rootRef} className="dlavie-cinematic-app dlavie-copy-protected">
         <ShaderStage />
         <MainNav />
         <main>

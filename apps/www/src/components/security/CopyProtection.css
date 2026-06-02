@@ -1,0 +1,26 @@
+.dlavie-copy-protected {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.dlavie-copy-protected input,
+.dlavie-copy-protected textarea,
+.dlavie-copy-protected select,
+.dlavie-copy-protected [contenteditable="true"],
+.dlavie-copy-protected code,
+.dlavie-copy-protected pre,
+.dlavie-copy-protected .allow-copy {
+  user-select: text;
+  -webkit-user-select: text;
+  -webkit-touch-callout: default;
+}
+
+.dlavie-copy-protected img,
+.dlavie-copy-protected svg,
+.dlavie-copy-protected canvas,
+.dlavie-copy-protected picture,
+.dlavie-copy-protected video {
+  user-drag: none;
+  -webkit-user-drag: none;
+}
