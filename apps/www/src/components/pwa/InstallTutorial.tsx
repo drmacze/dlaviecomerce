@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { playDlavieClinkFromGesture, setupDlavieClink } from '../../lib/audio/dlavieClink';
-import './InstallTutorial.css';
 
 type InstallTutorialProps = {
   enabled: boolean;
