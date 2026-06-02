@@ -17,9 +17,9 @@ import { createLenis } from '../motion/createLenis';
 import { createScrollScenes } from '../motion/createScrollScene';
 import { playDlavieClink, setupDlavieClink } from '../lib/audio/dlavieClink';
 
-const MIN_LOADER_MS = 1050;
-const MAX_LOADER_MS = 3000;
-const FADE_REFRESH_DELAY_MS = 720;
+const MIN_LOADER_MS = 2400;
+const MAX_LOADER_MS = 5500;
+const FADE_REFRESH_DELAY_MS = 860;
 
 function waitForWindowLoad() {
   if (typeof window === 'undefined' || document.readyState === 'complete') {

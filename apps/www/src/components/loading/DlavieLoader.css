@@ -6,11 +6,12 @@
   place-items: center;
   overflow: hidden;
   background:
-    radial-gradient(circle at 50% 45%, rgba(255, 108, 132, 0.16), transparent 34%),
-    radial-gradient(circle at 50% 55%, rgba(104, 64, 255, 0.12), transparent 42%),
-    #03030a;
+    radial-gradient(circle at 50% 40%, rgba(254, 179, 255, 0.15), transparent 30%),
+    radial-gradient(circle at 44% 58%, rgba(255, 108, 132, 0.13), transparent 34%),
+    radial-gradient(circle at 58% 62%, rgba(88, 64, 255, 0.12), transparent 44%),
+    linear-gradient(145deg, #020106 0%, #07030d 46%, #030207 100%);
   opacity: 1;
-  transition: opacity 680ms cubic-bezier(0.22, 1, 0.36, 1), visibility 680ms step-end;
+  transition: opacity 820ms cubic-bezier(0.22, 1, 0.36, 1), visibility 820ms step-end;
   visibility: visible;
   pointer-events: auto;
   isolation: isolate;
@@ -27,50 +28,114 @@
   inset: -18%;
   z-index: -1;
   background:
-    linear-gradient(115deg, transparent 0 34%, rgba(255, 244, 237, 0.055) 45%, transparent 58%),
-    repeating-linear-gradient(90deg, rgba(255,255,255,.018) 0 1px, transparent 1px 92px);
+    radial-gradient(circle at 50% 50%, rgba(255, 244, 237, 0.055), transparent 23rem),
+    linear-gradient(115deg, transparent 0 34%, rgba(255, 244, 237, 0.065) 45%, transparent 58%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.02) 0 1px, transparent 1px 92px);
   filter: blur(0.5px);
-  opacity: 0.72;
+  opacity: 0.76;
   transform: rotate(-8deg) scale(1.05);
   animation: dlavie-loader-sheen 2600ms ease-in-out infinite alternate;
+}
+
+.dlavie-loader::after {
+  position: absolute;
+  inset: 12%;
+  border: 1px solid rgba(255, 231, 245, 0.055);
+  border-radius: 999px;
+  content: "";
+  filter: blur(0.2px);
+  opacity: 0.72;
+  pointer-events: none;
 }
 
 .dlavie-loader__content {
   display: grid;
   justify-items: center;
-  gap: clamp(1rem, 2vw, 1.4rem);
+  gap: clamp(0.72rem, 1.5vw, 1.08rem);
   transform: translate3d(0, 0, 0);
 }
 
 .dlavie-loader__mark {
+  position: relative;
   display: grid;
   place-items: center;
-  width: clamp(9rem, 18vw, 15rem);
+  width: clamp(9.25rem, 18vw, 15.5rem);
   aspect-ratio: 1;
   filter:
     drop-shadow(0 0 22px rgba(255, 149, 173, 0.2))
     drop-shadow(0 20px 70px rgba(115, 73, 255, 0.24));
 }
 
-.dlavie-loader__static-mark {
+.dlavie-loader__fallback-orb {
+  position: absolute;
+  inset: 6%;
+  border: 1px solid rgba(255, 244, 237, 0.08);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 44%, rgba(254, 179, 255, 0.15), transparent 40%),
+    radial-gradient(circle at 50% 50%, rgba(255, 244, 237, 0.08), transparent 60%),
+    rgba(255, 255, 255, 0.018);
+  box-shadow:
+    inset 0 0 54px rgba(254, 179, 255, 0.055),
+    0 0 90px rgba(122, 91, 255, 0.18);
+}
+
+.dlavie-loader__static-mark,
+.dlavie-loader__metallic-mark {
+  grid-area: 1 / 1;
   display: block;
   width: 100%;
   height: 100%;
+}
+
+.dlavie-loader__static-mark {
   object-fit: contain;
-  filter: invert(1) brightness(1.7) sepia(0.12) saturate(1.3);
+  filter: invert(1) brightness(1.72) sepia(0.12) saturate(1.3);
   opacity: 0.96;
+  transform: scale(0.93);
+  transition: opacity 480ms ease, filter 480ms ease, transform 480ms ease;
+}
+
+.dlavie-loader__metallic-mark {
+  opacity: 0;
+  transform: scale(0.965);
+  transition: opacity 520ms ease, transform 720ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dlavie-loader[data-enhanced='ready'] .dlavie-loader__metallic-mark {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.dlavie-loader[data-enhanced='ready'] .dlavie-loader__static-mark {
+  opacity: 0.26;
+  filter: invert(1) brightness(1.45) sepia(0.18) saturate(1.18) blur(0.4px);
+  transform: scale(0.915);
+}
+
+.dlavie-loader__eyebrow,
+.dlavie-loader__wordmark {
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.dlavie-loader__eyebrow {
+  color: rgba(255, 231, 245, 0.42);
+  font-family: var(--font-label, var(--font-sans), sans-serif);
+  font-size: clamp(0.58rem, 1vw, 0.68rem);
+  font-weight: 850;
+  letter-spacing: 0.28em;
+  text-indent: 0.28em;
 }
 
 .dlavie-loader__wordmark {
-  margin: 0;
-  color: rgba(255, 244, 237, 0.78);
+  color: rgba(255, 244, 237, 0.82);
   font-family: var(--font-display), var(--font-sans), sans-serif;
-  font-size: clamp(0.86rem, 1.45vw, 1.06rem);
+  font-size: clamp(0.95rem, 1.55vw, 1.12rem);
   font-weight: 700;
-  letter-spacing: 0.42em;
+  letter-spacing: 0.46em;
   line-height: 1;
-  text-indent: 0.42em;
-  text-transform: uppercase;
+  text-indent: 0.46em;
   text-shadow: 0 0 28px rgba(255, 108, 132, 0.24);
 }
 
@@ -81,7 +146,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .dlavie-loader,
-  .dlavie-loader__backdrop {
+  .dlavie-loader__backdrop,
+  .dlavie-loader__static-mark,
+  .dlavie-loader__metallic-mark {
     animation: none;
     transition-duration: 180ms;
   }

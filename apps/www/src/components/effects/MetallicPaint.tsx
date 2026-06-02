@@ -164,6 +164,7 @@ interface MetallicPaintProps {
   distortion?: number;
   contour?: number;
   tintColor?: string;
+  onReady?: () => void;
 }
 
 function processImage(img: HTMLImageElement): ImageData {
@@ -297,7 +298,8 @@ export function MetallicPaint({
   mouseAnimation = false,
   distortion = 1,
   contour = 0.2,
-  tintColor = '#feb3ff'
+  tintColor = '#feb3ff',
+  onReady
 }: MetallicPaintProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const glRef = useRef<WebGL2RenderingContext | null>(null);
@@ -488,6 +490,13 @@ export function MetallicPaint({
     contour,
     tintColor
   ]);
+
+  useEffect(() => {
+    if (!textureReady || !onReady) return;
+
+    const readyFrame = requestAnimationFrame(() => onReady());
+    return () => cancelAnimationFrame(readyFrame);
+  }, [textureReady, onReady]);
 
   useEffect(() => {
     if (!ready || !textureReady) return;
