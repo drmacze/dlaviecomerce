@@ -1,0 +1,86 @@
+:root {
+  --font-display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue Condensed", Impact, sans-serif;
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-label: var(--font-sans);
+
+  --page-bg: #030205;
+  --page-fg: #fff8f4;
+  --muted-fg: rgba(255, 238, 231, 0.64);
+  --soft-fg: rgba(255, 248, 244, 0.82);
+  --accent: #ff7a8a;
+  --accent-2: #c98cff;
+  --scene-glow: rgba(255, 112, 136, 0.34);
+
+  --hero-bg: #030205;
+  --hero-glow: rgba(255, 113, 134, 0.42);
+  --hero-accent: #ff8e75;
+  --hero-accent-soft: rgba(255, 142, 117, 0.18);
+  --button-bg: #fff2e8;
+  --button-fg: #100709;
+  --button-border: rgba(255, 242, 232, 0.48);
+
+  --nav-bg: rgba(8, 5, 8, 0.64);
+  --glass-bg: rgba(255, 238, 231, 0.055);
+  --glass-border: rgba(255, 238, 231, 0.14);
+  --radius-sharp: 0.2rem;
+  --radius-panel: clamp(1rem, 2vw, 1.7rem);
+  --tracking-label: 0.18em;
+
+  --type-wordmark: clamp(5.1rem, 19vw, 20rem);
+  --type-hero-tagline: clamp(1.55rem, 5.6vw, 5.4rem);
+  --type-display-lg: clamp(3.1rem, 9vw, 9.6rem);
+  --type-display-md: clamp(2.65rem, 7vw, 7.2rem);
+  --type-body: clamp(1rem, 1.22vw, 1.18rem);
+  --section-progress: 0;
+  --portal-progress: 0;
+  --os-progress: 0;
+  --commerce-progress: 0;
+  --automation-progress: 0;
+  --line-fill: 0%;
+}
+
+:root[data-theme="portal"] {
+  --page-bg: #050306;
+  --page-fg: #fff8f6;
+  --muted-fg: rgba(255, 235, 229, 0.62);
+  --accent: #ff8f70;
+  --accent-2: #e68cff;
+  --scene-glow: rgba(255, 120, 103, 0.34);
+  --hero-glow: rgba(255, 119, 103, 0.36);
+}
+
+:root[data-theme="os"] {
+  --page-bg: #030607;
+  --page-fg: #effffc;
+  --muted-fg: rgba(224, 245, 241, 0.62);
+  --accent: #79ffe5;
+  --accent-2: #f0a0ff;
+  --scene-glow: rgba(96, 255, 221, 0.30);
+  --button-bg: #dffdf5;
+  --button-fg: #02100d;
+  --button-border: rgba(175, 255, 236, 0.44);
+}
+
+:root[data-theme="commerce"] {
+  --page-bg: #0b0209;
+  --page-fg: #fff4fb;
+  --muted-fg: rgba(255, 226, 243, 0.66);
+  --accent: #ff6f9f;
+  --accent-2: #ffb06e;
+  --scene-glow: rgba(255, 86, 148, 0.35);
+  --button-bg: #ffe7dc;
+  --button-fg: #16050c;
+  --button-border: rgba(255, 218, 231, 0.48);
+}
+
+:root[data-theme="automation"] {
+  --page-bg: #050412;
+  --page-fg: #f8fbff;
+  --muted-fg: rgba(230, 236, 255, 0.65);
+  --accent: #9aaaff;
+  --accent-2: #ff8bba;
+  --scene-glow: rgba(141, 154, 255, 0.32);
+  --button-bg: #eef0ff;
+  --button-fg: #070918;
+  --button-border: rgba(219, 224, 255, 0.44);
+}

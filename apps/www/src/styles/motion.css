@@ -1,0 +1,18 @@
+.has-lenis.lenis,
+.has-lenis.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+.lenis.lenis-stopped { overflow: clip; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .001ms !important;
+  }
+  .scene-hero, .scene-portal, .scene-os, .scene-commerce { min-height: auto; }
+  .hero-pin, .portal-pin, .os-pin, .commerce-pin { min-height: auto; padding-block: 8rem; }
+  .hero-wordmark, .portal-os-label, .os-feature, .commerce-feature, .automation-step { opacity: 1; transform: none; filter: none; }
+  .commerce-path, .agent-link, .orbit-progress { stroke-dashoffset: 0; }
+}
