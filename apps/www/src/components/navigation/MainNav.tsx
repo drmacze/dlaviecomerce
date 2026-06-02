@@ -5,14 +5,17 @@ import { MagneticButton } from '../ui/MagneticButton';
 export function MainNav() {
   return (
     <nav className="main-nav" aria-label="DLavie primary navigation">
-      <a className="nav-brand" href="#hero" aria-label="DLavie home">
+      <a className="nav-brand" href="/#hero" aria-label="DLavie home">
         <SvgIcon name="brand" />
         <span>DLAVIE</span>
       </a>
       <div className="nav-links" aria-label="Website sections">
-        {sceneRegistry.slice(1, 6).map((scene) => <a key={scene.id} href={`#${scene.id}`}>{scene.label}</a>)}
+        {sceneRegistry.slice(1, 6).map((scene) => <a key={scene.id} href={`/#${scene.id}`}>{scene.label}</a>)}
       </div>
-      <MagneticButton href="#contact" tone="secondary" className="nav-action">Start</MagneticButton>
+      <div className="nav-account-actions" aria-label="DLavie account actions">
+        <a className="nav-login" href="/account/login">Login</a>
+        <MagneticButton href="/account/register" tone="secondary" className="nav-action">Register</MagneticButton>
+      </div>
     </nav>
   );
 }
