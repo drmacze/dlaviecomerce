@@ -38,6 +38,11 @@ function removeUnlockListeners() {
   listenersAttached = false;
 }
 
+function markAudioUnlocked(context: AudioContext) {
+  unlocked = context.state === 'running';
+  if (unlocked) removeUnlockListeners();
+}
+
 function unlockAudio() {
   const context = getAudioContext();
   if (!context) {
@@ -45,17 +50,28 @@ function unlockAudio() {
     return;
   }
 
-  const markUnlocked = () => {
-    unlocked = context.state === 'running';
-    if (unlocked) removeUnlockListeners();
-  };
-
   if (context.state === 'running') {
-    markUnlocked();
+    markAudioUnlocked(context);
     return;
   }
 
-  context.resume().then(markUnlocked).catch(() => undefined);
+  context.resume().then(() => markAudioUnlocked(context)).catch(() => undefined);
+}
+
+async function unlockAudioFromGesture() {
+  const context = getAudioContext();
+  if (!context) return null;
+
+  if (context.state !== 'running') {
+    try {
+      await context.resume();
+    } catch {
+      return null;
+    }
+  }
+
+  markAudioUnlocked(context);
+  return unlocked ? context : null;
 }
 
 function connectFilteredGain(
@@ -63,7 +79,7 @@ function connectFilteredGain(
   destination: AudioNode,
   type: BiquadFilterType,
   frequency: number,
-  q: number,
+  q: number
 ) {
   const filter = context.createBiquadFilter();
   filter.type = type;
@@ -175,4 +191,11 @@ export function playDlavieClink() {
   } catch {
     // Browser audio failures are intentionally silent.
   }
+}
+
+export function playDlavieClinkFromGesture() {
+  void unlockAudioFromGesture().then((context) => {
+    if (!context) return;
+    playDlavieClink();
+  });
 }
