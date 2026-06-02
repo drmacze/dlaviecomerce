@@ -5,6 +5,7 @@ import { useReducedMotion } from '../motion/useReducedMotion';
 
 export function ShaderStage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const progressRef = useRef(0);
   const reducedMotion = useReducedMotion();
 
   useEffect(() => {
@@ -20,11 +21,14 @@ export function ShaderStage() {
       canvas.height = Math.floor(canvas.clientHeight * ratio);
       context.setTransform(ratio, 0, 0, ratio, 0, 0);
     };
+    const syncProgress = (event: Event) => {
+      progressRef.current = (event as CustomEvent<{ progress: number }>).detail.progress;
+    };
     const draw = () => {
       frame += 0.008;
       const { clientWidth: width, clientHeight: height } = canvas;
       context.clearRect(0, 0, width, height);
-      const progress = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--section-progress')) || 0;
+      const progress = progressRef.current;
       const warm = 0.18 + progress * 0.08;
       const violet = 0.14 + progress * 0.06;
 
@@ -58,9 +62,11 @@ export function ShaderStage() {
     resize();
     draw();
     window.addEventListener('resize', resize);
+    window.addEventListener('dlavie:section-progress', syncProgress);
     return () => {
       window.cancelAnimationFrame(raf);
       window.removeEventListener('resize', resize);
+      window.removeEventListener('dlavie:section-progress', syncProgress);
       context.clearRect(0, 0, canvas.width, canvas.height);
     };
   }, [reducedMotion]);

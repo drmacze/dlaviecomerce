@@ -11,6 +11,7 @@ export function createScrollScenes(root: HTMLElement) {
   const ctx = gsap.context(() => {
     const setProgress = (value: number) => {
       document.documentElement.style.setProperty('--section-progress', value.toFixed(4));
+      window.dispatchEvent(new CustomEvent('dlavie:section-progress', { detail: { progress: value } }));
     };
 
     gsap.utils.toArray<HTMLElement>('[data-scene-theme]').forEach((scene, index) => {
