@@ -4,9 +4,87 @@
 
 :root {
   --radius: 0.5rem;
+
+  /* shadcn/ui neutral infrastructure tokens; the cinematic DLAVIE CSS system remains in src/styles/*.css. */
+  --background: 0 0% 98%;
+  --foreground: 0 0% 10%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 10%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 10%;
+  --primary: 0 0% 10%;
+  --primary-foreground: 0 0% 98%;
+  --primary-border: 0 0% 10%;
+  --secondary: 0 0% 94%;
+  --secondary-foreground: 0 0% 10%;
+  --secondary-border: 0 0% 82%;
+  --muted: 0 0% 94%;
+  --muted-foreground: 0 0% 46%;
+  --accent: 0 0% 94%;
+  --accent-foreground: 0 0% 10%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+  --destructive-border: 0 84% 52%;
+  --border: 0 0% 86%;
+  --input: 0 0% 86%;
+  --ring: 0 0% 10%;
+  --button-outline: hsl(0 0% 82%);
+  --chart-1: 0 0% 20%;
+  --chart-2: 0 0% 35%;
+  --chart-3: 0 0% 50%;
+  --chart-4: 0 0% 65%;
+  --chart-5: 0 0% 80%;
+  --sidebar: 0 0% 98%;
+  --sidebar-foreground: 0 0% 10%;
+  --sidebar-primary: 0 0% 10%;
+  --sidebar-primary-foreground: 0 0% 98%;
+  --sidebar-accent: 0 0% 94%;
+  --sidebar-accent-foreground: 0 0% 10%;
+  --sidebar-border: 0 0% 86%;
+  --sidebar-ring: 0 0% 10%;
   --app-font-sans: 'Inter', sans-serif;
   --app-font-serif: Georgia, serif;
   --app-font-mono: Menlo, monospace;
+}
+
+
+.dark {
+  --background: 0 0% 4%;
+  --foreground: 0 0% 98%;
+  --card: 0 0% 8%;
+  --card-foreground: 0 0% 98%;
+  --popover: 0 0% 8%;
+  --popover-foreground: 0 0% 98%;
+  --primary: 0 0% 98%;
+  --primary-foreground: 0 0% 10%;
+  --primary-border: 0 0% 98%;
+  --secondary: 0 0% 14%;
+  --secondary-foreground: 0 0% 98%;
+  --secondary-border: 0 0% 24%;
+  --muted: 0 0% 14%;
+  --muted-foreground: 0 0% 68%;
+  --accent: 0 0% 14%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 63% 31%;
+  --destructive-foreground: 0 0% 98%;
+  --destructive-border: 0 63% 38%;
+  --border: 0 0% 18%;
+  --input: 0 0% 18%;
+  --ring: 0 0% 84%;
+  --button-outline: hsl(0 0% 24%);
+  --chart-1: 0 0% 84%;
+  --chart-2: 0 0% 70%;
+  --chart-3: 0 0% 56%;
+  --chart-4: 0 0% 42%;
+  --chart-5: 0 0% 28%;
+  --sidebar: 0 0% 8%;
+  --sidebar-foreground: 0 0% 98%;
+  --sidebar-primary: 0 0% 98%;
+  --sidebar-primary-foreground: 0 0% 10%;
+  --sidebar-accent: 0 0% 14%;
+  --sidebar-accent-foreground: 0 0% 98%;
+  --sidebar-border: 0 0% 18%;
+  --sidebar-ring: 0 0% 84%;
 }
 
 @layer base {

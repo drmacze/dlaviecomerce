@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { DlavieMetallicLoader } from '@/components/effects/DlavieMetallicLoader';
 
 type Props = { routeLoading?: boolean; authChecking?: boolean };
 
@@ -40,7 +41,9 @@ export function DlavieAssetBoot({ routeLoading, authChecking }: Props) {
             <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-white/38">DLAVIE System</p>
             <p className="mt-2 text-2xl font-semibold tracking-[-.045em] text-white">Loading assets...</p>
           </div>
-          <div className="grid h-14 w-14 place-items-center rounded-full bg-white text-xl font-black text-[#050505]">D</div>
+          <div className="grid h-16 w-16 place-items-center">
+            <DlavieMetallicLoader />
+          </div>
         </div>
         <p className="mt-5 text-sm font-medium text-white/52">Preparing interface and motion system.</p>
         <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/10">
