@@ -1,10 +1,5 @@
-import { HeroShowcase } from '../components/HeroShowcase';
-import { SmoothScrollProvider } from '../components/SmoothScrollProvider';
+import { AppShell } from '../src/app/AppShell';
 
 export default function Page() {
-  return (
-    <SmoothScrollProvider>
-      <HeroShowcase />
-    </SmoothScrollProvider>
-  );
+  return <AppShell />;
 }

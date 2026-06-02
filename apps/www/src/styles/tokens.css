@@ -1,0 +1,42 @@
+:root {
+  --page-bg: #05060a;
+  --page-fg: #f5f7fb;
+  --muted-fg: rgba(245, 247, 251, 0.66);
+  --accent: #8d7dff;
+  --accent-2: #72ffe0;
+  --scene-glow: rgba(125, 109, 255, 0.42);
+  --section-progress: 0;
+  --portal-progress: 0;
+  --os-progress: 0;
+  --commerce-progress: 0;
+  --automation-progress: 0;
+  --nav-bg: rgba(6, 7, 12, 0.64);
+  --line-fill: 0%;
+}
+
+:root[data-theme="os"] {
+  --page-bg: #080a0d;
+  --page-fg: #effffc;
+  --muted-fg: rgba(224, 245, 241, 0.62);
+  --accent: #73ffe3;
+  --accent-2: #9b8cff;
+  --scene-glow: rgba(115, 255, 227, 0.34);
+}
+
+:root[data-theme="commerce"] {
+  --page-bg: #12031c;
+  --page-fg: #fff7ff;
+  --muted-fg: rgba(255, 232, 255, 0.66);
+  --accent: #ff61d7;
+  --accent-2: #b585ff;
+  --scene-glow: rgba(255, 97, 215, 0.36);
+}
+
+:root[data-theme="automation"] {
+  --page-bg: #070615;
+  --page-fg: #f8fbff;
+  --muted-fg: rgba(230, 236, 255, 0.65);
+  --accent: #88a7ff;
+  --accent-2: #6cffd9;
+  --scene-glow: rgba(136, 167, 255, 0.34);
+}
