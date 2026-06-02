@@ -88,7 +88,7 @@ export function DlavieLoader({ isLeaving, onExited }: DlavieLoaderProps) {
             </span>
           ) : null}
         </div>
-        <p className="dlavie-loader__eyebrow">Cinematic commerce intelligence</p>
+        <p className="dlavie-loader__eyebrow">Loading DLavie</p>
         <p className="dlavie-loader__wordmark">DLAVIE</p>
       </div>
     </div>
