@@ -7,6 +7,8 @@ import '../src/styles/motion.css';
 import '../src/components/effects/MetallicPaint.css';
 import '../src/components/loading/DlavieLoader.css';
 import '../src/components/security/CopyProtection.css';
+import '../src/components/pwa/InstallTutorial.css';
+import '../src/styles/account.css';
 
 const dlavieDisplay = Barlow_Condensed({
   subsets: ['latin'],
