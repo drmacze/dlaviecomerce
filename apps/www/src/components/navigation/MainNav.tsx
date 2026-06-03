@@ -38,7 +38,8 @@ export function MainNav() {
         <span>DLAVIE</span>
       </a>
       <div className="nav-links" aria-label="Website sections">
-        {sceneRegistry.slice(1, 6).map((scene) => <a key={scene.id} href={`/#${scene.id}`}>{scene.label}</a>)}
+        {sceneRegistry.slice(1, 5).map((scene) => <a key={scene.id} href={`/#${scene.id}`}>{scene.label}</a>)}
+        <a href="/ai">DLavie AI</a>
       </div>
       <div className="nav-account-actions" aria-label="DLavie account actions">
         {account?.authenticated ? (
