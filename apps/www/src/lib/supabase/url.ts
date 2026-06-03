@@ -10,5 +10,6 @@ export function getSupabaseRequestHeaders() {
   const headers = new Headers();
   headers.set('apikey', key);
   headers.set('Content-Type', 'application/json');
+  headers.set('Authorization', ['Bearer', key].join(' '));
   return headers;
 }
