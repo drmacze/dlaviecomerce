@@ -2,7 +2,6 @@
 
 import { FormEvent, useState, useTransition } from 'react';
 import Link from 'next/link';
-import { SvgIcon } from '../ui/SvgIcon';
 import { NeonField } from './NeonField';
 import { PasswordStrengthMeter } from './PasswordStrengthMeter';
 import { VideoWordmark } from './VideoWordmark';
@@ -75,35 +74,58 @@ export function AccountAccessPage({ mode }: AccountAccessPageProps) {
   return (
     <main className="account-shell account-shell--cinematic">
       <section className="account-cinematic" data-mode={mode} aria-labelledby="account-title">
-        <header className="account-cinematic__topbar">
-          <Link className="account-brand account-brand--icon" href="/" aria-label="Back to DLavie home">
-            <SvgIcon name="brand" />
+        <header className="account-cinematic__topbar" aria-label="DLavie Account controls">
+          <Link className="account-glass-circle account-glass-circle--close" href="/" aria-label="Close DLavie Account">
+            <span aria-hidden="true" />
+            <span aria-hidden="true" />
           </Link>
-          <Link className="account-cinematic__dashboard" href="/account/dashboard">Dashboard</Link>
+          <Link className="account-domain-pill" href="/ai" aria-label="Open DLavie AI">
+            <span aria-hidden="true" className="account-domain-pill__lock" />
+            <strong>dlavie.ai</strong>
+          </Link>
+          <div className="account-top-actions">
+            <Link className="account-glass-circle account-glass-circle--dots" href="/account/dashboard" aria-label="Open dashboard">...</Link>
+            <details className="account-mobile-menu">
+              <summary className="account-glass-circle account-glass-circle--hamburger" aria-label="Open menu">
+                <span />
+                <span />
+                <span />
+              </summary>
+              <div className="account-mobile-menu__panel">
+                <Link href="/ai">DLavie AI</Link>
+                <Link href="/account/dashboard">Dashboard</Link>
+                <Link href="/faq">FAQ</Link>
+                <Link href="/terms">Ketentuan Layanan</Link>
+                <Link href="/privacy">Kebijakan Privasi</Link>
+              </div>
+            </details>
+          </div>
         </header>
 
         <div className="account-cinematic__hero">
           <VideoWordmark compact />
-          <p className="account-cinematic__tagline">Access DLavie AI, DLavieOS Agent, Commerce, and automation with one connected identity.</p>
         </div>
 
         <div className="account-oauth-stack" aria-label="DLavie Account sign in options">
           <button type="button" className="account-oauth-button" disabled>
-            <span aria-hidden="true">X</span>
-            <strong>Continue with X</strong>
-          </button>
-          <button type="button" className="account-oauth-button" disabled>
             <span aria-hidden="true">G</span>
-            <strong>Continue with Google</strong>
+            <strong>Lanjutkan dengan Google</strong>
+            <em aria-hidden="true">›</em>
           </button>
           <button type="button" className="account-oauth-button account-oauth-button--primary" disabled>
-            <span aria-hidden="true"></span>
-            <strong>Sign in with Apple</strong>
+            <span aria-hidden="true">A</span>
+            <strong>Masuk dengan Apple</strong>
+            <em aria-hidden="true">›</em>
+          </button>
+          <button type="button" className="account-oauth-button" onClick={() => setShowAdvancedForm(true)}>
+            <span aria-hidden="true">@</span>
+            <strong>Lanjutkan dengan Email</strong>
+            <em aria-hidden="true">›</em>
           </button>
         </div>
 
         <button className="account-more-button" type="button" onClick={() => setShowAdvancedForm((value) => !value)}>
-          {showAdvancedForm ? 'Hide email access' : 'Email access'}
+          {showAdvancedForm ? 'Tutup email' : 'Opsi lainnya'} <span aria-hidden="true">v</span>
         </button>
 
         <section className="account-panel account-panel--cinematic" aria-labelledby="account-title" data-open={showAdvancedForm ? 'true' : 'false'}>
@@ -177,10 +199,12 @@ export function AccountAccessPage({ mode }: AccountAccessPageProps) {
 
         <footer className="account-cinematic__footer">
           <p>
-            {isRegister ? 'Already have a DLavie Account? ' : 'New to DLavie? '}
+            {isRegister ? 'Sudah punya akun? ' : 'Belum punya akun? '}
             <Link href={isRegister ? '/account/login' : '/account/register'}>{isRegister ? 'Login' : 'Create Account'}</Link>
           </p>
-          <p>By continuing, you agree to DLavie Account rules and privacy policy.</p>
+          <p>
+            Dengan melanjutkan, Anda menyetujui <Link href="/terms">Ketentuan Layanan</Link> dan <Link href="/privacy">Kebijakan Privasi</Link>.
+          </p>
         </footer>
       </section>
     </main>
