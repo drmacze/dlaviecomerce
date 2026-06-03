@@ -58,8 +58,14 @@ export function getEnv(
       missing.push('HUGGINGFACE_API_KEY', 'HUGGINGFACE_CHAT_MODEL');
     }
   }
-  if (env.NODE_ENV === 'production' && env.CORS_ORIGINS.includes('*'))
-    missing.push('CORS_ORIGINS(no wildcard in production)');
+  if (env.NODE_ENV === 'production') {
+    const origins = env.CORS_ORIGINS.split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean);
+    if (origins.length === 0) missing.push('CORS_ORIGINS');
+    if (origins.some((origin) => origin === '*' || origin.includes('*')))
+      missing.push('CORS_ORIGINS(no wildcard in production)');
+  }
   if (missing.length > 0)
     throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
   return env;

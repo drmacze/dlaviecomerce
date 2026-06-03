@@ -2,7 +2,7 @@
 
 ## What was built
 
-A backend-only Fastify TypeScript API for DLavie AI with auth, chat, model routing, providers, RAG, knowledge management, conversation history, usage logging, migrations, tests, and documentation.
+A backend-only Fastify TypeScript API for DLavie AI with auth, chat, model routing, providers, RAG, knowledge management, conversation history, usage logging, migrations, tests, documentation, and follow-up security hardening for CORS, RLS assumptions, knowledge-route validation, structured 501 errors, and non-blocking usage logging.
 
 ## Commands run
 
@@ -11,6 +11,15 @@ A backend-only Fastify TypeScript API for DLavie AI with auth, chat, model routi
 - `npm run lint`
 - `npm run test`
 - `npm run build`
+
+## Audit fixes applied
+
+- Hardened RLS assumptions by removing browser insert/delete policies for conversations and messages and by restricting the vector-search RPC to `service_role`.
+- Validated knowledge document IDs with Zod and removed order-dependent search argument mapping.
+- Rejected wildcard/empty CORS origins in production and improved rate-limit keying with a hashed bearer-token principal plus IP.
+- Added `NOT_IMPLEMENTED` structured error handling for the streaming placeholder.
+- Made usage logging non-blocking so a logging failure does not fail successful chat responses.
+- Added security regression tests.
 
 ## Remaining TODOs
 

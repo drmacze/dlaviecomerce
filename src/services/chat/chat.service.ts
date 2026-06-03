@@ -55,15 +55,13 @@ export class ChatService {
     let fallbackUsed = false;
     let finalRoute = route;
     try {
-      output = await this.providers
-        .get(route.providerName)
-        .chat({
-          messages,
-          model: route.model,
-          temperature: route.temperature,
-          max_tokens: route.maxTokens,
-          metadata: request.metadata,
-        });
+      output = await this.providers.get(route.providerName).chat({
+        messages,
+        model: route.model,
+        temperature: route.temperature,
+        max_tokens: route.maxTokens,
+        metadata: request.metadata,
+      });
     } catch (error) {
       if (!env.ENABLE_MODEL_FALLBACK) throw error;
       fallbackUsed = true;
@@ -73,15 +71,13 @@ export class ChatService {
         useRag: ragChunks.length > 0,
         fallback: true,
       });
-      output = await this.providers
-        .get(finalRoute.providerName)
-        .chat({
-          messages,
-          model: finalRoute.model,
-          temperature: finalRoute.temperature,
-          max_tokens: finalRoute.maxTokens,
-          metadata: request.metadata,
-        });
+      output = await this.providers.get(finalRoute.providerName).chat({
+        messages,
+        model: finalRoute.model,
+        temperature: finalRoute.temperature,
+        max_tokens: finalRoute.maxTokens,
+        metadata: request.metadata,
+      });
     }
     const messageId = await this.conversations.addMessage({
       conversationId,

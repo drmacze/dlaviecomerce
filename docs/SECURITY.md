@@ -14,11 +14,11 @@ Admin endpoints accept either a Supabase user whose `profiles.role` is `admin` o
 
 ## RLS assumptions
 
-RLS is enabled. Users can read/write their own conversations and messages. Knowledge and usage tables are managed by the backend service-role client.
+RLS is enabled. Users can read their own conversations and messages. Browser write policies are intentionally omitted so clients cannot forge assistant/system messages or bypass backend usage logging; conversation/message writes are performed by the backend service-role client after ownership checks. Knowledge and usage tables are also managed by the backend service-role client. The vector-search RPC revokes execution from browser roles and grants execution only to `service_role`.
 
 ## Rate limiting
 
-Global Fastify rate limiting uses user id when available plus IP. 429 responses use the structured error format.
+Global Fastify rate limiting uses a hashed bearer-token principal when present plus IP, or anonymous IP when unauthenticated. 429 responses use the structured error format.
 
 ## Prompt injection
 

@@ -1,2 +1,1 @@
-import { z } from 'zod';
-export const conversationParamSchema = z.object({ conversationId: z.string().uuid() });
+export { conversationIdParamSchema as conversationParamSchema } from './common.schema.js';

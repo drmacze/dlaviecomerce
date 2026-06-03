@@ -27,16 +27,11 @@ export async function chatRoutes(app: FastifyInstance) {
     const body = chatRequestSchema.parse(request.body);
     return chatService.send(userId, body, request.requestStart ?? Date.now());
   });
-  app.post('/v1/chat/stream', { preHandler: requireAuth }, async (_request, reply) =>
-    reply
-      .status(501)
-      .send({
-        error: {
-          code: 'BAD_REQUEST',
-          message:
-            'Streaming is not implemented yet. Use POST /v1/chat; docs describe SSE integration steps.',
-          details: {},
-        },
-      }),
-  );
+  app.post('/v1/chat/stream', { preHandler: requireAuth }, async () => {
+    throw new AppError(
+      'NOT_IMPLEMENTED',
+      'Streaming is not implemented yet. Use POST /v1/chat; docs describe SSE integration steps.',
+      501,
+    );
+  });
 }

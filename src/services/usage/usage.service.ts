@@ -1,4 +1,5 @@
 import { env } from '../../config/env.js';
+import { logger } from '../../lib/logger.js';
 import { getSupabaseAdmin } from '../../lib/supabase.js';
 export class UsageService {
   async log(input: {
@@ -15,9 +16,8 @@ export class UsageService {
     metadata?: Record<string, unknown>;
   }) {
     if (!env.ENABLE_USAGE_LOGGING) return;
-    await (getSupabaseAdmin() as any)
-      .from('usage_logs')
-      .insert({
+    try {
+      await (getSupabaseAdmin() as any).from('usage_logs').insert({
         user_id: input.userId,
         route: input.route,
         provider: input.provider,
@@ -30,5 +30,11 @@ export class UsageService {
         error_message: input.errorMessage,
         metadata: input.metadata ?? {},
       });
+    } catch (error) {
+      logger.warn(
+        { error: error instanceof Error ? error.message : 'unknown' },
+        'usage logging failed',
+      );
+    }
   }
 }

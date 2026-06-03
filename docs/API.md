@@ -1,6 +1,6 @@
 # API
 
-Errors use `{ "error": { "code": "VALIDATION_ERROR", "message": "...", "details": {} } }`.
+Errors use `{ "error": { "code": "VALIDATION_ERROR", "message": "...", "details": {} } }`. Supported codes include `BAD_REQUEST`, `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `VALIDATION_ERROR`, `RATE_LIMITED`, `AI_PROVIDER_ERROR`, `AI_PROVIDER_TIMEOUT`, `RAG_ERROR`, `DATABASE_ERROR`, `NOT_IMPLEMENTED`, and `INTERNAL_ERROR`.
 
 ## GET /health
 
@@ -27,7 +27,7 @@ Returns conversation id, assistant message id, answer, provider, model, fallback
 
 ## POST /v1/chat/stream
 
-Auth required. Currently returns 501. Future SSE implementation should reuse `ChatService`, emit token deltas, and persist the final assistant message after the stream closes.
+Auth required. Currently returns HTTP 501 with `NOT_IMPLEMENTED`. Future SSE implementation should reuse `ChatService`, emit token deltas, and persist the final assistant message after the stream closes.
 
 ## GET /v1/conversations
 

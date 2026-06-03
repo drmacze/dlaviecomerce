@@ -14,7 +14,7 @@ Production requires Supabase URL/anon/service-role/JWT secret, `ADMIN_API_KEY`, 
 
 ## Supabase
 
-Apply `supabase/migrations/001_init.sql`, `002_policies.sql`, and `003_functions.sql`. Confirm pgvector is enabled and embedding dimension is 1536.
+Apply all files in `supabase/migrations/` in filename order, including the security hardening migration. Confirm pgvector is enabled and embedding dimension is 1536.
 
 ## Production checklist
 
