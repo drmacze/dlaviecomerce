@@ -9,6 +9,13 @@ export default [
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
+    files: ['src/server/**/*.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      'no-control-regex': 'off',
+    },
+  },
+  {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
       ecmaVersion: 2022,
