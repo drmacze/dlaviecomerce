@@ -27,7 +27,7 @@ export function NeonField(props: NeonFieldProps) {
   const visibleHint = typedHint || (isFocused ? props.hint : '');
 
   if (props.fieldType === 'select') {
-    const { label, hint, fieldType, options, onChange, onFocus, onBlur, ...selectProps } = props;
+    const { label, hint: _hint, fieldType: _fieldType, options, onChange, onFocus, onBlur, ...selectProps } = props;
 
     return (
       <label className="account-field account-field--neon" data-active={isFocused ? 'true' : 'false'}>
@@ -56,7 +56,7 @@ export function NeonField(props: NeonFieldProps) {
     );
   }
 
-  const { label, hint, fieldType, onChange, onFocus, onBlur, ...inputProps } = props;
+  const { label, hint: _hint, fieldType: _fieldType, onChange, onFocus, onBlur, ...inputProps } = props;
 
   return (
     <label className="account-field account-field--neon" data-active={isFocused ? 'true' : 'false'}>

@@ -1,7 +1,12 @@
-# DLavie AI Backend Agent Instructions
+# DLavie Monorepo Agent Instructions
 
-- Never build UI in this repository.
-- Keep this repository backend-only.
+- This repository is a monorepo; the active web application lives in `apps/www`.
+- Never redesign UI, change visual behavior, or build new UI unless explicitly requested.
+- Keep this task's backend inside `apps/www` only.
+- Next.js API route handlers belong in `apps/www/app/api`.
+- Shared server/business logic belongs in `apps/www/src/server`.
+- Supabase migrations belong in `apps/www/supabase/migrations`.
+- The legacy root Fastify backend under `src/` is not the active deployment target; root npm scripts delegate to `@dlavie/www`.
 - Use TypeScript strict mode.
 - Run typecheck before finishing.
 - Run tests before finishing.
