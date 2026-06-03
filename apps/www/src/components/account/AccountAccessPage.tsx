@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { SvgIcon } from '../ui/SvgIcon';
 import { NeonField } from './NeonField';
 import { PasswordStrengthMeter } from './PasswordStrengthMeter';
-import { ShinyHeading } from './ShinyHeading';
 import { VideoWordmark } from './VideoWordmark';
 
 type AccountMode = 'login' | 'register';
@@ -34,6 +33,7 @@ export function AccountAccessPage({ mode }: AccountAccessPageProps) {
   const [email, setEmail] = useState('');
   const [interest, setInterest] = useState('commerce');
   const [password, setPassword] = useState('');
+  const [showAdvancedForm, setShowAdvancedForm] = useState(isRegister);
   const [status, setStatus] = useState<{ tone: 'info' | 'error'; message: string } | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -61,7 +61,11 @@ export function AccountAccessPage({ mode }: AccountAccessPageProps) {
           return;
         }
 
-        window.location.assign(result.redirectTo ?? '/account/dashboard');
+        const redirectTo = result.redirectTo ?? '/account/dashboard';
+        if (redirectTo.startsWith('/account/dashboard')) {
+          window.sessionStorage.setItem('dlavie-account-transition', 'dashboard');
+        }
+        window.location.assign(redirectTo);
       } catch {
         setStatus({ tone: 'error', message: 'Network error. Please check your connection and try again.' });
       }
@@ -69,34 +73,46 @@ export function AccountAccessPage({ mode }: AccountAccessPageProps) {
   };
 
   return (
-    <main className="account-shell">
-      <section className="account-card" data-mode={mode} aria-labelledby="account-title">
-        <aside className="account-visual">
-          <Link className="account-brand" href="/" aria-label="Back to DLavie home">
+    <main className="account-shell account-shell--cinematic">
+      <section className="account-cinematic" data-mode={mode} aria-labelledby="account-title">
+        <header className="account-cinematic__topbar">
+          <Link className="account-brand account-brand--icon" href="/" aria-label="Back to DLavie home">
             <SvgIcon name="brand" />
-            <span>DLAVIE</span>
           </Link>
+          <Link className="account-cinematic__dashboard" href="/account/dashboard">Dashboard</Link>
+        </header>
 
-          <VideoWordmark />
+        <div className="account-cinematic__hero">
+          <VideoWordmark compact />
+          <p className="account-cinematic__tagline">Access DLavie AI, DLavieOS Agent, Commerce, and automation with one connected identity.</p>
+        </div>
 
-          <div className="account-visual__copy">
-            <p>A unified identity layer for DlavieOS, DLavie AI, commerce infrastructure, and connected automation systems.</p>
-          </div>
+        <div className="account-oauth-stack" aria-label="DLavie Account sign in options">
+          <button type="button" className="account-oauth-button" disabled>
+            <span aria-hidden="true">X</span>
+            <strong>Continue with X</strong>
+          </button>
+          <button type="button" className="account-oauth-button" disabled>
+            <span aria-hidden="true">G</span>
+            <strong>Continue with Google</strong>
+          </button>
+          <button type="button" className="account-oauth-button account-oauth-button--primary" disabled>
+            <span aria-hidden="true"></span>
+            <strong>Sign in with Apple</strong>
+          </button>
+        </div>
 
-          <div className="account-signal" aria-hidden="true">
-            <span><b>AI</b><em>Ready</em></span>
-            <span><b>Commerce</b><em>Secure</em></span>
-            <span><b>Automation</b><em>Online</em></span>
-          </div>
-        </aside>
+        <button className="account-more-button" type="button" onClick={() => setShowAdvancedForm((value) => !value)}>
+          {showAdvancedForm ? 'Hide email access' : 'Email access'}
+        </button>
 
-        <section className="account-panel">
-          <p className="account-panel__kicker">{isRegister ? 'Create access' : 'Secure access'}</p>
-          <ShinyHeading id="account-title">{isRegister ? 'Register' : 'Login'}</ShinyHeading>
+        <section className="account-panel account-panel--cinematic" aria-labelledby="account-title" data-open={showAdvancedForm ? 'true' : 'false'}>
+          <p className="account-panel__kicker">{isRegister ? 'Create DLavie Card' : 'Secure DLavie Access'}</p>
+          <h1 id="account-title" className="account-cinematic__form-title">{isRegister ? 'Create account' : 'Login'}</h1>
           <p className="account-panel__copy">
             {isRegister
-              ? 'Create your DLavie Account to activate secure access across AI, Commerce, and Automation products.'
-              : 'Sign in to your DLavie Account to manage product access, workspace identity, and connected DLavie services.'}
+              ? 'Create one DLavie Account for AI, Agent, Commerce, and future DLavie products.'
+              : 'Use your DLavie Account credentials to continue into your verified workspace.'}
           </p>
 
           <form className="account-form" onSubmit={handleSubmit}>
@@ -149,24 +165,23 @@ export function AccountAccessPage({ mode }: AccountAccessPageProps) {
               hint="Use a strong password with at least 12 characters."
               required
             />
-            <PasswordStrengthMeter value={password} />
+            {isRegister ? <PasswordStrengthMeter value={password} /> : null}
 
             {status ? <p className="account-status" data-tone={status.tone}>{status.message}</p> : null}
 
             <button className="account-submit" type="submit" disabled={isPending}>
-              {isPending ? 'Processing' : isRegister ? 'Create account' : 'Continue to account'}
+              {isPending ? 'Processing' : isRegister ? 'Create DLavie Account' : 'Continue'}
             </button>
           </form>
-
-          <p className="account-switch">
-            {isRegister ? 'Sudah punya akun? ' : 'Belum punya akun? '}
-            <Link href={isRegister ? '/account/login' : '/account/register'}>
-              {isRegister ? 'Login to DLavie Account' : 'Create DLavie Account'}
-            </Link>
-          </p>
-          <p className="account-signed-in-link">Already signed in? <Link href="/account/dashboard">Open Dashboard</Link></p>
-          <p className="account-note">DLavie Account is connected to Supabase Auth with server-set session cookies.</p>
         </section>
+
+        <footer className="account-cinematic__footer">
+          <p>
+            {isRegister ? 'Already have a DLavie Account? ' : 'New to DLavie? '}
+            <Link href={isRegister ? '/account/login' : '/account/register'}>{isRegister ? 'Login' : 'Create Account'}</Link>
+          </p>
+          <p>By continuing, you agree to DLavie Account rules and privacy policy.</p>
+        </footer>
       </section>
     </main>
   );
