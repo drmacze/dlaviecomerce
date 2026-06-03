@@ -20,6 +20,7 @@ A backend-only Fastify TypeScript API for DLavie AI with auth, chat, model routi
 - Added `NOT_IMPLEMENTED` structured error handling for the streaming placeholder.
 - Made usage logging non-blocking so a logging failure does not fail successful chat responses.
 - Added security regression tests.
+- Improved RAG chunking for Markdown/plain text/structured documents, added heading metadata, configurable chunk/retrieval env vars, retrieval validation, and defensive knowledge-context sanitization.
 
 ## Remaining TODOs
 

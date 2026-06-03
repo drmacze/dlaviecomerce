@@ -39,12 +39,18 @@ export class ChatService {
     });
     const ragChunks =
       request.use_rag && env.ENABLE_RAG && this.rag
-        ? await this.rag.context(latestUser.content, 5, 0.72)
+        ? await this.rag.context(latestUser.content)
         : [];
     const messages = this.prompts.prepareMessages(
       request.mode,
       request.messages as AIMessage[],
-      ragChunks.map((c) => ({ title: c.title, content: c.content })),
+      ragChunks.map((c) => ({
+        title: c.title,
+        content: c.content,
+        headings: Array.isArray(c.metadata.headings)
+          ? c.metadata.headings.filter((heading): heading is string => typeof heading === 'string')
+          : [],
+      })),
     );
     const route = this.router.route({
       mode: request.mode,

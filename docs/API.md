@@ -49,7 +49,7 @@ Admin required by `profiles.role='admin'` or trusted `x-admin-api-key`.
 { "title": "Docs", "content": "Long text", "source_type": "manual", "metadata": {} }
 ```
 
-Creates document, chunks, embeddings, and chunk rows.
+Creates document, chunks, embeddings, and chunk rows. Chunking preserves Markdown/structured headings in metadata, uses `RAG_CHUNK_TARGET_TOKENS` and `RAG_CHUNK_OVERLAP_TOKENS`, and never returns raw embeddings.
 
 ## GET /v1/kb/documents
 
@@ -67,4 +67,4 @@ Admin required.
 { "query": "pricing policy", "limit": 5, "similarity_threshold": 0.72 }
 ```
 
-Returns matching chunks without raw embeddings.
+Returns matching chunks without raw embeddings. `limit` is bounded by `RAG_RETRIEVAL_MAX_RESULTS` (max 20) and `similarity_threshold` must be between 0 and 1. Retrieved content is treated as untrusted reference text when injected into chat prompts.

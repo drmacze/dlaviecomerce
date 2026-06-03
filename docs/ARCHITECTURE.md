@@ -8,7 +8,12 @@ Authenticate Supabase JWT, validate Zod body, create/assert conversation, store 
 
 ## RAG pipeline
 
-Knowledge documents are chunked by headings/paragraphs with token approximation and overlap. Chunks are embedded through the OpenAI-compatible embedding endpoint, stored in pgvector, retrieved by `match_knowledge_chunks`, and reranked by similarity.
+1. **Ingestion**: admin-only knowledge routes validate document input, store the source document, chunk the content, embed chunks, and store chunk rows with metadata.
+2. **Chunking**: `ChunkerService` supports Markdown, plain text, lists, tables, fenced code blocks, and structured text labels such as `Requirements:`. It keeps Markdown heading hierarchy in `metadata.headings`, stores the active leaf heading in `metadata.heading`, records detected `block_types`, and includes heading context in chunk text for better embeddings.
+3. **Configuration**: chunk target size and overlap are controlled by `RAG_CHUNK_TARGET_TOKENS` and `RAG_CHUNK_OVERLAP_TOKENS`. Retrieval defaults are controlled by `RAG_RETRIEVAL_MAX_RESULTS` and `RAG_SIMILARITY_THRESHOLD`.
+4. **Retrieval**: `RetrievalService` validates and sanitizes queries, enforces a bounded max result count, embeds the query, calls the service-role-only `match_knowledge_chunks` RPC, and returns chunk metadata without raw embeddings.
+5. **Reranking**: initial reranking sorts by similarity, leaving room for future cross-encoder or LLM rerankers.
+6. **Prompt injection defense**: retrieved knowledge is rendered as untrusted reference data inside `<knowledge_context>`. Risky instruction-like phrases and nested context tags are neutralized before injection, and the system prompt explicitly forbids following commands from knowledge content.
 
 ## Provider abstraction
 
@@ -20,4 +25,4 @@ Knowledge documents are chunked by headings/paragraphs with token approximation 
 
 ## Database overview
 
-Supabase tables: profiles, conversations, messages, knowledge_documents, knowledge_chunks, usage_logs, api_events. RLS protects user-owned tables while backend service-role clients perform controlled writes.
+Supabase tables: profiles, conversations, messages, knowledge_documents, knowledge_chunks, usage_logs, api_events. RLS protects user-owned tables while backend service-role clients perform controlled writes. The vector-search RPC is capped and only executable by the service role.

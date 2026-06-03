@@ -24,7 +24,7 @@ npm run dev
 
 ## Environment variables
 
-See `.env.example`. Production fails fast if Supabase secrets, `ADMIN_API_KEY`, `OPENAI_API_KEY`, or enabled fallback secrets are missing. Never commit `.env`.
+See `.env.example`. Production fails fast if Supabase secrets, `ADMIN_API_KEY`, `OPENAI_API_KEY`, or enabled fallback secrets are missing. RAG chunking/retrieval can be tuned with `RAG_CHUNK_TARGET_TOKENS`, `RAG_CHUNK_OVERLAP_TOKENS`, `RAG_RETRIEVAL_MAX_RESULTS`, and `RAG_SIMILARITY_THRESHOLD`. Never commit `.env`.
 
 ## Supabase setup
 
