@@ -1,20 +1,40 @@
 {
-  "name": "dlavie-workspace",
-  "version": "0.0.0",
+  "name": "dlavie-ai-backend",
+  "version": "1.0.0",
+  "description": "Production-ready backend API for DLavie AI.",
   "license": "MIT",
   "private": true,
-  "packageManager": "pnpm@10.24.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "dev": "pnpm -r --parallel --filter ./apps/** --if-present run dev",
-    "build": "pnpm run typecheck && pnpm -r --filter=./artifacts/** --filter=./apps/** --filter=./packages/** --filter=./scripts --filter=!@workspace/dlavie-mobile --if-present run build",
-    "lint": "pnpm -r --if-present run lint",
-    "test": "pnpm -r --if-present run test",
-    "typecheck:libs": "tsc --build",
-    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter ./artifacts/** --filter ./apps/** --filter ./packages/** --filter ./scripts --if-present run typecheck"
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint src tests",
+    "test": "vitest run",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.1.0",
+    "@fastify/helmet": "^13.0.2",
+    "@fastify/rate-limit": "^10.3.0",
+    "@supabase/supabase-js": "^2.87.1",
+    "dotenv": "^17.2.3",
+    "fastify": "^5.6.2",
+    "pino": "^10.1.0",
+    "zod": "^4.1.13"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^24.10.1",
+    "eslint": "^9.39.1",
     "prettier": "^3.8.3",
-    "turbo": "^2.6.1",
-    "typescript": "~5.9.3"
+    "tsx": "^4.21.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.49.0",
+    "vitest": "^4.0.15"
   }
 }
