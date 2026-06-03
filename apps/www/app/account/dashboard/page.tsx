@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { AccountDashboardTransition } from '../../../src/components/account/AccountDashboardTransition';
 import { DlavieAvatar } from '../../../src/components/account/DlavieAvatar';
 import { VerifiedBadge } from '../../../src/components/account/VerifiedBadge';
 import { SvgIcon } from '../../../src/components/ui/SvgIcon';
@@ -99,6 +100,7 @@ export default async function AccountDashboardPage() {
 
   return (
     <main className="account-shell account-dashboard-shell">
+      <AccountDashboardTransition />
       <section className="account-dashboard account-dashboard--card" aria-labelledby="dashboard-title">
         <header className="account-dashboard__header account-dashboard__header--actions">
           <Link className="account-brand" href="/" aria-label="Back to DLavie home">
