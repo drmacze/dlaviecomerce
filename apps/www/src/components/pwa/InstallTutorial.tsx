@@ -12,6 +12,8 @@ type InstallSlide = {
   eyebrow: string;
   title: string;
   description: string;
+  helper?: string;
+  primaryLabel: string;
 };
 
 const STORAGE_KEY = 'dlavie-install-tutorial-dismissed-v1';
@@ -19,21 +21,25 @@ const STORAGE_KEY = 'dlavie-install-tutorial-dismissed-v1';
 const slides: InstallSlide[] = [
   {
     imageSrc: '/onboarding/install-welcome.png',
-    eyebrow: 'DLAVIE UPDATE',
-    title: 'Selamat datang di DLAVIE',
-    description: 'Kenali DLavie sebagai pusat AI, commerce, automation, dan pengalaman produk yang terhubung.',
+    eyebrow: 'DLAVIE ACCOUNT',
+    title: 'Selamat datang di DLavie',
+    description: 'Satu akun untuk mengakses DLavieOS, DLavie AI, Commerce, dan ekosistem automation dalam satu identitas yang terhubung.',
+    primaryLabel: 'Next',
   },
   {
     imageSrc: '/onboarding/install-step-share.png',
-    eyebrow: 'INSTALL DLAVIE',
-    title: 'Buka menu Share',
-    description: 'Ketuk tombol Share di browser untuk mulai menambahkan DLavie ke layar utama perangkatmu.',
+    eyebrow: 'INSTALL AS APP',
+    title: 'Tambahkan DLavie ke Home Screen',
+    description: 'Agar akses lebih cepat dan terasa seperti aplikasi, tambahkan situs DLavie ke layar utama perangkat Anda.',
+    helper: 'Di iPhone atau iPad, buka menu Share lalu pilih Add to Home Screen.',
+    primaryLabel: 'Next',
   },
   {
     imageSrc: '/onboarding/install-step-home-screen.png',
-    eyebrow: 'HOME SCREEN',
-    title: 'Tambahkan sebagai app',
-    description: 'Pilih Add to Home Screen, lalu buka DLavie langsung dari ikon aplikasi di perangkatmu.',
+    eyebrow: 'READY TO START',
+    title: 'Buat akun DLavie Anda',
+    description: 'Akun DLavie memungkinkan Anda memakai layanan AI, Commerce, dan Automation dengan satu identitas yang konsisten.',
+    primaryLabel: 'Create Account',
   },
 ];
 
@@ -96,9 +102,14 @@ export function InstallTutorial({ enabled }: InstallTutorialProps) {
     setIsVisible(false);
   };
 
+  const goToAccount = (path: '/account/register' | '/account/login', playClink: boolean) => {
+    closeTutorial(playClink);
+    window.location.assign(path);
+  };
+
   const handleNext = () => {
     if (isLastSlide) {
-      closeTutorial(true);
+      goToAccount('/account/register', true);
       return;
     }
 
@@ -135,9 +146,10 @@ export function InstallTutorial({ enabled }: InstallTutorialProps) {
           <p className="dlavie-install-tutorial__eyebrow">{slide.eyebrow}</p>
           <h2 id="dlavie-install-title">{slide.title}</h2>
           <p>{slide.description}</p>
+          {slide.helper ? <p className="dlavie-install-tutorial__helper">{slide.helper}</p> : null}
         </div>
 
-        <div className="dlavie-install-tutorial__actions">
+        <div className="dlavie-install-tutorial__actions" data-final={isLastSlide ? 'true' : 'false'}>
           {showSkip ? (
             <button className="dlavie-install-tutorial__skip" type="button" onClick={() => closeTutorial(false)}>
               Skip
@@ -145,8 +157,13 @@ export function InstallTutorial({ enabled }: InstallTutorialProps) {
           ) : (
             <span aria-hidden="true" />
           )}
+          {isLastSlide ? (
+            <button className="dlavie-install-tutorial__login" type="button" onClick={() => goToAccount('/account/login', false)}>
+              Login
+            </button>
+          ) : null}
           <button className="dlavie-install-tutorial__next" type="button" onClick={handleNext}>
-            {isLastSlide ? 'Finish' : 'Next'}
+            {slide.primaryLabel}
           </button>
         </div>
       </section>

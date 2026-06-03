@@ -164,6 +164,7 @@ export function AccountAccessPage({ mode }: AccountAccessPageProps) {
               {isRegister ? 'Login to DLavie Account' : 'Create DLavie Account'}
             </Link>
           </p>
+          <p className="account-signed-in-link">Already signed in? <Link href="/account/dashboard">Open Dashboard</Link></p>
           <p className="account-note">DLavie Account is connected to Supabase Auth with server-set session cookies.</p>
         </section>
       </section>

@@ -148,3 +148,472 @@
     min-height: unset;
   }
 }
+
+.account-signed-in-link {
+  margin: 0.85rem 0 0;
+  color: rgba(255, 238, 231, 0.58);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.account-signed-in-link a {
+  color: #fff5ef;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.account-dashboard--card {
+  width: min(100%, 1120px);
+}
+
+.account-dashboard__header--actions {
+  align-items: center;
+}
+
+.account-dashboard__topnav,
+.account-info-page__nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.account-dashboard__topnav a,
+.account-info-page__nav a,
+.account-dashboard__topnav .account-dashboard__logout {
+  display: inline-flex;
+  min-height: 2.8rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 238, 231, 0.13);
+  border-radius: 0;
+  padding: 0 0.92rem;
+  color: rgba(255, 244, 237, 0.82);
+  background: rgba(255, 244, 237, 0.04);
+  font-family: var(--font-label);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.dlavie-card {
+  position: relative;
+  display: grid;
+  gap: clamp(1.35rem, 3vw, 2rem);
+  overflow: hidden;
+  margin: clamp(1rem, 3vw, 2rem);
+  border: 1px solid rgba(255, 238, 231, 0.15);
+  border-radius: clamp(1.4rem, 3vw, 2.4rem);
+  padding: clamp(1.25rem, 4vw, 2.6rem);
+  background:
+    linear-gradient(135deg, rgba(255, 244, 237, 0.08), rgba(255, 244, 237, 0.025) 34%, rgba(185, 108, 255, 0.08)),
+    radial-gradient(circle at 84% 20%, rgba(185, 108, 255, 0.22), transparent 20rem),
+    radial-gradient(circle at 18% 12%, rgba(255, 126, 103, 0.24), transparent 18rem),
+    rgba(9, 4, 7, 0.86);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 2rem 5rem rgba(0, 0, 0, 0.42);
+  isolation: isolate;
+}
+
+.dlavie-card::before {
+  content: '';
+  position: absolute;
+  inset: 0.75rem;
+  z-index: -1;
+  border: 1px solid rgba(255, 238, 231, 0.07);
+  border-radius: clamp(1rem, 2.6vw, 1.9rem);
+  pointer-events: none;
+}
+
+.dlavie-card__ambient {
+  position: absolute;
+  inset: auto -8rem -10rem auto;
+  z-index: -2;
+  width: 24rem;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255, 126, 103, 0.24), rgba(185, 108, 255, 0.14) 38%, transparent 68%);
+  filter: blur(14px);
+}
+
+.dlavie-card__intro h1,
+.account-info-page__hero h1 {
+  margin: 0;
+  color: #fff7f1;
+  font-family: var(--font-display);
+  font-size: clamp(3.6rem, 10vw, 8rem);
+  font-weight: 700;
+  line-height: 0.82;
+  letter-spacing: -0.055em;
+  text-transform: uppercase;
+}
+
+.dlavie-card__intro p:not(.account-panel__kicker),
+.account-info-page__hero p:not(.account-panel__kicker) {
+  max-width: 42rem;
+  margin: 0.95rem 0 0;
+  color: rgba(255, 238, 231, 0.64);
+  font-size: clamp(1rem, 2vw, 1.18rem);
+  line-height: 1.66;
+}
+
+.dlavie-card__profile {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(1rem, 3vw, 1.65rem);
+  border: 1px solid rgba(255, 238, 231, 0.11);
+  padding: clamp(1rem, 3vw, 1.4rem);
+  background: rgba(255, 244, 237, 0.045);
+}
+
+.dlavie-avatar {
+  position: relative;
+  width: clamp(7.25rem, 20vw, 11rem);
+  margin: 0;
+  border: 1px solid rgba(255, 238, 231, 0.18);
+  border-radius: 1.6rem;
+  padding: 0.45rem;
+  background: linear-gradient(135deg, rgba(255, 126, 103, 0.34), rgba(185, 108, 255, 0.18));
+  box-shadow: 0 1rem 2.6rem rgba(255, 126, 103, 0.14);
+}
+
+.dlavie-avatar[data-tier='vip'] {
+  background: linear-gradient(135deg, rgba(255, 194, 111, 0.42), rgba(185, 108, 255, 0.25));
+}
+
+.dlavie-avatar[data-tier='permanent'] {
+  background: linear-gradient(135deg, rgba(255, 245, 239, 0.46), rgba(255, 126, 103, 0.22), rgba(185, 108, 255, 0.22));
+}
+
+.dlavie-avatar svg {
+  display: block;
+  width: 100%;
+  border-radius: 1.2rem;
+}
+
+.dlavie-card__identity {
+  min-width: 0;
+}
+
+.dlavie-card__name-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.dlavie-card__identity h2 {
+  margin: 0;
+  color: #fff7f1;
+  font-family: var(--font-display);
+  font-size: clamp(2.3rem, 6vw, 4.4rem);
+  line-height: 0.9;
+  letter-spacing: -0.045em;
+  text-transform: uppercase;
+}
+
+.dlavie-card__identity p {
+  overflow-wrap: anywhere;
+  margin: 0.65rem 0 0;
+  color: rgba(255, 238, 231, 0.66);
+  font-size: 1rem;
+}
+
+.dlavie-card__identity > span {
+  display: inline-flex;
+  margin-top: 0.85rem;
+  border: 1px solid rgba(255, 238, 231, 0.12);
+  padding: 0.42rem 0.6rem;
+  color: rgba(255, 244, 237, 0.78);
+  font-family: var(--font-label);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+}
+
+.verified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  border: 1px solid rgba(88, 166, 255, 0.35);
+  border-radius: 999px;
+  padding: 0.38rem 0.62rem;
+  color: #dcecff;
+  background: rgba(38, 113, 255, 0.14);
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.verified-badge__icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.verified-badge__icon circle {
+  fill: #2f8dff;
+}
+
+.verified-badge__icon path {
+  fill: none;
+  stroke: white;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.4;
+}
+
+.dlavie-card__details {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid rgba(255, 238, 231, 0.1);
+  background: rgba(255, 238, 231, 0.1);
+}
+
+.dlavie-card__details div {
+  min-height: 8.2rem;
+  padding: 1rem;
+  background: rgba(7, 3, 5, 0.72);
+}
+
+.dlavie-card__details dt,
+.account-plan-card span,
+.account-faq-section > h2 {
+  color: rgba(255, 238, 231, 0.52);
+  font-family: var(--font-label);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.dlavie-card__details dd {
+  margin: 0.7rem 0 0;
+  color: rgba(255, 247, 241, 0.9);
+  font-size: 1rem;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.dlavie-card__actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.dlavie-card__actions a,
+.dlavie-card__actions button,
+.account-plan-card button {
+  display: inline-flex;
+  min-height: 3.25rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 238, 231, 0.13);
+  border-radius: 0;
+  padding: 0 0.9rem;
+  color: rgba(255, 244, 237, 0.86);
+  background: rgba(255, 244, 237, 0.045);
+  font-family: var(--font-label);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-decoration: none;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.dlavie-card__actions a:first-child,
+.dlavie-card__actions a:nth-last-child(2) {
+  border-color: rgba(255, 126, 103, 0.38);
+  background: linear-gradient(135deg, rgba(255, 126, 103, 0.17), rgba(185, 108, 255, 0.12));
+}
+
+.dlavie-card__actions form {
+  margin: 0;
+}
+
+.dlavie-card__actions button {
+  width: 100%;
+}
+
+.account-info-shell {
+  display: grid;
+  place-items: center;
+}
+
+.account-info-page {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 1120px);
+  overflow: hidden;
+  border: 1px solid rgba(255, 238, 231, 0.14);
+  border-radius: var(--radius-sharp);
+  background:
+    radial-gradient(circle at 22% 10%, rgba(255, 126, 103, 0.2), transparent 26rem),
+    radial-gradient(circle at 86% 74%, rgba(185, 108, 255, 0.16), transparent 28rem),
+    rgba(10, 5, 7, 0.78);
+  box-shadow: 0 2.4rem 7rem rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(24px) saturate(1.12);
+}
+
+.account-info-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid rgba(255, 238, 231, 0.1);
+  padding: clamp(1.2rem, 3vw, 2rem);
+}
+
+.account-info-page__hero {
+  padding: clamp(1.4rem, 5vw, 3.4rem);
+}
+
+.account-plan-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  border-block: 1px solid rgba(255, 238, 231, 0.1);
+  background: rgba(255, 238, 231, 0.1);
+}
+
+.account-plan-card {
+  display: grid;
+  align-content: start;
+  gap: 0.9rem;
+  min-height: 19rem;
+  padding: clamp(1.2rem, 3vw, 2rem);
+  background: rgba(7, 3, 5, 0.82);
+}
+
+.account-plan-card h2 {
+  margin: 0;
+  color: #fff7f1;
+  font-family: var(--font-display);
+  font-size: clamp(2.7rem, 5vw, 4.8rem);
+  line-height: 0.85;
+  letter-spacing: -0.045em;
+  text-transform: uppercase;
+}
+
+.account-plan-card p {
+  margin: 0;
+  color: rgba(255, 238, 231, 0.58);
+  line-height: 1.62;
+}
+
+.account-plan-card__duration {
+  color: rgba(255, 202, 188, 0.85) !important;
+  font-family: var(--font-label);
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.account-plan-card button {
+  margin-top: auto;
+  opacity: 0.62;
+  cursor: not-allowed;
+}
+
+.account-policy-note {
+  margin: clamp(1.2rem, 4vw, 2rem);
+  border: 1px solid rgba(255, 126, 103, 0.22);
+  padding: clamp(1rem, 3vw, 1.4rem);
+  background: rgba(255, 126, 103, 0.07);
+}
+
+.account-policy-note h2,
+.account-faq-card h3 {
+  margin: 0;
+  color: #fff7f1;
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 4vw, 2.55rem);
+  line-height: 0.94;
+  letter-spacing: -0.035em;
+  text-transform: uppercase;
+}
+
+.account-policy-note p,
+.account-faq-card p {
+  margin: 0.8rem 0 0;
+  color: rgba(255, 238, 231, 0.62);
+  line-height: 1.66;
+}
+
+.account-faq-sections {
+  display: grid;
+  gap: 1px;
+  border-top: 1px solid rgba(255, 238, 231, 0.1);
+  background: rgba(255, 238, 231, 0.1);
+}
+
+.account-faq-section {
+  display: grid;
+  grid-template-columns: minmax(10rem, 0.28fr) minmax(0, 1fr);
+  gap: 1px;
+  background: rgba(255, 238, 231, 0.1);
+}
+
+.account-faq-section > h2 {
+  margin: 0;
+  padding: clamp(1.2rem, 3vw, 2rem);
+  background: rgba(7, 3, 5, 0.82);
+}
+
+.account-faq-list {
+  display: grid;
+  gap: 1px;
+}
+
+.account-faq-card {
+  padding: clamp(1.15rem, 3vw, 1.8rem);
+  background: rgba(7, 3, 5, 0.82);
+}
+
+@media (max-width: 860px) {
+  .dlavie-card__details,
+  .account-plan-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dlavie-card__actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .account-faq-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .account-dashboard__header--actions,
+  .account-info-page__header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .account-dashboard__topnav,
+  .account-info-page__nav {
+    justify-content: flex-start;
+  }
+
+  .dlavie-card__profile {
+    grid-template-columns: 1fr;
+  }
+
+  .dlavie-avatar {
+    width: min(100%, 9.5rem);
+  }
+
+  .dlavie-card__actions {
+    grid-template-columns: 1fr;
+  }
+}
