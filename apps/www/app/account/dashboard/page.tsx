@@ -62,6 +62,28 @@ function formatProductInterest(value: string) {
   return labels[value] ?? value;
 }
 
+function AccountMenu() {
+  return (
+    <details className="account-action-menu">
+      <summary aria-label="Open DLavie Account menu">
+        <span />
+        <span />
+        <span />
+      </summary>
+      <div className="account-action-menu__panel">
+        <Link href="/account/card">Manage Card</Link>
+        <Link href="/faq">FAQ</Link>
+        <Link href="/faq">DLavieOS</Link>
+        <Link href="/faq">DLavie AI</Link>
+        <Link href="/faq">Commerce</Link>
+        <form action="/api/account/logout" method="post">
+          <button type="submit">Logout</button>
+        </form>
+      </div>
+    </details>
+  );
+}
+
 export default async function AccountDashboardPage() {
   const user = await getDashboardUser();
 
@@ -83,25 +105,21 @@ export default async function AccountDashboardPage() {
             <SvgIcon name="brand" />
             <span>DLAVIE</span>
           </Link>
-          <nav className="account-dashboard__topnav" aria-label="Account dashboard navigation">
+          <nav className="account-dashboard__topnav account-dashboard__topnav--minimal" aria-label="Account dashboard navigation">
             <Link href="/">Back to Website</Link>
-            <Link href="/account/card">Account Card</Link>
-            <Link href="/faq">FAQ</Link>
-            <form action="/api/account/logout" method="post">
-              <button className="account-dashboard__logout" type="submit">Logout</button>
-            </form>
+            <AccountMenu />
           </nav>
         </header>
 
         <article className="dlavie-card" aria-labelledby="dashboard-title">
           <div className="dlavie-card__ambient" aria-hidden="true" />
-          <div className="dlavie-card__intro">
+          <div className="dlavie-card__intro dlavie-card__intro--compact">
             <p className="account-panel__kicker">DLavie Account</p>
             <h1 id="dashboard-title">DLavie Card</h1>
             <p>Your connected identity across the DLavie ecosystem</p>
           </div>
 
-          <div className="dlavie-card__profile">
+          <div className="dlavie-card__profile dlavie-card__profile--hero">
             <DlavieAvatar seedSource={user.id || user.email || fullName} name={fullName} tier="standard" />
             <div className="dlavie-card__identity">
               <div className="dlavie-card__name-row">
@@ -113,7 +131,7 @@ export default async function AccountDashboardPage() {
             </div>
           </div>
 
-          <dl className="dlavie-card__details">
+          <dl className="dlavie-card__details dlavie-card__details--compact">
             <div>
               <dt>Status</dt>
               <dd>{statusText}</dd>
@@ -134,22 +152,14 @@ export default async function AccountDashboardPage() {
               <dt>Product interest</dt>
               <dd>{productInterest}</dd>
             </div>
-            <div>
-              <dt>Retention policy</dt>
-              <dd>Expired cards may limit access until renewed. Blacklist is reserved for abuse, fraud, spam, or policy violations.</dd>
-            </div>
           </dl>
 
-          <div className="dlavie-card__actions" aria-label="DLavie product and account actions">
-            <Link href="/">Back to Website</Link>
-            <Link href="/faq">Open DLavieOS</Link>
-            <Link href="/faq">Open DLavie AI</Link>
-            <Link href="/faq">Open Commerce</Link>
-            <Link href="/faq">View FAQ</Link>
-            <Link href="/account/card">Manage Card</Link>
-            <form action="/api/account/logout" method="post">
-              <button type="submit">Logout</button>
-            </form>
+          <div className="dlavie-card__footer">
+            <p>Expired cards may limit access until renewed. Blacklist is reserved only for abuse, fraud, spam, or policy violations.</p>
+            <div>
+              <Link href="/account/card">Manage Card</Link>
+              <Link href="/faq">View FAQ</Link>
+            </div>
           </div>
         </article>
       </section>
