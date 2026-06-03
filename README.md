@@ -69,7 +69,7 @@ Works on Vercel serverless functions with an adapter, Railway, Render, Fly.io, o
 
 ## Security warnings
 
-Never expose service-role, OpenAI, Hugging Face, or admin API keys to browsers. Browser clients should use Supabase access tokens. `x-admin-api-key` is for trusted scripts only.
+Never expose service-role, OpenAI, Hugging Face, or admin API keys to browsers. Browser clients should use Supabase access tokens. `x-admin-api-key` is for trusted scripts only. Configure `CORS_ORIGINS` with the exact origins used by the separate frontend.
 
 ## Troubleshooting
 

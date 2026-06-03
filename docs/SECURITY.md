@@ -26,4 +26,4 @@ Server prompts are always first. Client system messages are downgraded to user c
 
 ## CORS
 
-`CORS_ORIGINS` is an allow-list. Wildcard CORS is rejected in production env validation.
+`CORS_ORIGINS` is a comma-separated allow-list of frontend origins, for example `http://localhost:3000,http://localhost:5173,https://app.example.com`. Wildcard CORS is rejected in production env validation. Browser clients must call from one of the allowed origins and send Supabase bearer tokens in the `Authorization` header; never expose provider keys, the Supabase service-role key, or `ADMIN_API_KEY` in browser code.
