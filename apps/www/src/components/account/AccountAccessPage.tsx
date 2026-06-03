@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { SvgIcon } from '../ui/SvgIcon';
 import { NeonField } from './NeonField';
@@ -12,6 +12,13 @@ type AccountMode = 'login' | 'register';
 
 type AccountAccessPageProps = {
   mode: AccountMode;
+};
+
+type AccountApiResponse = {
+  ok: boolean;
+  message?: string;
+  redirectTo?: string;
+  requiresConfirmation?: boolean;
 };
 
 const PRODUCT_OPTIONS = [
@@ -27,9 +34,38 @@ export function AccountAccessPage({ mode }: AccountAccessPageProps) {
   const [email, setEmail] = useState('');
   const [interest, setInterest] = useState('commerce');
   const [password, setPassword] = useState('');
+  const [status, setStatus] = useState<{ tone: 'info' | 'error'; message: string } | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setStatus(null);
+
+    startTransition(async () => {
+      try {
+        const response = await fetch(isRegister ? '/api/account/register' : '/api/account/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, interest, password }),
+        });
+
+        const result = await response.json().catch(() => ({})) as AccountApiResponse;
+
+        if (!response.ok || !result.ok) {
+          setStatus({ tone: 'error', message: result.message ?? 'Unable to process your DLavie Account request.' });
+          return;
+        }
+
+        if (result.requiresConfirmation) {
+          setStatus({ tone: 'info', message: result.message ?? 'Account created. Please confirm your email before signing in.' });
+          return;
+        }
+
+        window.location.assign(result.redirectTo ?? '/account/dashboard');
+      } catch {
+        setStatus({ tone: 'error', message: 'Network error. Please check your connection and try again.' });
+      }
+    });
   };
 
   return (
@@ -115,8 +151,10 @@ export function AccountAccessPage({ mode }: AccountAccessPageProps) {
             />
             <PasswordStrengthMeter value={password} />
 
-            <button className="account-submit" type="submit">
-              {isRegister ? 'Create account' : 'Continue to account'}
+            {status ? <p className="account-status" data-tone={status.tone}>{status.message}</p> : null}
+
+            <button className="account-submit" type="submit" disabled={isPending}>
+              {isPending ? 'Processing' : isRegister ? 'Create account' : 'Continue to account'}
             </button>
           </form>
 
@@ -126,7 +164,7 @@ export function AccountAccessPage({ mode }: AccountAccessPageProps) {
               {isRegister ? 'Login to DLavie Account' : 'Create DLavie Account'}
             </Link>
           </p>
-          <p className="account-note">Supabase environment sudah siap. Form ini menyiapkan pengalaman account sebelum auth action diaktifkan ke route produksi.</p>
+          <p className="account-note">DLavie Account is connected to Supabase Auth with server-set session cookies.</p>
         </section>
       </section>
     </main>
