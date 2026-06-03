@@ -3,17 +3,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { gsap, registerDlavieGsap, CustomEase } from '@dlavie/animations';
 
-const STORAGE_KEY = 'dlavie-account-transition';
-
 export function AccountDashboardTransition() {
   const rootRef = useRef<HTMLDivElement>(null);
   const [shouldRender, setShouldRender] = useState(false);
 
   useEffect(() => {
-    const shouldPlay = window.sessionStorage.getItem(STORAGE_KEY) === 'dashboard';
-    if (!shouldPlay) return;
-
-    window.sessionStorage.removeItem(STORAGE_KEY);
     setShouldRender(true);
   }, []);
 
