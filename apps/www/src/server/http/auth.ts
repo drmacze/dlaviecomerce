@@ -16,6 +16,14 @@ type ProfileRoleClient = {
   };
 };
 
+function decodeCookieValue(value: string) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
 function getCookieToken(headers: Headers, cookieName: string) {
   const cookieHeader = headers.get('cookie');
   if (!cookieHeader) return null;
@@ -29,7 +37,7 @@ function getCookieToken(headers: Headers, cookieName: string) {
     if (name !== cookieName) continue;
 
     const value = cookie.slice(separatorIndex + 1).trim();
-    return value ? decodeURIComponent(value) : null;
+    return value ? decodeCookieValue(value) : null;
   }
 
   return null;
