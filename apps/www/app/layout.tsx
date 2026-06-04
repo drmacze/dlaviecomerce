@@ -10,6 +10,7 @@ import '../src/components/security/CopyProtection.css';
 import '../src/components/pwa/InstallTutorial.css';
 import '../src/styles/account.css';
 import '../src/styles/account-auth.css';
+import '../src/styles/ai.css';
 
 const dlavieDisplay = Barlow_Condensed({
   subsets: ['latin'],
