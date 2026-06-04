@@ -1,3 +1,4 @@
+import { DLAVIE_ACCESS_COOKIE } from '../../lib/supabase/session';
 import { env } from '../config/env';
 import { AppError } from '../lib/errors';
 import { getBearerToken } from '../lib/http';
@@ -15,12 +16,31 @@ type ProfileRoleClient = {
   };
 };
 
+function getCookieToken(headers: Headers, cookieName: string) {
+  const cookieHeader = headers.get('cookie');
+  if (!cookieHeader) return null;
+
+  const cookies = cookieHeader.split(';');
+  for (const cookie of cookies) {
+    const separatorIndex = cookie.indexOf('=');
+    if (separatorIndex === -1) continue;
+
+    const name = cookie.slice(0, separatorIndex).trim();
+    if (name !== cookieName) continue;
+
+    const value = cookie.slice(separatorIndex + 1).trim();
+    return value ? decodeURIComponent(value) : null;
+  }
+
+  return null;
+}
+
 export async function requireAuth(headers: Headers): Promise<AuthUser> {
-  const token = getBearerToken(headers);
-  if (!token) throw new AppError('UNAUTHORIZED', 'Missing bearer token.', 401);
+  const token = getBearerToken(headers) ?? getCookieToken(headers, DLAVIE_ACCESS_COOKIE);
+  if (!token) throw new AppError('UNAUTHORIZED', 'Missing bearer token or DLavie account session.', 401);
 
   const { data, error } = await getSupabaseAnon().auth.getUser(token);
-  if (error || !data.user) throw new AppError('UNAUTHORIZED', 'Invalid bearer token.', 401);
+  if (error || !data.user) throw new AppError('UNAUTHORIZED', 'Invalid bearer token or DLavie account session.', 401);
 
   const profileClient = getSupabaseAdmin() as unknown as ProfileRoleClient;
   const { data: profile } = await profileClient
