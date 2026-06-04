@@ -15,8 +15,6 @@
   --dlavie-border: rgba(255, 255, 255, 0.13);
 }
 
-/* ... rest of your existing custom CSS below ... */
-
 * {
   box-sizing: border-box;
 }
@@ -77,4 +75,4 @@ a {
   margin: 0 auto;
 }
 
-/* ... (keep all your existing custom .dlv-* styles exactly as they were) ... */
+/* Sisa custom CSS (dlv-*) tetap sama seperti sebelumnya */
