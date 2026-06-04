@@ -2,7 +2,7 @@
 
 _Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
 
-## Run & Operate
+## Run & Operated
 
 - `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
 - `pnpm run typecheck` — full typecheck across all packages
