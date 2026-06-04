@@ -82,7 +82,8 @@ async function requestDlavieAiPreview(prompt: string, mode: AiMode, isAuthentica
 }
 
 export function AiConsole({ mode, content, accountSession, onModeChange }: AiConsoleProps) {
-  const isAuthenticated = accountSession.isAuthenticated;
+  const accountUser = accountSession.isAuthenticated ? accountSession.user : null;
+  const isAuthenticated = Boolean(accountUser);
   const [prompt, setPrompt] = useState(content.prompt);
   const [answer, setAnswer] = useState(content.answer);
   const [stageIndex, setStageIndex] = useState(0);
@@ -196,10 +197,10 @@ export function AiConsole({ mode, content, accountSession, onModeChange }: AiCon
       </div>
 
       <div className="ai-console__account" aria-live="polite">
-        <span>{isAuthenticated ? accountSession.user.initials : 'DL'}</span>
+        <span>{accountUser ? accountUser.initials : 'DL'}</span>
         <p>
-          {isAuthenticated
-            ? `Using ${accountSession.user.fullName}'s DLavie Account session.`
+          {accountUser
+            ? `Using ${accountUser.fullName}'s DLavie Account session.`
             : 'Public preview. Login unlocks account-connected responses.'}
         </p>
       </div>
