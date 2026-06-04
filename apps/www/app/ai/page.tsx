@@ -1,10 +1,13 @@
-import { DlavieAiExperience } from '../../src/components/ai/DlavieAiExperience';
+import type { Metadata } from 'next';
+import { DlavieAiAppShell } from '../../src/components/ai/DlavieAiAppShell';
+import { getDlavieServerAccountSession } from '../../src/lib/supabase/server-session';
 
-export const metadata = {
-  title: 'DLavie AI — Customer Intelligence Workspace',
-  description: 'A cinematic DLavie AI workspace for conversations, workflow agents, commerce operations, and account-connected intelligence.',
+export const metadata: Metadata = {
+  title: 'DLavie AI — Mobile AI App',
+  description: 'A premium mobile-first DLavie AI app shell for account, commerce, PPOB, website, and automation assistance.',
 };
 
-export default function AiPage() {
-  return <DlavieAiExperience />;
+export default async function AiPage() {
+  const accountSession = await getDlavieServerAccountSession();
+  return <DlavieAiAppShell accountSession={accountSession} />;
 }
