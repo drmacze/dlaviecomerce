@@ -11,9 +11,9 @@ export function FinalCtaScene() {
         <p>Launch with DLavie Commerce or activate the DLavie AI operating workspace. Both paths connect into the same product ecosystem.</p>
         <div className="final-paths">
           <a href="#commerce" className="final-path"><SvgIcon name="commerce" /><span>Explore DLavie Commerce</span></a>
-          <a href="#dlavieos" className="final-path"><SvgIcon name="ai" /><span>Activate DLavie AI</span></a>
+          <a href="/ai" className="final-path"><SvgIcon name="ai" /><span>Activate DLavie AI</span></a>
         </div>
-        <div className="final-actions"><MagneticButton href="mailto:hello@dlavie.com">Plan the rollout</MagneticButton></div>
+        <div className="final-actions"><MagneticButton href="/ai">Information</MagneticButton></div>
       </div>
     </section>
   );
