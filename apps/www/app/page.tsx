@@ -8,19 +8,17 @@ import {
 } from 'lucide-react';
 
 export default function DLavieRedesigned() {
+  const coreFeatures = [
+    { icon: <Bot className="w-7 h-7" />, title: "AI Core", desc: "The intelligent foundation that powers reasoning, orchestration, and decision-making across the entire ecosystem." },
+    { icon: <Users className="w-7 h-7" />, title: "Agents", desc: "Autonomous agents that execute complex workflows, handle commerce operations, and respond to real-time signals." },
+    { icon: <Brain className="w-7 h-7" />, title: "Models", desc: "Flexible model routing with support for frontier models, fine-tuned agents, and local inference when needed." },
+    { icon: <Database className="w-7 h-7" />, title: "Memory", desc: "Persistent, contextual memory layer that remembers conversations, transactions, and operational history." },
+    { icon: <LayoutDashboard className="w-7 h-7" />, title: "Dashboards", desc: "Beautiful, real-time command surfaces for monitoring agents, commerce metrics, and system health." },
+    { icon: <Workflow className="w-7 h-7" />, title: "Workflows", desc: "Visual and code-based orchestration of multi-step processes across AI, commerce, and automation layers." }
+  ];
+
   return (
     <div className="min-h-screen bg-[#050505] text-white overflow-hidden font-sans">
-      {/* Force clean styles */}
-      <style jsx global>{`
-        .dlavie-landing * {
-          box-sizing: border-box;
-        }
-        .dlavie-landing h1, .dlavie-landing h2, .dlavie-landing h3 {
-          font-family: var(--font-display, system-ui);
-          font-feature-settings: "tnum";
-        }
-      `}</style>
-
       <div className="dlavie-landing">
         {/* Navbar */}
         <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-[#050505]/95 backdrop-blur-xl">
@@ -40,16 +38,10 @@ export default function DLavieRedesigned() {
             </div>
 
             <div className="flex items-center gap-3">
-              <a 
-                href="/ai" 
-                className="hidden sm:block px-5 py-2 text-sm font-medium border border-white/20 hover:bg-white/5 rounded-full transition-all"
-              >
+              <a href="/ai" className="hidden sm:block px-5 py-2 text-sm font-medium border border-white/20 hover:bg-white/5 rounded-full transition-all">
                 Open Workspace
               </a>
-              <a 
-                href="#os" 
-                className="px-6 py-2.5 text-sm font-semibold bg-white text-[#050505] hover:bg-white/90 rounded-full flex items-center gap-2 transition-all active:scale-[0.985]"
-              >
+              <a href="#os" className="px-6 py-2.5 text-sm font-semibold bg-white text-[#050505] hover:bg-white/90 rounded-full flex items-center gap-2 transition-all active:scale-[0.985]">
                 Launch DLavie OS
                 <ArrowRight className="w-4 h-4" />
               </a>
@@ -68,25 +60,19 @@ export default function DLavieRedesigned() {
           </h1>
           
           <p className="max-w-2xl mx-auto text-2xl md:text-3xl tracking-[-1px] text-white/80 mb-4">
-            The cinematic command mesh for agents,<br className="hidden md:block" /> models, memory, and intelligent operations.
+            The cinematic command mesh for agents, models, memory, and intelligent operations.
           </p>
 
           <p className="max-w-md mx-auto text-lg text-white/50 mb-10">
-            One parent brand. One unified ecosystem.<br />Decisions, transactions, and workflows — perfectly aligned.
+            One parent brand. One unified ecosystem. Decisions, transactions, and workflows — perfectly aligned.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a 
-              href="#os" 
-              className="inline-flex items-center justify-center gap-3 px-9 py-4 bg-white text-[#050505] rounded-2xl font-semibold text-lg hover:bg-white/90 active:bg-white transition-all active:scale-[0.985]"
-            >
+            <a href="#os" className="inline-flex items-center justify-center gap-3 px-9 py-4 bg-white text-[#050505] rounded-2xl font-semibold text-lg hover:bg-white/90 active:bg-white transition-all active:scale-[0.985]">
               Explore DLavie OS
             </a>
             
-            <a 
-              href="/ai" 
-              className="inline-flex items-center justify-center gap-3 px-9 py-4 border border-white/30 hover:bg-white/5 rounded-2xl font-medium text-lg transition-all active:scale-[0.985]"
-            >
+            <a href="/ai" className="inline-flex items-center justify-center gap-3 px-9 py-4 border border-white/30 hover:bg-white/5 rounded-2xl font-medium text-lg transition-all active:scale-[0.985]">
               <Play className="w-5 h-5" />
               Open AI Workspace
             </a>
@@ -105,9 +91,7 @@ export default function DLavieRedesigned() {
               One parent brand.<br />Connected intelligence.
             </h2>
             <p className="text-lg md:text-xl text-white/70 max-w-3xl mx-auto leading-relaxed">
-              DLavie designs connected digital systems under one cohesive brand — 
-              from agent workspaces to transaction rails. Everything shares the same 
-              visual language and operational rhythm.
+              DLavie designs connected digital systems under one cohesive brand — from agent workspaces to transaction rails.
             </p>
           </div>
         </section>
@@ -125,14 +109,7 @@ export default function DLavieRedesigned() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              { icon: <Bot className="w-7 h-7" />, title: "AI Core", desc: "The intelligent foundation that powers reasoning, orchestration, and decision-making across the entire ecosystem." },
-              { icon: <Users className="w-7 h-7" />, title: "Agents", desc: "Autonomous agents that execute complex workflows, handle commerce operations, and respond to real-time signals." },
-              { icon: <Brain className="w-7 h-7" />, title: "Models", desc: "Flexible model routing with support for frontier models, fine-tuned agents, and local inference when needed." },
-              { icon: <Database className="w-7 h-7" />, title: "Memory", desc: "Persistent, contextual memory layer that remembers conversations, transactions, and operational history." },
-              { icon: <LayoutDashboard className="w-7 h-7" />, title: "Dashboards", desc: "Beautiful, real-time command surfaces for monitoring agents, commerce metrics, and system health." },
-              { icon: <Workflow className="w-7 h-7" />, title: "Workflows", desc: "Visual and code-based orchestration of multi-step processes across AI, commerce, and automation layers." }
-            ].map((item, index) => (
+            {coreFeatures.map((item, index) => (
               <motion.div
                 key={index}
                 whileHover={{ y: -6 }}
@@ -163,7 +140,7 @@ export default function DLavieRedesigned() {
             </div>
 
             <div className="grid md:grid-cols-3 gap-6">
-              {[ 
+              {[
                 { title: "DLavie Commerce", desc: "PPOB products, storefront flows, transaction rails, and automated settlement — all connected." },
                 { title: "Automation Layer", desc: "Triggers, agents, and commerce events stay synchronized from signal to final settlement." },
                 { title: "DLavie OS", desc: "The intelligent command layer that orchestrates everything into one cinematic experience." }
@@ -185,25 +162,18 @@ export default function DLavieRedesigned() {
             </div>
             
             <h2 className="text-5xl md:text-6xl tracking-[-2.5px] font-semibold mb-6">
-              Experience the<br />command layer.
+              Experience the command layer.
             </h2>
             
             <p className="text-xl md:text-2xl text-white/70 mb-10">
-              DLavie AI Workspace is where intelligence meets operations.<br />
-              Account-aware, context-rich, and built for real work.
+              DLavie AI Workspace is where intelligence meets operations. Account-aware, context-rich, and built for real work.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a 
-                href="/ai" 
-                className="inline-flex items-center justify-center gap-3 px-9 py-4 bg-white text-[#050505] rounded-2xl font-semibold text-lg hover:bg-white/90 active:bg-white transition-all"
-              >
+              <a href="/ai" className="inline-flex items-center justify-center gap-3 px-9 py-4 bg-white text-[#050505] rounded-2xl font-semibold text-lg hover:bg-white/90 active:bg-white transition-all">
                 Open DLavie AI Workspace
               </a>
-              <a 
-                href="#os" 
-                className="inline-flex items-center justify-center gap-3 px-9 py-4 border border-white/20 hover:bg-white/5 rounded-2xl font-medium text-lg transition-all"
-              >
+              <a href="#os" className="inline-flex items-center justify-center gap-3 px-9 py-4 border border-white/20 hover:bg-white/5 rounded-2xl font-medium text-lg transition-all">
                 Learn about DLavie OS
               </a>
             </div>
