@@ -36,7 +36,10 @@ function createInitials(fullName: string, email: string | null) {
     .map((token) => token.trim())
     .filter(Boolean);
 
-  return (tokens.length > 1 ? `${tokens[0][0]}${tokens[1][0]}` : tokens[0]?.slice(0, 2) ?? 'DL').toUpperCase();
+  const first = tokens.at(0)?.at(0) ?? 'D';
+  const second = tokens.at(1)?.at(0) ?? tokens.at(0)?.at(1) ?? 'L';
+
+  return `${first}${second}`.toUpperCase();
 }
 
 export function buildDlavieAccountUser(user: DlavieSupabaseUser): DlavieAccountUser {
