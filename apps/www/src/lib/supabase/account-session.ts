@@ -36,8 +36,9 @@ function createInitials(fullName: string, email: string | null) {
     .map((token) => token.trim())
     .filter(Boolean);
 
-  const first = tokens.at(0)?.at(0) ?? 'D';
-  const second = tokens.at(1)?.at(0) ?? tokens.at(0)?.at(1) ?? 'L';
+  const firstToken = tokens[0] ?? 'DL';
+  const first = firstToken[0] ?? 'D';
+  const second = tokens[1]?.[0] ?? firstToken[1] ?? 'L';
 
   return `${first}${second}`.toUpperCase();
 }
