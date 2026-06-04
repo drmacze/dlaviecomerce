@@ -6,7 +6,8 @@ type AiFinalCtaProps = {
 };
 
 export function AiFinalCta({ accountSession }: AiFinalCtaProps) {
-  const isAuthenticated = accountSession.isAuthenticated;
+  const accountUser = accountSession.isAuthenticated ? accountSession.user : null;
+  const isAuthenticated = Boolean(accountUser);
 
   return (
     <section className="dlavie-ai__section ai-final" aria-labelledby="ai-final-title" data-ai-final>
@@ -18,8 +19,8 @@ export function AiFinalCta({ accountSession }: AiFinalCtaProps) {
             : 'Bring support, commerce, and operating agents into one premium AI surface.'}
         </h2>
         <p>
-          {isAuthenticated
-            ? `Continue as ${accountSession.user.fullName} without logging in again. The page already detected your secure DLavie Account cookie on the server.`
+          {accountUser
+            ? `Continue as ${accountUser.fullName} without logging in again. The page already detected your secure DLavie Account cookie on the server.`
             : 'Start with DLavie AI conversation mode, then unlock DLavieOS Agent workflows as protected tools come online.'}
         </p>
         <div className="ai-final__actions">
