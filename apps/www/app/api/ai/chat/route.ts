@@ -41,7 +41,33 @@ const GREETING_ANSWER =
   'Hi, saya DLavie AI. Saya bisa membantu soal akun DLavie, PPOB, commerce, website, automation, atau menyusun rencana kerja. Mau mulai dari apa?';
 
 const SAFE_FALLBACK_ANSWER =
-  'DLavie AI sedang kesulitan terhubung ke model utama. Saya tetap bisa membantu dengan mode aman: jelaskan kebutuhan Anda, misalnya akun, PPOB, website, atau automation.';
+  'DLavie AI sedang kesulitan terhubung ke model utama. Saya tetap bisa membantu dengan mode aman. Ceritakan kebutuhan Anda dalam satu atau dua kalimat.';
+
+function getSafeFallbackAnswer(message: string) {
+  const normalized = message.toLowerCase();
+
+  if (/\b(ppob|pulsa|token listrik|pln|top ?up|tagihan)\b/i.test(normalized)) {
+    return 'Untuk PPOB, saya bisa bantu susun langkah aman: cek status transaksi, cocokkan nomor tujuan, siapkan ringkasan untuk customer, lalu tentukan apakah perlu eskalasi.';
+  }
+
+  if (/\b(website|web|landing page|next\.?js|ui\/?ux|frontend)\b/i.test(normalized)) {
+    return 'Saya bisa bantu mulai dari struktur halaman, UI/UX, copywriting, performa, sampai rencana implementasi Next.js.';
+  }
+
+  if (/\b(commerce|toko|produk|checkout|order|pesanan|jualan)\b/i.test(normalized)) {
+    return 'Untuk commerce, saya bisa bantu rapikan alur produk, checkout, status pesanan, pesan customer, dan prioritas perbaikan agar operasional lebih jelas.';
+  }
+
+  if (/\b(akun|account|login|register|password|profil|profile)\b/i.test(normalized)) {
+    return 'Untuk akun DLavie, saya bisa bantu susun langkah aman seperti memeriksa email login, status sesi, kebutuhan reset password, dan informasi minimum yang perlu disiapkan.';
+  }
+
+  if (/\b(automation|otomasi|workflow|agent|integrasi|zapier|n8n)\b/i.test(normalized)) {
+    return 'Untuk automation, saya bisa bantu pecah kebutuhan menjadi trigger, data yang dibutuhkan, aksi aman, dan rencana implementasi bertahap.';
+  }
+
+  return SAFE_FALLBACK_ANSWER;
+}
 
 function json(payload: DlavieAiChatResponse, status = 200) {
   return NextResponse.json(payload, { status });
@@ -113,7 +139,7 @@ export async function POST(request: NextRequest) {
 
   const account = await validateCookieUser(request);
   if (!account) {
-    return json({ ok: true, answer: SAFE_FALLBACK_ANSWER, source: 'fallback', mode });
+    return json({ ok: true, answer: getSafeFallbackAnswer(message), source: 'fallback', mode });
   }
 
   try {
@@ -137,8 +163,8 @@ export async function POST(request: NextRequest) {
       Date.now(),
     );
 
-    return json({ ok: true, answer: result.answer || SAFE_FALLBACK_ANSWER, source: 'model', mode });
+    return json({ ok: true, answer: result.answer || getSafeFallbackAnswer(message), source: 'model', mode });
   } catch {
-    return json({ ok: true, answer: SAFE_FALLBACK_ANSWER, source: 'fallback', mode });
+    return json({ ok: true, answer: getSafeFallbackAnswer(message), source: 'fallback', mode });
   }
 }
