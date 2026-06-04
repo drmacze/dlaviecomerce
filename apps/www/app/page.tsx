@@ -1,5 +1,258 @@
-import { AppShell } from '../src/app/AppShell';
+'use client';
 
-export default function Page() {
-  return <AppShell />;
+import React from 'react';
+import { motion } from 'framer-motion';
+import { 
+  Bot, Users, Brain, Database, LayoutDashboard, Workflow, 
+  ArrowRight, Play 
+} from 'lucide-react';
+
+export default function DLavieRedesigned() {
+  return (
+    <div className="min-h-screen bg-[#050505] text-white overflow-hidden">
+      {/* Navbar - Grok Style: Clean & Minimal */}
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-[#050505]/95 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-8 flex items-center justify-between h-20">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
+              <span className="text-[#050505] font-bold text-xl tracking-[-2px]">D</span>
+            </div>
+            <div>
+              <div className="font-semibold tracking-[-1.5px] text-2xl">DLavie</div>
+            </div>
+          </div>
+
+          <div className="hidden md:flex items-center gap-10 text-sm font-medium">
+            <a href="#os" className="hover:text-white/70 transition-colors">DLavie OS</a>
+            <a href="#ecosystem" className="hover:text-white/70 transition-colors">Ecosystem</a>
+            <a href="#workspace" className="hover:text-white/70 transition-colors">AI Workspace</a>
+            <a href="/ai" className="hover:text-white/70 transition-colors">Docs</a>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <a 
+              href="/ai" 
+              className="px-5 py-2.5 text-sm font-medium border border-white/20 hover:bg-white/5 rounded-full transition-all"
+            >
+              Open Workspace
+            </a>
+            <a 
+              href="#os" 
+              className="px-6 py-2.5 text-sm font-semibold bg-white text-[#050505] hover:bg-white/90 rounded-full flex items-center gap-2 transition-all"
+            >
+              Launch DLavie OS
+              <ArrowRight className="w-4 h-4" />
+            </a>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Section - Premium Grok-like */}
+      <section className="pt-32 pb-24 px-8 max-w-5xl mx-auto text-center">
+        <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full border border-white/10 text-xs tracking-[2px] mb-8 text-white/60">
+          INTELLIGENT OPERATING SYSTEM
+        </div>
+
+        <h1 className="text-7xl md:text-8xl font-semibold tracking-[-5.5px] leading-[0.9] mb-6">
+          DLavie OS
+        </h1>
+        
+        <p className="max-w-2xl mx-auto text-2xl md:text-3xl tracking-[-1.5px] text-white/80 mb-4">
+          The cinematic command mesh for agents,<br />models, memory, and intelligent operations.
+        </p>
+
+        <p className="max-w-md mx-auto text-lg text-white/50 mb-10">
+          One parent brand. One unified ecosystem.<br />Decisions, transactions, and workflows — perfectly aligned.
+        </p>
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <a 
+            href="#os" 
+            className="group inline-flex items-center justify-center gap-3 px-10 py-4 bg-white text-[#050505] rounded-2xl font-semibold text-lg hover:bg-white/90 transition-all active:scale-[0.985]"
+          >
+            Explore DLavie OS
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition" />
+          </a>
+          
+          <a 
+            href="/ai" 
+            className="inline-flex items-center justify-center gap-3 px-10 py-4 border border-white/30 hover:bg-white/5 rounded-2xl font-medium text-lg transition-all"
+          >
+            <Play className="w-5 h-5" />
+            Open AI Workspace
+          </a>
+        </div>
+
+        <div className="mt-16 text-xs tracking-[3px] text-white/40">
+          BUILT FOR FOUNDERS • OPERATORS • INTELLIGENT SYSTEMS
+        </div>
+      </section>
+
+      {/* Vision / Identity - Clean & Spacious */}
+      <section className="border-y border-white/10 py-20 px-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="text-sm tracking-[3px] text-white/50 mb-4">THE PHILOSOPHY</div>
+          <h2 className="text-5xl tracking-[-2.5px] font-semibold mb-8">
+            One parent brand.<br />Connected intelligence.
+          </h2>
+          <p className="text-xl text-white/70 max-w-2xl mx-auto leading-relaxed">
+            DLavie designs connected digital systems under one cohesive brand — 
+            from agent workspaces to transaction rails. Everything shares the same 
+            visual language and operational rhythm.
+          </p>
+        </div>
+      </section>
+
+      {/* DLavie OS - The Star Section */}
+      <section id="os" className="max-w-7xl mx-auto px-8 pt-24 pb-20">
+        <div className="flex flex-col items-center text-center mb-16">
+          <div className="px-4 py-1.5 rounded-full bg-white/5 text-xs tracking-[2.5px] mb-4 border border-white/10">
+            THE CORE
+          </div>
+          <h2 className="text-6xl tracking-[-3.5px] font-semibold">DLavie OS</h2>
+          <p className="mt-4 max-w-md text-xl text-white/60">
+            Turns agents, models, memory, dashboards, and workflows into a single cinematic command mesh.
+          </p>
+        </div>
+
+        {/* 6 Premium Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[
+            {
+              icon: <Bot className="w-7 h-7" />,
+              title: "AI Core",
+              desc: "The intelligent foundation that powers reasoning, orchestration, and decision-making across the entire ecosystem."
+            },
+            {
+              icon: <Users className="w-7 h-7" />,
+              title: "Agents",
+              desc: "Autonomous agents that execute complex workflows, handle commerce operations, and respond to real-time signals."
+            },
+            {
+              icon: <Brain className="w-7 h-7" />,
+              title: "Models",
+              desc: "Flexible model routing with support for frontier models, fine-tuned agents, and local inference when needed."
+            },
+            {
+              icon: <Database className="w-7 h-7" />,
+              title: "Memory",
+              desc: "Persistent, contextual memory layer that remembers conversations, transactions, and operational history."
+            },
+            {
+              icon: <LayoutDashboard className="w-7 h-7" />,
+              title: "Dashboards",
+              desc: "Beautiful, real-time command surfaces for monitoring agents, commerce metrics, and system health."
+            },
+            {
+              icon: <Workflow className="w-7 h-7" />,
+              title: "Workflows",
+              desc: "Visual and code-based orchestration of multi-step processes across AI, commerce, and automation layers."
+            }
+          ].map((item, index) => (
+            <motion.div
+              key={index}
+              whileHover={{ y: -4 }}
+              className="group relative rounded-3xl border border-white/10 bg-zinc-950/50 p-8 hover:border-white/20 transition-all duration-300 flex flex-col"
+            >
+              <div className="relative z-10">
+                <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-8 text-white group-hover:bg-white/10 transition-colors">
+                  {item.icon}
+                </div>
+                
+                <h3 className="text-3xl tracking-[-1.5px] font-semibold mb-4">{item.title}</h3>
+                <p className="text-white/70 leading-relaxed flex-1">{item.desc}</p>
+                
+                <div className="mt-8 flex items-center text-sm font-medium text-white/60 group-hover:text-white transition-colors">
+                  Learn more <ArrowRight className="ml-2 w-4 h-4" />
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* Unified Ecosystem */}
+      <section id="ecosystem" className="border-y border-white/10 bg-zinc-950 py-20 px-8">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-14">
+            <div className="text-xs tracking-[3px] text-white/50 mb-3">UNIFIED BY DESIGN</div>
+            <h2 className="text-5xl tracking-[-2.5px] font-semibold">One ecosystem.<br />Zero friction.</h2>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              { title: "DLavie Commerce", desc: "PPOB products, storefront flows, transaction rails, and automated settlement — all connected." },
+              { title: "Automation Layer", desc: "Triggers, agents, and commerce events stay synchronized from signal to final settlement." },
+              { title: "DLavie OS", desc: "The intelligent command layer that orchestrates everything into one cinematic experience." }
+            ].map((item, i) => (
+              <div key={i} className="rounded-3xl border border-white/10 p-8 bg-[#050505]">
+                <div className="font-semibold text-2xl tracking-tight mb-4">{item.title}</div>
+                <p className="text-white/70 leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* The Command Experience */}
+      <section id="workspace" className="max-w-5xl mx-auto px-8 py-24 text-center">
+        <div className="max-w-3xl mx-auto">
+          <div className="inline-block px-5 py-1.5 rounded-full bg-white/5 text-xs tracking-[2px] mb-6 border border-white/10">
+            THE WORKSPACE
+          </div>
+          
+          <h2 className="text-6xl tracking-[-3px] font-semibold mb-6">
+            Experience the<br />command layer.
+          </h2>
+          
+          <p className="text-2xl text-white/70 mb-10">
+            DLavie AI Workspace is where intelligence meets operations.<br />
+            Account-aware, context-rich, and built for real work.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <a 
+              href="/ai" 
+              className="inline-flex items-center justify-center gap-3 px-9 py-4 bg-white text-[#050505] rounded-2xl font-semibold text-lg hover:bg-white/90 transition-all"
+            >
+              Open DLavie AI Workspace
+              <ArrowRight className="w-5 h-5" />
+            </a>
+            <a 
+              href="#os" 
+              className="inline-flex items-center justify-center gap-3 px-9 py-4 border border-white/20 hover:bg-white/5 rounded-2xl font-medium text-lg transition-all"
+            >
+              Learn about DLavie OS
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="border-t border-white/10 py-20 px-8 bg-zinc-950">
+        <div className="max-w-xl mx-auto text-center">
+          <h3 className="text-4xl tracking-tight font-semibold mb-4">Ready to build with intelligence?</h3>
+          <p className="text-white/60 mb-8">Start with DLavie OS or dive straight into the AI workspace.</p>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="#os" className="px-8 py-3.5 rounded-2xl bg-white text-[#050505] font-semibold hover:bg-white/90 transition">Explore DLavie OS</a>
+            <a href="/ai" className="px-8 py-3.5 rounded-2xl border border-white/20 hover:bg-white/5 font-medium transition">Launch AI Workspace →</a>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-white/10 py-12 px-8 text-sm text-white/50">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+          <div>© {new Date().getFullYear()} DLavie. All rights reserved.</div>
+          <div className="flex gap-8">
+            <a href="#" className="hover:text-white transition">Privacy</a>
+            <a href="#" className="hover:text-white transition">Terms</a>
+            <a href="https://github.com/drmacze/dlaviecomerce" className="hover:text-white transition">GitHub</a>
+          </div>
+          <div>Built with precision in Indonesia</div>
+        </div>
+      </footer>
+    </div>
+  );
 }
