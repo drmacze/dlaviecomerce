@@ -2,12 +2,14 @@
 
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import { gsap } from '@dlavie/animations';
+import type { DlavieAccountSession } from '../../lib/supabase/account-session';
 import type { AiMode, ModeContent } from './aiContent';
 import { thinkingStages } from './aiContent';
 
 type AiConsoleProps = {
   mode: AiMode;
   content: ModeContent;
+  accountSession: DlavieAccountSession;
   onModeChange: (mode: AiMode) => void;
 };
 
@@ -29,23 +31,22 @@ function isChatApiResponse(value: unknown): value is ChatApiResponse {
   return typeof value === 'object' && value !== null;
 }
 
-async function requestDlavieAiPreview(prompt: string, mode: AiMode, signal: AbortSignal): Promise<PreviewResult> {
-  const bearerToken = window.sessionStorage.getItem('dlavie-ai-access-token');
-  if (!bearerToken) {
+async function requestDlavieAiPreview(prompt: string, mode: AiMode, isAuthenticated: boolean, signal: AbortSignal): Promise<PreviewResult> {
+  if (!isAuthenticated) {
     return {
       answer: mode === 'ai'
-        ? 'Public preview mode is active. Sign in to connect DLavie Account context, commerce guidance, and protected knowledge retrieval.'
+        ? 'Public preview mode is active. Sign in once to connect DLavie Account context, commerce guidance, and protected knowledge retrieval.'
         : 'Public preview mode is active. Sign in before DLavieOS Agent can inspect tools, queue operations, or prepare guarded actions.',
       source: 'demo',
-      detail: 'No browser-accessible bearer session was available for the authenticated chat endpoint.',
+      detail: 'No verified DLavie Account cookie was detected on the server for this page render.',
     };
   }
 
   const response = await fetch('/api/v1/chat', {
     method: 'POST',
     signal,
+    credentials: 'same-origin',
     headers: {
-      Authorization: `Bearer ${bearerToken}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -64,7 +65,13 @@ async function requestDlavieAiPreview(prompt: string, mode: AiMode, signal: Abor
 
   if (!response.ok) {
     const message = typeof payload.error?.message === 'string' ? payload.error.message : 'The AI endpoint could not complete this preview.';
-    return { answer: message, source: 'demo', detail: 'Authenticated endpoint returned an error.' };
+    return {
+      answer: response.status === 401
+        ? 'Your DLavie Account was detected on the page, but the chat endpoint could not validate the session. Please refresh or sign in again if the session expired.'
+        : message,
+      source: 'demo',
+      detail: response.status === 401 ? 'Account cookie validation failed at the chat endpoint.' : 'Authenticated endpoint returned an error.',
+    };
   }
 
   if (typeof payload.answer !== 'string' || payload.answer.trim().length === 0) {
@@ -74,13 +81,14 @@ async function requestDlavieAiPreview(prompt: string, mode: AiMode, signal: Abor
   return { answer: payload.answer, source: 'backend' };
 }
 
-export function AiConsole({ mode, content, onModeChange }: AiConsoleProps) {
+export function AiConsole({ mode, content, accountSession, onModeChange }: AiConsoleProps) {
+  const isAuthenticated = accountSession.isAuthenticated;
   const [prompt, setPrompt] = useState(content.prompt);
   const [answer, setAnswer] = useState(content.answer);
   const [stageIndex, setStageIndex] = useState(0);
   const [isThinking, setIsThinking] = useState(false);
   const [source, setSource] = useState<'backend' | 'demo'>('demo');
-  const [detail, setDetail] = useState<string>('Local preview ready');
+  const [detail, setDetail] = useState<string>(isAuthenticated ? 'DLavie Account session ready' : 'Public preview ready');
   const runIdRef = useRef(0);
   const abortRef = useRef<AbortController | null>(null);
   const orbRef = useRef<HTMLDivElement>(null);
@@ -90,23 +98,23 @@ export function AiConsole({ mode, content, onModeChange }: AiConsoleProps) {
     setPrompt(content.prompt);
     setAnswer(content.answer);
     setSource('demo');
-    setDetail('Mode preview ready');
-  }, [content]);
+    setDetail(isAuthenticated ? 'DLavie Account session ready' : 'Public preview ready');
+  }, [content, isAuthenticated]);
 
   useEffect(() => {
     if (!isThinking) return undefined;
     const interval = window.setInterval(() => {
       setStageIndex((current) => (current + 1) % thinkingStages.length);
-    }, 560);
+    }, 640);
     return () => window.clearInterval(interval);
   }, [isThinking]);
 
   useEffect(() => {
     if (!orbRef.current) return;
     const tween = gsap.to(orbRef.current, {
-      scale: isThinking ? 1.12 : 1,
-      opacity: isThinking ? 1 : 0.82,
-      duration: 0.72,
+      scale: isThinking ? 1.06 : 1,
+      opacity: isThinking ? 1 : 0.9,
+      duration: 0.78,
       repeat: isThinking ? -1 : 0,
       yoyo: true,
       ease: 'sine.inOut',
@@ -125,15 +133,15 @@ export function AiConsole({ mode, content, onModeChange }: AiConsoleProps) {
 
     setIsThinking(true);
     setStageIndex(0);
-    setDetail('Thinking through DLavie context');
+    setDetail(isAuthenticated ? 'Checking secure DLavie Account cookie' : 'Running safe public preview');
     setAnswer('');
 
     if (outputRef.current) {
-      gsap.fromTo(outputRef.current, { opacity: 0.42, y: 8 }, { opacity: 1, y: 0, duration: 0.42, ease: 'power2.out' });
+      gsap.fromTo(outputRef.current, { opacity: 0.52, y: 6 }, { opacity: 1, y: 0, duration: 0.36, ease: 'power2.out' });
     }
 
-    const minimumDelay = new Promise((resolve) => window.setTimeout(resolve, 2200));
-    const resultPromise = requestDlavieAiPreview(prompt, mode, controller.signal).catch((error: unknown): PreviewResult => {
+    const minimumDelay = new Promise((resolve) => window.setTimeout(resolve, 1400));
+    const resultPromise = requestDlavieAiPreview(prompt, mode, isAuthenticated, controller.signal).catch((error: unknown): PreviewResult => {
       if (error instanceof DOMException && error.name === 'AbortError') {
         return { answer: '', source: 'demo', detail: 'Preview superseded by a newer request.' };
       }
@@ -155,7 +163,7 @@ export function AiConsole({ mode, content, onModeChange }: AiConsoleProps) {
     setAnswer(result.answer || content.answer);
 
     if (outputRef.current) {
-      gsap.fromTo(outputRef.current, { opacity: 0, y: 12, filter: 'blur(10px)' }, { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.58, ease: 'power3.out' });
+      gsap.fromTo(outputRef.current, { opacity: 0, y: 10, filter: 'blur(8px)' }, { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.5, ease: 'power3.out' });
     }
   };
 
@@ -174,7 +182,7 @@ export function AiConsole({ mode, content, onModeChange }: AiConsoleProps) {
         </div>
         <div className="ai-console__status">
           <span className="ai-console__status-dot" />
-          {source === 'backend' ? 'Connected endpoint' : 'Safe preview'}
+          {source === 'backend' ? 'Connected endpoint' : isAuthenticated ? 'Account ready' : 'Safe preview'}
         </div>
       </div>
 
@@ -185,6 +193,15 @@ export function AiConsole({ mode, content, onModeChange }: AiConsoleProps) {
         <button type="button" role="tab" aria-selected={mode === 'agent'} aria-pressed={mode === 'agent'} onClick={() => onModeChange('agent')}>
           Agent
         </button>
+      </div>
+
+      <div className="ai-console__account" aria-live="polite">
+        <span>{isAuthenticated ? accountSession.user.initials : 'DL'}</span>
+        <p>
+          {isAuthenticated
+            ? `Using ${accountSession.user.fullName}'s DLavie Account session.`
+            : 'Public preview. Login unlocks account-connected responses.'}
+        </p>
       </div>
 
       <div className="ai-console__body">
@@ -224,7 +241,7 @@ export function AiConsole({ mode, content, onModeChange }: AiConsoleProps) {
           placeholder="Ask DLavie AI..."
           maxLength={500}
         />
-        <button type="submit" disabled={isThinking}>{isThinking ? 'Thinking' : 'Run AI preview'}</button>
+        <button type="submit" disabled={isThinking}>{isThinking ? 'Thinking' : isAuthenticated ? 'Run with account' : 'Run preview'}</button>
       </form>
     </article>
   );
