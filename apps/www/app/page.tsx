@@ -126,7 +126,7 @@ export default function DLavieRedesigned() {
                 <div className="mt-auto pt-8 flex items-center text-sm font-medium text-white/60 group-hover:text-white transition-colors">
                   Learn more <ArrowRight className="ml-2 w-4 h-4" />
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </section>
