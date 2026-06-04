@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { motion } from 'framer-motion';
 import { 
   Bot, Users, Brain, Database, LayoutDashboard, Workflow, 
   ArrowRight, Play 
@@ -9,14 +10,16 @@ import {
 export default function DLavieRedesigned() {
   return (
     <div className="min-h-screen bg-[#050505] text-white overflow-hidden">
-      {/* Navbar */}
+      {/* Navbar - Grok Style */}
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-[#050505]/95 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-8 flex items-center justify-between h-20">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
               <span className="text-[#050505] font-bold text-xl tracking-[-2px]">D</span>
             </div>
-            <div className="font-semibold tracking-[-1.5px] text-2xl">DLavie</div>
+            <div>
+              <div className="font-semibold tracking-[-1.5px] text-2xl">DLavie</div>
+            </div>
           </div>
 
           <div className="hidden md:flex items-center gap-10 text-sm font-medium">
@@ -35,7 +38,7 @@ export default function DLavieRedesigned() {
             </a>
             <a 
               href="#os" 
-              className="px-6 py-2.5 text-sm font-semibold bg-white text-[#050505] hover:bg-white/90 rounded-full flex items-center gap-2 transition-all active:scale-[0.985]"
+              className="px-6 py-2.5 text-sm font-semibold bg-white text-[#050505] hover:bg-white/90 rounded-full flex items-center gap-2 transition-all"
             >
               Launch DLavie OS
               <ArrowRight className="w-4 h-4" />
@@ -65,9 +68,10 @@ export default function DLavieRedesigned() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <a 
             href="#os" 
-            className="inline-flex items-center justify-center gap-3 px-10 py-4 bg-white text-[#050505] rounded-2xl font-semibold text-lg hover:bg-white/90 transition-all active:scale-[0.985]"
+            className="group inline-flex items-center justify-center gap-3 px-10 py-4 bg-white text-[#050505] rounded-2xl font-semibold text-lg hover:bg-white/90 transition-all active:scale-[0.985]"
           >
             Explore DLavie OS
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition" />
           </a>
           
           <a 
@@ -99,7 +103,7 @@ export default function DLavieRedesigned() {
         </div>
       </section>
 
-      {/* DLavie OS Core */}
+      {/* DLavie OS - With nice animations */}
       <section id="os" className="max-w-7xl mx-auto px-8 pt-24 pb-20">
         <div className="flex flex-col items-center text-center mb-16">
           <div className="px-4 py-1.5 rounded-full bg-white/5 text-xs tracking-[2.5px] mb-4 border border-white/10">
@@ -120,9 +124,11 @@ export default function DLavieRedesigned() {
             { icon: <LayoutDashboard className="w-7 h-7" />, title: "Dashboards", desc: "Beautiful, real-time command surfaces for monitoring agents, commerce metrics, and system health." },
             { icon: <Workflow className="w-7 h-7" />, title: "Workflows", desc: "Visual and code-based orchestration of multi-step processes across AI, commerce, and automation layers." }
           ].map((item, index) => (
-            <div 
+            <motion.div
               key={index}
-              className="group relative rounded-3xl border border-white/10 bg-zinc-950/50 p-8 hover:border-white/20 active:border-white/30 transition-all duration-200 flex flex-col active:scale-[0.985]"
+              whileHover={{ y: -6 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="group relative rounded-3xl border border-white/10 bg-zinc-950/50 p-8 hover:border-white/20 transition-all duration-300 flex flex-col"
             >
               <div className="relative z-10">
                 <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-8 text-white group-hover:bg-white/10 transition-colors">
@@ -136,7 +142,7 @@ export default function DLavieRedesigned() {
                   Learn more <ArrowRight className="ml-2 w-4 h-4" />
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </section>
@@ -155,7 +161,7 @@ export default function DLavieRedesigned() {
               { title: "Automation Layer", desc: "Triggers, agents, and commerce events stay synchronized from signal to final settlement." },
               { title: "DLavie OS", desc: "The intelligent command layer that orchestrates everything into one cinematic experience." }
             ].map((item, i) => (
-              <div key={i} className="rounded-3xl border border-white/10 p-8 bg-[#050505] active:scale-[0.985] transition-transform">
+              <div key={i} className="rounded-3xl border border-white/10 p-8 bg-[#050505]">
                 <div className="font-semibold text-2xl tracking-tight mb-4">{item.title}</div>
                 <p className="text-white/70 leading-relaxed">{item.desc}</p>
               </div>
@@ -183,7 +189,7 @@ export default function DLavieRedesigned() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a 
               href="/ai" 
-              className="inline-flex items-center justify-center gap-3 px-9 py-4 bg-white text-[#050505] rounded-2xl font-semibold text-lg hover:bg-white/90 active:bg-white/95 transition-all active:scale-[0.985]"
+              className="inline-flex items-center justify-center gap-3 px-9 py-4 bg-white text-[#050505] rounded-2xl font-semibold text-lg hover:bg-white/90 transition-all active:scale-[0.985]"
             >
               Open DLavie AI Workspace
               <ArrowRight className="w-5 h-5" />
@@ -205,8 +211,8 @@ export default function DLavieRedesigned() {
           <p className="text-white/60 mb-8">Start with DLavie OS or dive straight into the AI workspace.</p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="#os" className="px-8 py-3.5 rounded-2xl bg-white text-[#050505] font-semibold hover:bg-white/90 active:bg-white/95 transition active:scale-[0.985]">Explore DLavie OS</a>
-            <a href="/ai" className="px-8 py-3.5 rounded-2xl border border-white/20 hover:bg-white/5 active:bg-white/10 font-medium transition active:scale-[0.985]">Launch AI Workspace →</a>
+            <a href="#os" className="px-8 py-3.5 rounded-2xl bg-white text-[#050505] font-semibold hover:bg-white/90 transition">Explore DLavie OS</a>
+            <a href="/ai" className="px-8 py-3.5 rounded-2xl border border-white/20 hover:bg-white/5 font-medium transition">Launch AI Workspace →</a>
           </div>
         </div>
       </section>
