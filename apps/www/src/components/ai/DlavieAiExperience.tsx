@@ -13,6 +13,8 @@ type Feature = {
   meta: string;
 };
 
+type PlanCard = readonly [name: string, description: string, price: string, items: readonly string[]];
+
 const aiFeatures: Feature[] = [
   {
     title: 'Context memory',
@@ -66,7 +68,7 @@ const faqs = [
   ['Is the backend already required?', 'The page is UI-ready and backend-ready. Connect your AI endpoint to the console action when the backend route is finalized.'],
 ];
 
-const planCards = [
+const planCards: PlanCard[] = [
   ['Starter', 'For testing DLavie AI', 'Rp0', ['AI landing access', 'Account gated flow', 'Basic prompts']],
   ['Operator', 'For active workspaces', 'Rp29k', ['Priority AI surface', 'Agent mode preview', 'Workflow console UI']],
   ['Enterprise', 'For DLavie operations', 'Custom', ['Private routing', 'Team access', 'Advanced integrations']],
@@ -289,7 +291,7 @@ export function DlavieAiExperience() {
                 <h3>{name}</h3>
                 <strong>{price}</strong>
                 <Link href="/account/register">Start now</Link>
-                <ul>{(items as string[]).map((item) => <li key={item}>{item}</li>)}</ul>
+                <ul>{items.map((item) => <li key={item}>{item}</li>)}</ul>
               </article>
             ))}
           </div>
