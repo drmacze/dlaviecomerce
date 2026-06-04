@@ -65,7 +65,7 @@ export const modeContent: Record<AiMode, ModeContent> = {
     eyebrow: 'DLavie Intelligence Workspace',
     headline: 'AI support and operating agents for the DLavie ecosystem.',
     subcopy:
-      'DLavie AI connects account identity, product guidance, commerce operations, and agent workflows in one cinematic workspace.',
+      'DLavie AI connects account identity, product guidance, commerce operations, and agent workflows in one calm, modern workspace.',
     consoleLabel: 'DLavie AI conversation',
     prompt: 'Help me choose the right DLavie path for product support, PPOB commerce, and automation.',
     answer:
@@ -140,7 +140,7 @@ export const modeContent: Record<AiMode, ModeContent> = {
 };
 
 export const connectors: Connector[] = [
-  { name: 'Account identity', detail: 'Supabase Auth + access state', state: 'Live' },
+  { name: 'Account identity', detail: 'Supabase Auth + server cookie session', state: 'Live' },
   { name: 'Product guidance', detail: 'Docs, commerce, onboarding', state: 'Live' },
   { name: 'PPOB operations', detail: 'Orders, payments, status checks', state: 'Guarded' },
   { name: 'Agent tools', detail: 'Dashboards and workflows', state: 'Preview' },
@@ -170,7 +170,7 @@ export const accessPlans: AccessPlan[] = [
     description: 'For early DLavie AI exploration and account-gated previews.',
     price: 'Rp0',
     badge: 'Preview',
-    features: ['AI landing access', 'Local console preview', 'Account-ready CTA'],
+    features: ['AI landing access', 'Safe console preview', 'Account-aware CTA'],
   },
   {
     name: 'Operator',
@@ -200,9 +200,9 @@ export const insights: InsightCard[] = [
     metric: 'Safety-first',
   },
   {
-    title: 'Cinematic operator UX',
-    description: 'The workspace uses motion, hierarchy, and live context to make AI feel trustworthy and premium.',
-    metric: 'Premium OS',
+    title: 'Premium operator UX',
+    description: 'The workspace uses measured motion, hierarchy, and live context to make AI feel trustworthy and refined.',
+    metric: 'Minimal OS',
   },
 ];
 
@@ -220,11 +220,11 @@ export const faqItems: FaqItem[] = [
   {
     question: 'Does it connect to my DLavie Account?',
     answer:
-      'The production endpoint requires authenticated DLavie Account access. This page is designed to detect that boundary and keep the public preview safe.',
+      'Yes. The /ai page checks the server-set DLavie Account cookie before rendering, then updates CTAs and console state without asking signed-in users to login again.',
   },
   {
     question: 'Is the console a real AI integration?',
     answer:
-      'The console can call the stable authenticated chat endpoint when a bearer session is available, and falls back to a polished local preview for public visitors.',
+      'The console can call the authenticated chat endpoint using the same-origin DLavie Account cookie, and falls back to a safe local preview for public visitors.',
   },
 ];
