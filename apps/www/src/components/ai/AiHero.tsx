@@ -15,7 +15,8 @@ type AiHeroProps = {
 };
 
 export function AiHero({ mode, modes, content, accountSession, onModeChange }: AiHeroProps) {
-  const isAuthenticated = accountSession.isAuthenticated;
+  const accountUser = accountSession.isAuthenticated ? accountSession.user : null;
+  const isAuthenticated = Boolean(accountUser);
   const primaryHref = isAuthenticated ? '/account/dashboard' : '/account/login';
   const primaryLabel = isAuthenticated ? 'Open AI Workspace' : 'Start DLavie AI';
   const secondaryHref = isAuthenticated ? '/account/dashboard' : '/account/register';
@@ -46,9 +47,9 @@ export function AiHero({ mode, modes, content, accountSession, onModeChange }: A
 
           <div className="dlavie-ai__account-strip" data-ai-intro>
             <span className="dlavie-ai__account-dot" aria-hidden="true" />
-            {isAuthenticated ? (
+            {accountUser ? (
               <p>
-                Signed in as <strong>{accountSession.user.fullName}</strong>. Your DLavie Account session is active for this workspace.
+                Signed in as <strong>{accountUser.fullName}</strong>. Your DLavie Account session is active for this workspace.
               </p>
             ) : (
               <p>Public preview is available. Sign in once to connect DLavie Account context and protected AI access.</p>
