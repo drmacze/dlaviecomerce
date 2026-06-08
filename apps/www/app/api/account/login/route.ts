@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAuthEndpoint, getSupabaseRequestHeaders } from '../../../../src/lib/supabase/url';
 import { DLAVIE_ACCESS_COOKIE, DLAVIE_REFRESH_COOKIE, getAuthMessage, isSecureCookieRuntime, type DlavieAuthPayload } from '../../../../src/lib/supabase/session';
+import { checkLoginRateLimit, isSameOriginRequest, isValidEmail } from '../../../../src/lib/account/security';
 
 async function readPayload(response: Response) {
   try {
@@ -11,12 +12,24 @@ async function readPayload(response: Response) {
 }
 
 export async function POST(request: Request) {
+  if (!isSameOriginRequest(request)) {
+    return NextResponse.json({ ok: false, message: 'Invalid request origin.' }, { status: 403 });
+  }
+
   const body = await request.json().catch(() => ({}));
   const email = String(body.email ?? '').trim().toLowerCase();
   const password = String(body.password ?? '');
 
-  if (!email || !password) {
-    return NextResponse.json({ ok: false, message: 'Email and password are required.' }, { status: 400 });
+  if (!isValidEmail(email) || !password) {
+    return NextResponse.json({ ok: false, message: 'Enter a valid email and password.' }, { status: 400 });
+  }
+
+  const rateLimit = checkLoginRateLimit(request, email);
+  if (rateLimit.limited) {
+    return NextResponse.json(
+      { ok: false, message: 'Too many sign-in attempts. Please wait a moment and try again.' },
+      { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfter) } }
+    );
   }
 
   const response = await fetch(getSupabaseAuthEndpoint('/token?grant_type=password'), {
@@ -35,7 +48,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const result = NextResponse.json({ ok: true, redirectTo: '/account/dashboard' });
+  const result = NextResponse.json({ ok: true, redirectTo: '/ai' });
   const secure = isSecureCookieRuntime();
 
   result.cookies.set(DLAVIE_ACCESS_COOKIE, payload.access_token, {
