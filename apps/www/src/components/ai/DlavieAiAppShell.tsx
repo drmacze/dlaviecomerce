@@ -129,7 +129,7 @@ function normalizeStoredMessages(value: unknown): ChatMessage[] {
 
   return value
     .filter((item): item is Partial<ChatMessage> => Boolean(item) && typeof item === 'object')
-    .map((item) => ({
+    .map((item): ChatMessage => ({
       id: typeof item.id === 'string' ? item.id : newId('stored'),
       role: item.role === 'user' ? 'user' : 'assistant',
       content: typeof item.content === 'string' ? item.content.slice(0, 8000) : '',
