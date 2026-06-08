@@ -25,6 +25,17 @@ const PRODUCT_OPTIONS = [
   { label: 'Full DLavie Ecosystem', value: 'all' },
 ];
 
+function GoogleMark() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" width="19" height="19">
+      <path fill="#4285F4" d="M21.6 12.23c0-.77-.07-1.51-.2-2.23H12v4.22h5.38a4.6 4.6 0 0 1-2 3.02v2.51h3.24c1.9-1.75 2.98-4.32 2.98-7.52Z" />
+      <path fill="#34A853" d="M12 22c2.7 0 4.96-.9 6.62-2.45l-3.24-2.51c-.9.6-2.04.96-3.38.96-2.6 0-4.8-1.76-5.59-4.12H3.06v2.59A9.99 9.99 0 0 0 12 22Z" />
+      <path fill="#FBBC05" d="M6.41 13.88A6.02 6.02 0 0 1 6.1 12c0-.65.11-1.29.31-1.88V7.53H3.06A9.99 9.99 0 0 0 2 12c0 1.61.39 3.14 1.06 4.47l3.35-2.59Z" />
+      <path fill="#EA4335" d="M12 6c1.47 0 2.78.5 3.82 1.5l2.87-2.87A9.62 9.62 0 0 0 12 2a9.99 9.99 0 0 0-8.94 5.53l3.35 2.59C7.2 7.76 9.4 6 12 6Z" />
+    </svg>
+  );
+}
+
 export function AccountAccessPage({ mode }: AccountAccessPageProps) {
   const isRegister = mode === 'register';
   const [name, setName] = useState('');
@@ -38,7 +49,7 @@ export function AccountAccessPage({ mode }: AccountAccessPageProps) {
     const params = new URLSearchParams(window.location.search);
     const authError = params.get('auth_error');
     if (authError) {
-      setStatus({ tone: 'error', message: 'GitHub login could not be completed. Please try again.' });
+      setStatus({ tone: 'error', message: 'Social login could not be completed. Please try again.' });
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);
@@ -88,10 +99,16 @@ export function AccountAccessPage({ mode }: AccountAccessPageProps) {
           <small>Satu akun untuk DLavie AI dan DLavie Store.</small>
         </div>
 
-        <a className="account-oauth-button" href="/api/account/oauth/github">
-          <Github size={19} aria-hidden="true" />
-          Continue with GitHub
-        </a>
+        <div className="account-oauth-stack" aria-label="Social login options">
+          <a className="account-oauth-button" href="/api/account/oauth/google">
+            <GoogleMark />
+            Continue with Google
+          </a>
+          <a className="account-oauth-button" href="/api/account/oauth/github">
+            <Github size={19} aria-hidden="true" />
+            Continue with GitHub
+          </a>
+        </div>
 
         <div className="account-divider"><span>atau</span></div>
 
