@@ -7,6 +7,7 @@ The Next.js application exposes server-only API route handlers under `app/api`. 
 - `GET /api/health` — health check.
 - `GET /api/v1/models` — authenticated model routing metadata.
 - `POST /api/v1/chat` — authenticated chat completion with optional RAG.
+- `POST /api/ai/chat` — frontend-safe DLavie AI app BFF. It validates `{ message, mode, metadata }`, reads existing DLavie Account cookies when present, returns friendly typed `{ ok, answer, source, mode }` responses, and never exposes raw provider/auth errors to the public UI.
 - `POST /api/v1/chat/stream` — authenticated placeholder returning `NOT_IMPLEMENTED` until SSE streaming is added.
 - `GET /api/v1/conversations` — authenticated conversation list.
 - `GET /api/v1/conversations/:conversationId/messages` — authenticated conversation messages.
