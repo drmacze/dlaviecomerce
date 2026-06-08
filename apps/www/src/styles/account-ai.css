@@ -1,0 +1,238 @@
+.account-ai-shell {
+  --account-black: #000;
+  --account-surface: #121212;
+  --account-surface-2: #1f1f1f;
+  --account-border: rgba(255, 255, 255, 0.16);
+  --account-border-strong: rgba(255, 255, 255, 0.28);
+  --account-text: #fff;
+  --account-muted: rgba(255, 255, 255, 0.58);
+  min-height: 100svh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: calc(env(safe-area-inset-top) + 22px) 18px calc(env(safe-area-inset-bottom) + 22px);
+  color: var(--account-text);
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255,255,255,0.08), transparent 22rem),
+    radial-gradient(circle at 82% 78%, rgba(49,92,255,0.16), transparent 24rem),
+    #000;
+  font-family: var(--font-sans), Inter, system-ui, sans-serif;
+}
+
+.account-ai-shell *,
+.account-ai-shell *::before,
+.account-ai-shell *::after {
+  box-sizing: border-box;
+}
+
+.account-ai-card {
+  width: min(100%, 430px);
+  display: grid;
+  gap: 18px;
+  border: 1px solid var(--account-border);
+  border-radius: 34px;
+  padding: 18px;
+  background: rgba(18, 18, 18, 0.86);
+  box-shadow: 0 26px 90px rgba(0,0,0,0.72);
+  backdrop-filter: blur(26px);
+}
+
+.account-ai-card.is-callback {
+  min-height: 360px;
+  align-content: center;
+}
+
+.account-ai-brand {
+  width: max-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--account-border);
+  border-radius: 999px;
+  padding: 7px 13px 7px 7px;
+  color: #fff;
+  text-decoration: none;
+  background: rgba(0,0,0,0.32);
+}
+
+.account-ai-brand span {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: #050505;
+  background: #fff;
+}
+
+.account-ai-brand svg {
+  width: 22px;
+  height: 22px;
+}
+
+.account-ai-brand strong {
+  font-size: 1rem;
+  letter-spacing: -0.02em;
+}
+
+.account-ai-heading {
+  display: grid;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.account-ai-heading p,
+.account-ai-heading h1,
+.account-ai-heading small,
+.account-ai-switch {
+  margin: 0;
+}
+
+.account-ai-heading p {
+  color: var(--account-muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.account-ai-heading h1 {
+  color: #fff;
+  font-size: clamp(3.4rem, 18vw, 5.5rem);
+  line-height: 0.82;
+  letter-spacing: -0.065em;
+}
+
+.account-ai-heading small {
+  color: var(--account-muted);
+  font-size: 0.98rem;
+  line-height: 1.45;
+}
+
+.account-oauth-button,
+.account-ai-submit {
+  min-height: 54px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 999px;
+  font-weight: 850;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.account-oauth-button {
+  border: 1px solid var(--account-border-strong);
+  color: #fff;
+  background: rgba(255,255,255,0.05);
+}
+
+.account-divider {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+  color: rgba(255,255,255,0.38);
+  font-size: 0.78rem;
+}
+
+.account-divider::before,
+.account-divider::after {
+  content: '';
+  height: 1px;
+  background: var(--account-border);
+}
+
+.account-ai-form {
+  display: grid;
+  gap: 12px;
+}
+
+.account-ai-field {
+  display: grid;
+  gap: 7px;
+  color: var(--account-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.account-ai-field > span {
+  padding-left: 4px;
+}
+
+.account-ai-field > div {
+  min-height: 56px;
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--account-border);
+  border-radius: 20px;
+  padding: 0 14px;
+  color: rgba(255,255,255,0.58);
+  background: rgba(255,255,255,0.045);
+}
+
+.account-ai-field input,
+.account-ai-field select {
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  outline: 0;
+  color: #fff;
+  background: transparent;
+  font: inherit;
+  font-size: 1rem;
+}
+
+.account-ai-field select option {
+  color: #050505;
+}
+
+.account-ai-field input::placeholder {
+  color: rgba(255,255,255,0.36);
+}
+
+.account-ai-field > div:focus-within {
+  border-color: rgba(255,255,255,0.44);
+  box-shadow: 0 0 0 4px rgba(255,255,255,0.06);
+}
+
+.account-ai-submit {
+  border: 0;
+  color: #050505;
+  background: #fff;
+  cursor: pointer;
+}
+
+.account-ai-submit:disabled {
+  cursor: progress;
+  opacity: 0.62;
+}
+
+.account-ai-switch {
+  color: var(--account-muted);
+  text-align: center;
+  font-size: 0.92rem;
+}
+
+.account-ai-switch a {
+  color: #fff;
+  font-weight: 800;
+}
+
+.account-ai-shell .account-status {
+  border-radius: 18px;
+  border-left-width: 1px;
+}
+
+.account-ai-shell .password-strength {
+  margin-top: -4px;
+}
+
+@media (min-width: 820px) {
+  .account-ai-card {
+    padding: 22px;
+  }
+}
