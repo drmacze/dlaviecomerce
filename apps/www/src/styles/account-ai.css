@@ -109,6 +109,11 @@
   line-height: 1.45;
 }
 
+.account-oauth-stack {
+  display: grid;
+  gap: 10px;
+}
+
 .account-oauth-button,
 .account-ai-submit {
   min-height: 54px;
@@ -126,6 +131,11 @@
   border: 1px solid var(--account-border-strong);
   color: #fff;
   background: rgba(255,255,255,0.05);
+}
+
+.account-oauth-button:hover {
+  border-color: rgba(255,255,255,0.48);
+  background: rgba(255,255,255,0.08);
 }
 
 .account-divider {
