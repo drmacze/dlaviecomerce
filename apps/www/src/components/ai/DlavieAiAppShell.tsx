@@ -3,7 +3,7 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import * as Popover from '@radix-ui/react-popover';
 import type { FormEvent, KeyboardEvent, ReactNode } from 'react';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowUp,
   Bell,
@@ -33,6 +33,7 @@ import {
   Sparkles,
   Star,
   StopCircle,
+  Trash2,
   Vibrate,
   Volume2,
   Workflow,
@@ -61,6 +62,7 @@ type ChatMessage = {
   role: 'user' | 'assistant';
   content: string;
   pending?: boolean;
+  private?: boolean;
 };
 
 type SheetName = 'settings' | 'profile' | 'connectors' | 'agent' | 'upgrade' | null;
@@ -71,6 +73,8 @@ type DlavieAiAppShellProps = {
 
 const FRIENDLY_FALLBACK =
   'DLavie AI sedang kesulitan terhubung ke model utama. Saya tetap bisa membantu dengan mode aman. Ceritakan kebutuhan Anda dalam satu atau dua kalimat.';
+const HISTORY_LIMIT = 60;
+const HISTORY_VERSION = 1;
 
 const quickPrompts: Partial<Record<AiQuickActionId, string>> = {
   website: 'Bantu saya menyusun rencana website premium untuk bisnis DLavie.',
@@ -115,6 +119,26 @@ function getConnectorInitial(connector: string) {
   return connector.slice(0, 1);
 }
 
+function getHistoryKey(accountSession: DlavieAccountSession) {
+  const owner = accountSession.authenticated ? accountSession.email || accountSession.fullName : 'preview';
+  return `dlavie-ai-history:v${HISTORY_VERSION}:${owner}`;
+}
+
+function normalizeStoredMessages(value: unknown): ChatMessage[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .filter((item): item is Partial<ChatMessage> => Boolean(item) && typeof item === 'object')
+    .map((item) => ({
+      id: typeof item.id === 'string' ? item.id : newId('stored'),
+      role: item.role === 'user' ? 'user' : 'assistant',
+      content: typeof item.content === 'string' ? item.content.slice(0, 8000) : '',
+      private: Boolean(item.private),
+    }))
+    .filter((item) => item.content.trim().length > 0)
+    .slice(-HISTORY_LIMIT);
+}
+
 export function DlavieAiAppShell({ accountSession }: DlavieAiAppShellProps) {
   const [inputValue, setInputValue] = useState('');
   const [selectedMode, setSelectedMode] = useState<AiModeId>('fast');
@@ -131,9 +155,39 @@ export function DlavieAiAppShell({ accountSession }: DlavieAiAppShellProps) {
   const [notice, setNotice] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const historyKey = useMemo(() => getHistoryKey(accountSession), [accountSession]);
 
   const hasMessages = messages.length > 0;
   const modeLabel = useMemo(() => getModeLabel(selectedMode), [selectedMode]);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(historyKey);
+      if (!raw) {
+        setMessages([]);
+        return;
+      }
+
+      setMessages(normalizeStoredMessages(JSON.parse(raw)));
+    } catch {
+      setMessages([]);
+    }
+  }, [historyKey]);
+
+  useEffect(() => {
+    const safeMessages = messages.filter((message) => !message.pending && !message.private).slice(-HISTORY_LIMIT);
+
+    try {
+      if (safeMessages.length === 0) {
+        window.localStorage.removeItem(historyKey);
+        return;
+      }
+
+      window.localStorage.setItem(historyKey, JSON.stringify(safeMessages));
+    } catch {
+      // Storage can fail in private browsing or low-storage environments; the chat must keep working.
+    }
+  }, [historyKey, messages]);
 
   function showNotice(message: string) {
     setNotice(message);
@@ -148,6 +202,24 @@ export function DlavieAiAppShell({ accountSession }: DlavieAiAppShellProps) {
   function insertPrompt(prompt: string) {
     setInputValue(prompt);
     focusComposer();
+  }
+
+  function startNewChat() {
+    setMessages([]);
+    setPlusMenuOpen(false);
+    setModeSelectorOpen(false);
+    showNotice('Percakapan baru dimulai.');
+    focusComposer();
+  }
+
+  function clearHistory() {
+    setMessages([]);
+    try {
+      window.localStorage.removeItem(historyKey);
+    } catch {
+      // Ignore storage failures.
+    }
+    showNotice('Riwayat percakapan lokal dihapus.');
   }
 
   function handleQuickAction(action: AiQuickActionId) {
@@ -181,15 +253,17 @@ export function DlavieAiAppShell({ accountSession }: DlavieAiAppShellProps) {
     const trimmed = nextMessage.trim();
     if (!trimmed || sending) return;
 
+    const isPrivate = selectedMode === 'private';
     setInputValue('');
     setPlusMenuOpen(false);
     setModeSelectorOpen(false);
-    const userMessage: ChatMessage = { id: newId('user'), role: 'user', content: trimmed };
+    const userMessage: ChatMessage = { id: newId('user'), role: 'user', content: trimmed, private: isPrivate };
     const pendingMessage: ChatMessage = {
       id: newId('assistant-pending'),
       role: 'assistant',
       content: 'DLavie AI sedang menyusun jawaban…',
       pending: true,
+      private: isPrivate,
     };
     setMessages((current) => [...current, userMessage, pendingMessage]);
     setSending(true);
@@ -208,13 +282,13 @@ export function DlavieAiAppShell({ accountSession }: DlavieAiAppShellProps) {
       const answer = payload?.answer || FRIENDLY_FALLBACK;
       setMessages((current) =>
         current.map((message) =>
-          message.id === pendingMessage.id ? { ...message, content: answer, pending: false } : message,
+          message.id === pendingMessage.id ? { ...message, content: answer, pending: false, private: isPrivate } : message,
         ),
       );
     } catch {
       setMessages((current) =>
         current.map((message) =>
-          message.id === pendingMessage.id ? { ...message, content: FRIENDLY_FALLBACK, pending: false } : message,
+          message.id === pendingMessage.id ? { ...message, content: FRIENDLY_FALLBACK, pending: false, private: isPrivate } : message,
         ),
       );
     } finally {
@@ -251,7 +325,17 @@ export function DlavieAiAppShell({ accountSession }: DlavieAiAppShellProps) {
   return (
     <main className="dlavie-ai-app" aria-label="DLavie AI app">
       <div className="ai-app-frame">
-        <TopBar accountSession={accountSession} onOpenSettings={() => setActiveSheet('settings')} />
+        <TopBar
+          accountSession={accountSession}
+          hasMessages={hasMessages}
+          onOpenSettings={() => setActiveSheet('settings')}
+          onOpenProfile={() => setActiveSheet('profile')}
+          onOpenConnectors={() => setActiveSheet('connectors')}
+          onOpenAgent={() => setActiveSheet('agent')}
+          onOpenUpgrade={() => setActiveSheet('upgrade')}
+          onNewChat={startNewChat}
+          onClearHistory={clearHistory}
+        />
 
         <section className={hasMessages ? 'ai-conversation is-active' : 'ai-conversation'} aria-live="polite">
           {!hasMessages ? <EmptyState accountSession={accountSession} /> : <MessageList messages={messages} />}
@@ -366,21 +450,72 @@ export function DlavieAiAppShell({ accountSession }: DlavieAiAppShellProps) {
 
 function TopBar({
   accountSession,
+  hasMessages,
   onOpenSettings,
+  onOpenProfile,
+  onOpenConnectors,
+  onOpenAgent,
+  onOpenUpgrade,
+  onNewChat,
+  onClearHistory,
 }: {
   accountSession: DlavieAccountSession;
+  hasMessages: boolean;
   onOpenSettings: () => void;
+  onOpenProfile: () => void;
+  onOpenConnectors: () => void;
+  onOpenAgent: () => void;
+  onOpenUpgrade: () => void;
+  onNewChat: () => void;
+  onClearHistory: () => void;
 }) {
+  const menuItems = [
+    { label: 'Percakapan', description: hasMessages ? 'Lanjutkan obrolan tersimpan' : 'Belum ada riwayat lokal', icon: MessageSquare, action: onOpenSettings },
+    { label: 'Profil', description: accountSession.authenticated ? accountSession.email : 'Masuk ke DLavie Account', icon: Shield, action: onOpenProfile },
+    { label: 'Konektor', description: 'Gmail, Drive, GitHub, Notion', icon: Link2, action: onOpenConnectors },
+    { label: 'Agen', description: 'Atur gaya dan instruksi DLavie AI', icon: SlidersHorizontal, action: onOpenAgent },
+    { label: 'Upgrade', description: 'DLavie AI Pro', icon: Sparkles, action: onOpenUpgrade },
+    { label: 'Chat Baru', description: 'Mulai percakapan kosong', icon: Plus, action: onNewChat },
+    { label: 'Hapus Riwayat', description: 'Bersihkan history lokal browser ini', icon: Trash2, action: onClearHistory },
+  ];
+
   return (
     <header className="ai-topbar">
       <div className="ai-brand-lockup" aria-label="DLavie AI">
         <span className="ai-brand-mark"><DlavieAiMark /></span>
         <span>DLavie AI</span>
       </div>
-      <button className="ai-profile-button" type="button" aria-label="Buka pengaturan" onClick={onOpenSettings}>
-        <span>{accountSession.initials}</span>
-        <Menu size={16} />
-      </button>
+      <Popover.Root>
+        <Popover.Trigger asChild>
+          <button className="ai-profile-button" type="button" aria-label="Buka menu DLavie AI">
+            <span>{accountSession.initials}</span>
+            <Menu size={16} />
+          </button>
+        </Popover.Trigger>
+        <Popover.Portal>
+          <Popover.Content className="ai-floating-panel ai-main-menu" align="end" side="bottom" sideOffset={12} collisionPadding={12}>
+            <div className="ai-main-menu-header">
+              <strong>{accountSession.fullName}</strong>
+              <small>{accountSession.authenticated ? accountSession.email : 'Mode preview DLavie AI'}</small>
+            </div>
+            <div className="ai-main-menu-list">
+              {menuItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button key={item.label} type="button" onClick={item.action}>
+                    <span className="ai-menu-icon"><Icon size={18} /></span>
+                    <span>
+                      <strong>{item.label}</strong>
+                      <small>{item.description}</small>
+                    </span>
+                    <ChevronRight size={16} />
+                  </button>
+                );
+              })}
+            </div>
+          </Popover.Content>
+        </Popover.Portal>
+      </Popover.Root>
     </header>
   );
 }
