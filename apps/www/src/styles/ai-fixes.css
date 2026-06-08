@@ -78,3 +78,16 @@
   justify-self: end;
   color: rgba(255,255,255,0.48);
 }
+
+.ai-sheet-backdrop {
+  z-index: 60;
+}
+
+.ai-sheet {
+  position: fixed;
+  z-index: 70;
+}
+
+.ai-voice-overlay {
+  z-index: 90;
+}
