@@ -1,12 +1,10 @@
 'use client';
 
-import { FormEvent, useState, useTransition } from 'react';
+import { FormEvent, useEffect, useState, useTransition } from 'react';
 import Link from 'next/link';
-import { SvgIcon } from '../ui/SvgIcon';
-import { NeonField } from './NeonField';
+import { ArrowRight, Github, LockKeyhole, Mail, ShieldCheck, User } from 'lucide-react';
+import { DlavieAiMark } from '../ai/DlavieAiMark';
 import { PasswordStrengthMeter } from './PasswordStrengthMeter';
-import { ShinyHeading } from './ShinyHeading';
-import { VideoWordmark } from './VideoWordmark';
 
 type AccountMode = 'login' | 'register';
 
@@ -22,9 +20,8 @@ type AccountApiResponse = {
 };
 
 const PRODUCT_OPTIONS = [
-  { label: 'DLavie Commerce', value: 'commerce' },
   { label: 'DLavie AI', value: 'ai' },
-  { label: 'Automation Ecosystem', value: 'automation' },
+  { label: 'DLavie Store', value: 'commerce' },
   { label: 'Full DLavie Ecosystem', value: 'all' },
 ];
 
@@ -32,10 +29,19 @@ export function AccountAccessPage({ mode }: AccountAccessPageProps) {
   const isRegister = mode === 'register';
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [interest, setInterest] = useState('commerce');
+  const [interest, setInterest] = useState('ai');
   const [password, setPassword] = useState('');
   const [status, setStatus] = useState<{ tone: 'info' | 'error'; message: string } | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const authError = params.get('auth_error');
+    if (authError) {
+      setStatus({ tone: 'error', message: 'GitHub login could not be completed. Please try again.' });
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -49,7 +55,7 @@ export function AccountAccessPage({ mode }: AccountAccessPageProps) {
           body: JSON.stringify({ name, email, interest, password }),
         });
 
-        const result = await response.json().catch(() => ({})) as AccountApiResponse;
+        const result = (await response.json().catch(() => ({}))) as AccountApiResponse;
 
         if (!response.ok || !result.ok) {
           setStatus({ tone: 'error', message: result.message ?? 'Unable to process your DLavie Account request.' });
@@ -61,7 +67,7 @@ export function AccountAccessPage({ mode }: AccountAccessPageProps) {
           return;
         }
 
-        window.location.assign(result.redirectTo ?? '/account/dashboard');
+        window.location.assign(result.redirectTo ?? '/ai');
       } catch {
         setStatus({ tone: 'error', message: 'Network error. Please check your connection and try again.' });
       }
@@ -69,103 +75,113 @@ export function AccountAccessPage({ mode }: AccountAccessPageProps) {
   };
 
   return (
-    <main className="account-shell">
-      <section className="account-card" data-mode={mode} aria-labelledby="account-title">
-        <aside className="account-visual">
-          <Link className="account-brand" href="/" aria-label="Back to DLavie home">
-            <SvgIcon name="brand" />
-            <span>DLAVIE</span>
-          </Link>
+    <main className="account-ai-shell">
+      <section className="account-ai-card" aria-labelledby="account-title">
+        <Link className="account-ai-brand" href="/ai" aria-label="Back to DLavie AI">
+          <span><DlavieAiMark /></span>
+          <strong>DLavie AI</strong>
+        </Link>
 
-          <VideoWordmark />
+        <div className="account-ai-heading">
+          <p>{isRegister ? 'Create account' : 'Secure sign in'}</p>
+          <h1 id="account-title">{isRegister ? 'Daftar' : 'Login'}</h1>
+          <small>Satu akun untuk DLavie AI dan DLavie Store.</small>
+        </div>
 
-          <div className="account-visual__copy">
-            <p>A unified identity layer for DlavieOS, DLavie AI, commerce infrastructure, and connected automation systems.</p>
-          </div>
+        <a className="account-oauth-button" href="/api/account/oauth/github">
+          <Github size={19} aria-hidden="true" />
+          Continue with GitHub
+        </a>
 
-          <div className="account-signal" aria-hidden="true">
-            <span><b>AI</b><em>Ready</em></span>
-            <span><b>Commerce</b><em>Secure</em></span>
-            <span><b>Automation</b><em>Online</em></span>
-          </div>
-        </aside>
+        <div className="account-divider"><span>atau</span></div>
 
-        <section className="account-panel">
-          <p className="account-panel__kicker">{isRegister ? 'Create access' : 'Secure access'}</p>
-          <ShinyHeading id="account-title">{isRegister ? 'Register' : 'Login'}</ShinyHeading>
-          <p className="account-panel__copy">
-            {isRegister
-              ? 'Create your DLavie Account to activate secure access across AI, Commerce, and Automation products.'
-              : 'Sign in to your DLavie Account to manage product access, workspace identity, and connected DLavie services.'}
-          </p>
+        <form className="account-ai-form" onSubmit={handleSubmit}>
+          {isRegister ? (
+            <label className="account-ai-field">
+              <span>Nama</span>
+              <div>
+                <User size={18} aria-hidden="true" />
+                <input
+                  name="name"
+                  type="text"
+                  autoComplete="name"
+                  placeholder="Nama lengkap"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  minLength={2}
+                  maxLength={80}
+                  required
+                />
+              </div>
+            </label>
+          ) : null}
 
-          <form className="account-form" onSubmit={handleSubmit}>
-            {isRegister ? (
-              <NeonField
-                label="Full name"
-                name="name"
-                type="text"
-                autoComplete="name"
-                placeholder="Your name"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                hint="Use your real name for workspace identity and account recovery."
+          <label className="account-ai-field">
+            <span>Email</span>
+            <div>
+              <Mail size={18} aria-hidden="true" />
+              <input
+                name="email"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                maxLength={254}
                 required
               />
-            ) : null}
+            </div>
+          </label>
 
-            <NeonField
-              label="Email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="you@company.com"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              hint="Use your primary email address for secure DLavie access."
-              required
-            />
+          {isRegister ? (
+            <label className="account-ai-field">
+              <span>Produk</span>
+              <div>
+                <ShieldCheck size={18} aria-hidden="true" />
+                <select name="interest" value={interest} onChange={(event) => setInterest(event.target.value)}>
+                  {PRODUCT_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </div>
+            </label>
+          ) : null}
 
-            {isRegister ? (
-              <NeonField
-                fieldType="select"
-                label="Product interest"
-                name="interest"
-                value={interest}
-                onChange={(event) => setInterest(event.target.value)}
-                hint="Select the DLavie product path you want to activate first."
-                options={PRODUCT_OPTIONS}
+          <label className="account-ai-field">
+            <span>Password</span>
+            <div>
+              <LockKeyhole size={18} aria-hidden="true" />
+              <input
+                name="password"
+                type="password"
+                autoComplete={isRegister ? 'new-password' : 'current-password'}
+                placeholder="••••••••••••"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                minLength={isRegister ? 12 : 1}
+                maxLength={1024}
+                required
               />
-            ) : null}
+            </div>
+          </label>
 
-            <NeonField
-              label="Password"
-              name="password"
-              type="password"
-              autoComplete={isRegister ? 'new-password' : 'current-password'}
-              placeholder="••••••••••••"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              hint="Use a strong password with at least 12 characters."
-              required
-            />
-            <PasswordStrengthMeter value={password} />
+          {isRegister ? <PasswordStrengthMeter value={password} /> : null}
 
-            {status ? <p className="account-status" data-tone={status.tone}>{status.message}</p> : null}
+          {status ? <p className="account-status" data-tone={status.tone}>{status.message}</p> : null}
 
-            <button className="account-submit" type="submit" disabled={isPending}>
-              {isPending ? 'Processing' : isRegister ? 'Create account' : 'Continue to account'}
-            </button>
-          </form>
+          <button className="account-ai-submit" type="submit" disabled={isPending}>
+            {isPending ? 'Memproses…' : isRegister ? 'Buat DLavie Account' : 'Masuk'}
+            <ArrowRight size={18} aria-hidden="true" />
+          </button>
+        </form>
 
-          <p className="account-switch">
-            {isRegister ? 'Sudah punya akun? ' : 'Belum punya akun? '}
-            <Link href={isRegister ? '/account/login' : '/account/register'}>
-              {isRegister ? 'Login to DLavie Account' : 'Create DLavie Account'}
-            </Link>
-          </p>
-          <p className="account-note">DLavie Account is connected to Supabase Auth with server-set session cookies.</p>
-        </section>
+        <p className="account-ai-switch">
+          {isRegister ? 'Sudah punya akun? ' : 'Belum punya akun? '}
+          <Link href={isRegister ? '/account/login' : '/account/register'}>
+            {isRegister ? 'Login' : 'Daftar'}
+          </Link>
+        </p>
       </section>
     </main>
   );
