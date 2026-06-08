@@ -10,6 +10,7 @@ import '../src/components/security/CopyProtection.css';
 import '../src/components/pwa/InstallTutorial.css';
 import '../src/styles/account.css';
 import '../src/styles/account-auth.css';
+import '../src/styles/account-ai.css';
 import '../src/styles/ai.css';
 import '../src/styles/ai-fixes.css';
 import '../src/styles/home.css';
