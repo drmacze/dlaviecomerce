@@ -1,6 +1,3 @@
-'use client';
-
-import { motion, useReducedMotion } from 'framer-motion';
 import {
   ArrowRight,
   Bot,
@@ -61,8 +58,6 @@ const ecosystemCards = [
 ];
 
 export default function DLavieRedesigned() {
-  const shouldReduceMotion = useReducedMotion();
-
   return (
     <main className="dlavie-home">
       <nav className="dlavie-home__nav" aria-label="Primary navigation">
@@ -138,10 +133,8 @@ export default function DLavieRedesigned() {
 
         <div className="dlavie-home__grid dlavie-home__grid--features">
           {coreFeatures.map((item) => (
-            <motion.article
+            <article
               key={item.title}
-              whileHover={shouldReduceMotion ? undefined : { y: -6 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 22 }}
               className="dlavie-home__card dlavie-home__card--feature"
             >
               <div className="dlavie-home__card-icon">{item.icon}</div>
@@ -150,7 +143,7 @@ export default function DLavieRedesigned() {
               <span className="dlavie-home__card-link">
                 Learn more <ArrowRight aria-hidden="true" />
               </span>
-            </motion.article>
+            </article>
           ))}
         </div>
       </section>
