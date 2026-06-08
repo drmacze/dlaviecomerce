@@ -12,6 +12,7 @@ import '../src/styles/account.css';
 import '../src/styles/account-auth.css';
 import '../src/styles/ai.css';
 import '../src/styles/home.css';
+import '../src/styles/home-fixes.css';
 
 const dlavieDisplay = Barlow_Condensed({
   subsets: ['latin'],
