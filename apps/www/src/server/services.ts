@@ -1,4 +1,5 @@
 import { ProviderRegistry } from './services/ai/provider-registry';
+import { AppChatService } from './services/chat/app-chat.service';
 import { ChatService } from './services/chat/chat.service';
 import { ConversationService } from './services/chat/conversation.service';
 import { ModelRouterService } from './services/chat/model-router.service';
@@ -21,6 +22,8 @@ export const chatService = new ChatService(
   new PromptService(),
   new RagService(retrieval),
 );
+
+export const appChatService = new AppChatService(chatService);
 
 export const conversationService = conversations;
 
