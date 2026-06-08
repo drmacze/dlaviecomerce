@@ -1,4 +1,6 @@
 import { ProviderRegistry } from './services/ai/provider-registry';
+import { AiHistoryService } from './services/ai-history/history.service';
+import { AiPreferencesService } from './services/ai-history/preferences.service';
 import { ChatService } from './services/chat/chat.service';
 import { ConversationService } from './services/chat/conversation.service';
 import { ModelRouterService } from './services/chat/model-router.service';
@@ -25,3 +27,6 @@ export const chatService = new ChatService(
 export const conversationService = conversations;
 
 export const knowledgeService = new KnowledgeService(new ChunkerService(), embeddings, retrieval);
+
+export const aiPreferencesService = new AiPreferencesService();
+export const aiHistoryService = new AiHistoryService();

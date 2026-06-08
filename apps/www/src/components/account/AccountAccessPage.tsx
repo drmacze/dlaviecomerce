@@ -158,6 +158,8 @@ export function AccountAccessPage({ mode }: AccountAccessPageProps) {
             </button>
           </form>
 
+          {!isRegister ? <div className="account-social-actions"><a href="/api/account/oauth/google">Continue with Google</a><a href="/api/account/oauth/github">Continue with GitHub</a></div> : null}
+
           <p className="account-switch">
             {isRegister ? 'Sudah punya akun? ' : 'Belum punya akun? '}
             <Link href={isRegister ? '/account/login' : '/account/register'}>

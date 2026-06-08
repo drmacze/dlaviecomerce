@@ -148,3 +148,4 @@
     min-height: unset;
   }
 }
+.account-social-actions{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:1rem}.account-social-actions a{display:flex;align-items:center;justify-content:center;min-height:3rem;border:1px solid rgba(255,255,255,.18);border-radius:999px;color:inherit;text-decoration:none;font-weight:700}.account-social-actions a:focus-visible{outline:2px solid currentColor;outline-offset:3px}@media(max-width:540px){.account-social-actions{grid-template-columns:1fr}}

@@ -5,6 +5,8 @@ export type DlavieSupabaseUser = {
   id: string;
   email?: string;
   user_metadata?: Record<string, unknown>;
+  app_metadata?: Record<string, unknown>;
+  identities?: Array<{ provider?: string; [key: string]: unknown }>;
   created_at?: string;
 };
 

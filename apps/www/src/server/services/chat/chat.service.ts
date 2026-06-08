@@ -18,25 +18,23 @@ export class ChatService {
     private rag?: RagService,
     private usage = new UsageService(),
   ) {}
-  async send(userId: string, request: ChatRequest, latencyStart = Date.now()) {
-    const conversationId =
-      request.conversation_id ??
-      (await this.conversations.createConversation(
-        userId,
-        request.mode,
-        request.messages.find((m) => m.role === 'user')?.content,
-      ));
-    if (request.conversation_id) await this.conversations.assertOwner(conversationId, userId);
+  async send(userId: string | undefined, request: ChatRequest, latencyStart = Date.now(), options: { persist?: boolean } = {}) {
+    const persist = options.persist !== false && Boolean(userId);
+    const conversationId = persist
+      ? request.conversation_id ??
+        (await this.conversations.createConversation(
+          userId!,
+          request.mode,
+          request.messages.find((m) => m.role === 'user')?.content,
+        ))
+      : undefined;
+    if (persist && request.conversation_id) await this.conversations.assertOwner(request.conversation_id, userId!);
     const latestUser = [...request.messages].reverse().find((m) => m.role === 'user');
     if (!latestUser)
       throw new AppError('BAD_REQUEST', 'At least one user message is required.', 400);
-    await this.conversations.addMessage({
-      conversationId,
-      userId,
-      role: 'user',
-      content: latestUser.content,
-      metadata: request.metadata,
-    });
+    if (persist && conversationId) {
+      await this.conversations.addMessage({ conversationId, userId: userId!, role: 'user', content: latestUser.content, metadata: request.metadata });
+    }
     const ragChunks =
       request.use_rag && env.ENABLE_RAG && this.rag
         ? await this.rag.context(latestUser.content)
@@ -85,15 +83,9 @@ export class ChatService {
         metadata: request.metadata,
       });
     }
-    const messageId = await this.conversations.addMessage({
-      conversationId,
-      userId,
-      role: 'assistant',
-      content: output.content,
-      model: output.model,
-      provider: output.provider,
-      metadata: { fallback_used: fallbackUsed },
-    });
+    const messageId = persist && conversationId
+      ? await this.conversations.addMessage({ conversationId, userId: userId!, role: 'assistant', content: output.content, model: output.model, provider: output.provider, metadata: { fallback_used: fallbackUsed } })
+      : undefined;
     await this.usage.log({
       userId,
       route: '/v1/chat',
@@ -109,6 +101,7 @@ export class ChatService {
     return {
       conversation_id: conversationId,
       message_id: messageId,
+      persisted: persist,
       answer: output.content,
       mode: request.mode,
       provider: output.provider,

@@ -1,10 +1,14 @@
-import { DlavieAiExperience } from '../../src/components/ai/DlavieAiExperience';
+import { cookies } from 'next/headers';
+import { DlavieAiAppShell } from '../../src/components/ai/DlavieAiAppShell';
+import { createAccountSessionView } from '../../src/lib/supabase/account-session';
+import { validateDlavieAccessToken } from '../../src/lib/supabase/server-session';
+import { DLAVIE_ACCESS_COOKIE } from '../../src/lib/supabase/session';
 
-export const metadata = {
-  title: 'DLavie AI — Customer Intelligence Workspace',
-  description: 'A cinematic DLavie AI workspace for conversations, workflow agents, commerce operations, and account-connected intelligence.',
-};
+export const metadata = { title: 'DLavie AI', description: 'Account-aware DLavie AI workspace.' };
+export const dynamic = 'force-dynamic';
 
-export default function AiPage() {
-  return <DlavieAiExperience />;
+export default async function AiPage() {
+  const store = await cookies();
+  const user = await validateDlavieAccessToken(store.get(DLAVIE_ACCESS_COOKIE)?.value).catch(() => null);
+  return <DlavieAiAppShell accountSession={createAccountSessionView(user)} />;
 }
