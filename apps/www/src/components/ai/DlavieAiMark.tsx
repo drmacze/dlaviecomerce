@@ -16,24 +16,34 @@ export function DlavieAiMark({ className = '', title }: DlavieAiMarkProps) {
     >
       <defs>
         <linearGradient id="dlosSheen" x1="0" y1="0" x2="260" y2="0" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="currentColor" stopOpacity="0.54" />
-          <stop offset="0.48" stopColor="currentColor" stopOpacity="1" />
-          <stop offset="0.58" stopColor="currentColor" stopOpacity="1" />
-          <stop offset="1" stopColor="currentColor" stopOpacity="0.56" />
+          <stop offset="0" stopColor="currentColor" stopOpacity="0.42" />
+          <stop offset="0.38" stopColor="currentColor" stopOpacity="0.78" />
+          <stop offset="0.5" stopColor="currentColor" stopOpacity="1" />
+          <stop offset="0.62" stopColor="currentColor" stopOpacity="0.78" />
+          <stop offset="1" stopColor="currentColor" stopOpacity="0.46" />
+          <animateTransform attributeName="gradientTransform" type="translate" values="-120 0;120 0;-120 0" dur="7.2s" repeatCount="indefinite" />
         </linearGradient>
         <linearGradient id="dlosLine" x1="44" y1="84" x2="216" y2="84" gradientUnits="userSpaceOnUse">
           <stop offset="0" stopColor="currentColor" stopOpacity="0" />
           <stop offset="0.5" stopColor="currentColor" stopOpacity="0.54" />
           <stop offset="1" stopColor="currentColor" stopOpacity="0" />
         </linearGradient>
+        <filter id="dlosTextBlur" x="-25%" y="-80%" width="150%" height="260%">
+          <feGaussianBlur stdDeviation="2.8" />
+        </filter>
       </defs>
 
       <g className="dlos-topbar-glyph">
-        <path d="M62 28h42c31 0 55 17 55 34s-24 34-55 34H62V28Z" stroke="currentColor" strokeWidth="9" strokeLinejoin="round" />
-        <path d="M101 38V86H145" stroke="currentColor" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" opacity="0.82" />
+        <circle className="dlos-topbar-ring" cx="130" cy="56" r="38" stroke="currentColor" strokeWidth="5" pathLength="100" />
+        <path className="dlos-topbar-d" d="M110 32h16c22 0 39 10.6 39 24s-17 24-39 24h-16V32Z" stroke="currentColor" strokeWidth="7" strokeLinejoin="round" />
+        <path className="dlos-topbar-l" d="M130 40V74H154" stroke="currentColor" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" opacity="0.86" />
+        <circle className="dlos-topbar-node" cx="166" cy="38" r="4" fill="currentColor" />
       </g>
 
       <g className="dlos-center-wordmark">
+        <text className="dlos-blur-text" x="130" y="67" textAnchor="middle" fill="currentColor" fontFamily="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif" fontSize="48" fontWeight="880" letterSpacing="8" filter="url(#dlosTextBlur)">
+          DLOS
+        </text>
         <text className="dlos-final" x="130" y="67" textAnchor="middle" fill="url(#dlosSheen)" fontFamily="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif" fontSize="48" fontWeight="880" letterSpacing="8">
           DLOS
         </text>
