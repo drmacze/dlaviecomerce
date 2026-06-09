@@ -1,0 +1,148 @@
+.ai-main-menu {
+  width: min(calc(100vw - 24px), 380px);
+}
+
+.ai-main-menu-header {
+  display: grid;
+  gap: 4px;
+  padding: 12px 12px 10px;
+  border-bottom: 1px solid var(--ai-border-soft);
+}
+
+.ai-main-menu-header strong,
+.ai-main-menu-header small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-main-menu-header strong {
+  color: var(--ai-text);
+  font-size: 0.98rem;
+  letter-spacing: -0.02em;
+}
+
+.ai-main-menu-header small {
+  color: var(--ai-muted);
+  font-size: 0.78rem;
+}
+
+.ai-main-menu-list {
+  display: grid;
+  gap: 6px;
+  padding-top: 8px;
+}
+
+.ai-main-menu-list button {
+  width: 100%;
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: 42px 1fr auto;
+  align-items: center;
+  gap: 11px;
+  border: 1px solid transparent;
+  border-radius: 18px;
+  color: #fff;
+  background: transparent;
+  text-align: left;
+  padding: 8px 10px;
+}
+
+.ai-main-menu-list button:hover {
+  background: rgba(255,255,255,0.07);
+  border-color: var(--ai-border-soft);
+}
+
+.ai-main-menu-list button strong,
+.ai-main-menu-list button small {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-main-menu-list button strong {
+  font-size: 0.95rem;
+}
+
+.ai-main-menu-list button small {
+  margin-top: 2px;
+  color: var(--ai-muted);
+  font-size: 0.78rem;
+  line-height: 1.25;
+}
+
+.ai-main-menu-list button > svg {
+  justify-self: end;
+  color: rgba(255,255,255,0.48);
+}
+
+.ai-sheet-backdrop {
+  z-index: 60;
+}
+
+.ai-sheet {
+  position: fixed;
+  z-index: 70;
+}
+
+.ai-voice-overlay {
+  z-index: 90;
+}
+
+/* Account-aware controls layered onto the premium PR #35 mobile shell. */
+.ai-composer-caption {
+  margin: 7px 0 0;
+  color: var(--ai-muted);
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+.ai-history-list {
+  display: grid;
+  gap: 10px;
+}
+
+.ai-history-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid var(--ai-border-soft);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.ai-history-item button {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ai-text);
+  padding: 14px;
+  text-align: left;
+}
+
+.ai-history-item button:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.ai-history-item small {
+  overflow: hidden;
+  color: var(--ai-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-connector-row > span:last-child {
+  color: var(--ai-muted);
+  font-size: 0.76rem;
+  text-align: right;
+}
+
+.ai-plus-menu-list button:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}

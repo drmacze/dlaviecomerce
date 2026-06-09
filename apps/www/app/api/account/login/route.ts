@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const result = NextResponse.json({ ok: true, redirectTo: '/account/dashboard' });
+  const result = NextResponse.json({ ok: true, redirectTo: '/ai' });
   const secure = isSecureCookieRuntime();
 
   result.cookies.set(DLAVIE_ACCESS_COOKIE, payload.access_token, {
