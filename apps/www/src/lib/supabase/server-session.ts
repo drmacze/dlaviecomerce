@@ -2,7 +2,18 @@ import { getSupabaseAuthEndpoint, getSupabaseRequestHeaders } from './url';
 import { DLAVIE_ACCESS_COOKIE, type DlavieSupabaseUser } from './session';
 
 export function readCookie(cookieHeader: string | null, name: string) {
-  return cookieHeader?.split(';').map((part) => part.trim()).find((part) => part.startsWith(`${name}=`))?.slice(name.length + 1) || null;
+  const raw = cookieHeader
+    ?.split(';')
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(`${name}=`))
+    ?.slice(name.length + 1) || null;
+
+  if (!raw) return null;
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
 }
 
 export async function validateDlavieAccessToken(accessToken?: string | null): Promise<DlavieSupabaseUser | null> {
