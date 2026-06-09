@@ -80,6 +80,7 @@ export class ConversationService {
       .from('messages')
       .select('id,role,content,created_at,metadata')
       .eq('conversation_id', conversationId)
+      .eq('user_id', userId)
       .order('created_at', { ascending: true })
       .limit(limit);
     if (cursor) q = q.gt('created_at', cursor);

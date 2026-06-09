@@ -1,0 +1,6 @@
+/* Reserved for narrowly scoped cross-browser AI workspace fixes. Canonical styles live in ai.css. */
+@supports (-webkit-touch-callout: none) {
+  .ai-composer-card textarea {
+    font-size: 16px;
+  }
+}
