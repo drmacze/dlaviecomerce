@@ -17,20 +17,19 @@
   transform: scale(1.95);
 }
 
-/* Elegant DLOS wordmark treatment for the center empty state. */
+/* Ultra-smooth DLOS wordmark treatment for the center empty state. */
 .ai-empty-mark {
   position: relative;
   isolation: isolate;
-  width: min(72vw, 292px);
+  width: min(76vw, 304px);
   height: auto;
-  min-height: 104px;
+  min-height: 100px;
   overflow: visible;
   border: 0;
   border-radius: 0;
-  color: rgba(248, 248, 248, 0.94);
+  color: rgba(248, 248, 248, 0.96);
   background: transparent;
   box-shadow: none;
-  animation: dlos-wordmark-float 7s ease-in-out infinite;
 }
 
 .ai-empty-mark::before,
@@ -41,77 +40,266 @@
 }
 
 .ai-empty-mark::before {
-  inset: 18% 4% 14%;
+  inset: 22% 8% 18%;
   z-index: -1;
-  border-radius: 999px;
-  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.025) 48%, transparent 72%);
-  filter: blur(16px);
-  opacity: 0.62;
-  animation: dlos-wordmark-ambient 6s ease-in-out infinite;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 255, 255, 0.07),
+    rgba(255, 255, 255, 0.022) 48%,
+    transparent 72%
+  );
+  filter: blur(14px);
+  opacity: 0.52;
+  animation: dlos-ambient 7.2s ease-in-out infinite;
 }
 
 .ai-empty-mark::after {
-  left: 17%;
-  right: 17%;
-  bottom: 15%;
+  left: 18%;
+  right: 18%;
+  bottom: 16%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.42), transparent);
-  opacity: 0.46;
-  animation: dlos-wordmark-line 4.8s ease-in-out infinite;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.34), transparent);
+  opacity: 0.42;
+  animation: dlos-line-glow 7.2s ease-in-out infinite;
 }
 
 .ai-empty-mark svg {
   width: 100%;
   height: auto;
   display: block;
-  color: rgba(255, 255, 255, 0.94);
-  filter: drop-shadow(0 10px 28px rgba(0, 0, 0, 0.32));
+  color: rgba(255, 255, 255, 0.95);
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.24));
 }
 
-@keyframes dlos-wordmark-float {
+.ai-empty-mark .dlos-center-wordmark {
+  animation: dlos-float 7.2s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+  transform-origin: center;
+}
+
+.ai-empty-mark .dlos-final,
+.ai-empty-mark .dlos-sequence,
+.ai-empty-mark .dlos-dl,
+.ai-empty-mark .dlos-ring,
+.ai-empty-mark .dlos-box,
+.ai-empty-mark .dlos-os,
+.ai-empty-mark .dlos-underline {
+  transform-box: fill-box;
+  transform-origin: center;
+  will-change: opacity, transform, stroke-dashoffset, stroke-dasharray;
+}
+
+.ai-empty-mark .dlos-final {
+  animation: dlos-final-word 7.2s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+}
+
+.ai-empty-mark .dlos-sequence {
+  animation: dlos-sequence-fade 7.2s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+}
+
+.ai-empty-mark .dlos-dl {
+  opacity: 0;
+  animation: dlos-dl-phase 7.2s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+}
+
+.ai-empty-mark .dlos-ring {
+  opacity: 0;
+  stroke-dasharray: 1 100;
+  stroke-dashoffset: 0;
+  animation: dlos-ring-phase 7.2s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+}
+
+.ai-empty-mark .dlos-box {
+  opacity: 0;
+  animation: dlos-box-phase 7.2s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+}
+
+.ai-empty-mark .dlos-os {
+  opacity: 0;
+  animation: dlos-os-phase 7.2s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+}
+
+.ai-empty-mark .dlos-underline {
+  animation: dlos-underline-phase 7.2s ease-in-out infinite;
+}
+
+@keyframes dlos-final-word {
+  0%, 24% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  32%, 72% {
+    opacity: 0;
+    transform: translateY(1px) scale(0.985);
+  }
+  84%, 100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes dlos-sequence-fade {
+  0%, 24% {
+    opacity: 0;
+  }
+  34%, 72% {
+    opacity: 1;
+  }
+  84%, 100% {
+    opacity: 0;
+  }
+}
+
+@keyframes dlos-dl-phase {
+  0%, 23% {
+    opacity: 0;
+    transform: translateX(-4px) scale(0.96);
+  }
+  30%, 38% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  46%, 100% {
+    opacity: 0;
+    transform: translateX(1px) scale(0.92);
+  }
+}
+
+@keyframes dlos-ring-phase {
+  0%, 31% {
+    opacity: 0;
+    stroke-dasharray: 1 100;
+    stroke-dashoffset: 0;
+    transform: scale(0.84);
+  }
+  38% {
+    opacity: 0.86;
+    stroke-dasharray: 28 100;
+    stroke-dashoffset: -4;
+    transform: scale(1.02);
+  }
+  49% {
+    opacity: 0.92;
+    stroke-dasharray: 64 100;
+    stroke-dashoffset: -22;
+    transform: scale(1.04);
+  }
+  60% {
+    opacity: 0.58;
+    stroke-dasharray: 84 100;
+    stroke-dashoffset: -42;
+    transform: scale(0.98);
+  }
+  70%, 100% {
+    opacity: 0;
+    stroke-dasharray: 1 100;
+    stroke-dashoffset: -58;
+    transform: scale(0.9);
+  }
+}
+
+@keyframes dlos-box-phase {
+  0%, 43% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  52%, 63% {
+    opacity: 0.78;
+    transform: scale(1);
+  }
+  72%, 100% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@keyframes dlos-os-phase {
+  0%, 47% {
+    opacity: 0;
+    transform: translateX(10px) scale(0.98);
+  }
+  58%, 72% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  82%, 100% {
+    opacity: 0;
+    transform: translateX(-2px) scale(0.98);
+  }
+}
+
+@keyframes dlos-underline-phase {
+  0%, 100% {
+    opacity: 0.2;
+  }
+  22% {
+    opacity: 0.58;
+  }
+  54% {
+    opacity: 0.22;
+  }
+  86% {
+    opacity: 0.48;
+  }
+}
+
+@keyframes dlos-float {
   0%, 100% {
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-3px);
+    transform: translateY(-2px);
   }
 }
 
-@keyframes dlos-wordmark-ambient {
+@keyframes dlos-ambient {
   0%, 100% {
-    opacity: 0.42;
-    transform: scaleX(0.92);
+    opacity: 0.36;
+    transform: scaleX(0.96);
   }
   50% {
-    opacity: 0.74;
-    transform: scaleX(1.04);
+    opacity: 0.58;
+    transform: scaleX(1.03);
   }
 }
 
-@keyframes dlos-wordmark-line {
+@keyframes dlos-line-glow {
   0%, 100% {
-    opacity: 0.22;
-    transform: scaleX(0.72);
+    opacity: 0.18;
+    transform: scaleX(0.82);
   }
   50% {
-    opacity: 0.66;
+    opacity: 0.5;
     transform: scaleX(1);
   }
 }
 
 @media (max-width: 430px) {
   .ai-empty-mark {
-    width: min(78vw, 272px);
+    width: min(80vw, 280px);
     min-height: 92px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ai-empty-mark,
   .ai-empty-mark::before,
   .ai-empty-mark::after,
-  .ai-empty-mark svg,
-  .ai-empty-mark svg * {
+  .ai-empty-mark .dlos-center-wordmark,
+  .ai-empty-mark .dlos-final,
+  .ai-empty-mark .dlos-sequence,
+  .ai-empty-mark .dlos-dl,
+  .ai-empty-mark .dlos-ring,
+  .ai-empty-mark .dlos-box,
+  .ai-empty-mark .dlos-os,
+  .ai-empty-mark .dlos-underline,
+  .ai-empty-mark svg {
     animation: none !important;
+  }
+
+  .ai-empty-mark .dlos-final {
+    opacity: 1 !important;
+  }
+
+  .ai-empty-mark .dlos-sequence {
+    opacity: 0 !important;
   }
 }
