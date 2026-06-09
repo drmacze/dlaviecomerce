@@ -5,67 +5,70 @@
   }
 }
 
-/* Premium center mark motion for the DLavie AI empty/preview state only. */
+/* Visible center mark motion for the DLavie AI empty/preview state only. */
 .ai-empty-mark {
   position: relative;
   isolation: isolate;
-  width: clamp(132px, 34vw, 188px);
-  height: clamp(132px, 34vw, 188px);
+  width: clamp(136px, 36vw, 190px);
+  height: clamp(136px, 36vw, 190px);
   overflow: visible;
   border-radius: 999px;
   background:
-    radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.045) 42%, rgba(255, 255, 255, 0.02) 68%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.015));
+    radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.055) 43%, rgba(255, 255, 255, 0.02) 68%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.018));
   box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.14),
-    inset 0 -28px 64px rgba(0, 0, 0, 0.42),
-    0 28px 95px rgba(0, 0, 0, 0.62),
-    0 0 74px rgba(116, 139, 255, 0.06);
-  animation: dlavie-center-breathe 4.8s ease-in-out infinite;
+    inset 0 1px 1px rgba(255, 255, 255, 0.16),
+    inset 0 -30px 66px rgba(0, 0, 0, 0.44),
+    0 28px 95px rgba(0, 0, 0, 0.64),
+    0 0 88px rgba(124, 148, 255, 0.12);
+  animation: dlavie-center-breathe 3.8s ease-in-out infinite;
 }
 
 .ai-empty-mark::before,
 .ai-empty-mark::after {
   content: '';
   position: absolute;
-  inset: -18%;
   z-index: -1;
   border-radius: inherit;
   pointer-events: none;
 }
 
 .ai-empty-mark::before {
+  inset: -14%;
   background:
-    conic-gradient(from 118deg, transparent 0 19%, rgba(255, 255, 255, 0.14) 24%, transparent 31% 68%, rgba(112, 139, 255, 0.13) 73%, transparent 80%),
-    radial-gradient(circle, rgba(255, 255, 255, 0.055), transparent 63%);
-  filter: blur(0.5px);
-  opacity: 0.82;
-  animation: dlavie-center-orbit 9s linear infinite;
+    conic-gradient(from 0deg, transparent 0 13%, rgba(255, 255, 255, 0.55) 16%, rgba(126, 151, 255, 0.45) 20%, transparent 26% 60%, rgba(255, 255, 255, 0.22) 66%, transparent 72%),
+    radial-gradient(circle, rgba(255, 255, 255, 0.08), transparent 64%);
+  opacity: 0.9;
+  animation: dlavie-center-orbit 3.2s linear infinite;
 }
 
 .ai-empty-mark::after {
-  inset: -42%;
-  background: radial-gradient(circle, rgba(110, 135, 255, 0.13), transparent 56%);
-  filter: blur(20px);
-  opacity: 0.45;
-  animation: dlavie-center-halo 5.8s ease-in-out infinite;
+  inset: -48%;
+  background: radial-gradient(circle, rgba(112, 139, 255, 0.22), transparent 58%);
+  filter: blur(22px);
+  opacity: 0.58;
+  animation: dlavie-center-halo 3.4s ease-in-out infinite;
 }
 
 .ai-empty-mark svg {
-  width: 72%;
-  height: 72%;
-  color: rgba(245, 247, 255, 0.78);
-  filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.08));
+  width: 74%;
+  height: 74%;
+  color: rgba(248, 250, 255, 0.86);
+  filter: drop-shadow(0 0 16px rgba(255, 255, 255, 0.16));
+  transform-origin: center;
+  animation: dlavie-glyph-float 2.8s ease-in-out infinite;
 }
 
 .ai-empty-mark svg path:nth-of-type(1) {
   stroke-dasharray: 240;
   stroke-dashoffset: 240;
-  animation: dlavie-mark-draw 1.35s cubic-bezier(0.16, 1, 0.3, 1) 0.08s forwards;
+  animation:
+    dlavie-mark-draw 1.05s cubic-bezier(0.16, 1, 0.3, 1) 0.08s forwards,
+    dlavie-glyph-stroke-pulse 2.4s ease-in-out 1.15s infinite;
 }
 
 .ai-empty-mark svg path:nth-of-type(2) {
-  animation: dlavie-mark-fill-pulse 4.2s ease-in-out 1.1s infinite;
+  animation: dlavie-mark-fill-pulse 2.5s ease-in-out 0.9s infinite;
 }
 
 .ai-empty-mark svg path:nth-of-type(3),
@@ -75,8 +78,8 @@
   transform-box: fill-box;
   transform-origin: center;
   animation:
-    dlavie-mark-draw 1.15s cubic-bezier(0.16, 1, 0.3, 1) 0.35s forwards,
-    dlavie-mark-orbit-opacity 3.6s ease-in-out 1.45s infinite;
+    dlavie-mark-draw 1s cubic-bezier(0.16, 1, 0.3, 1) 0.22s forwards,
+    dlavie-inner-orbit-sweep 3.4s ease-in-out 1.05s infinite;
 }
 
 .ai-empty-mark svg circle {
@@ -84,17 +87,16 @@
   transform-origin: center;
   opacity: 0;
   animation:
-    dlavie-node-in 0.34s ease-out 0.92s forwards,
-    dlavie-node-pulse 2.8s ease-in-out 1.4s infinite;
+    dlavie-node-in 0.28s ease-out 0.72s forwards,
+    dlavie-node-pulse 1.55s ease-in-out 1s infinite;
 }
 
 .ai-empty-mark svg circle:nth-of-type(1) {
-  color: #ffffff;
-  animation-delay: 0.92s, 1.4s;
+  animation-delay: 0.72s, 1s;
 }
 
 .ai-empty-mark svg circle:nth-of-type(2) {
-  animation-delay: 1.05s, 1.62s;
+  animation-delay: 0.9s, 1.18s;
 }
 
 @keyframes dlavie-mark-draw {
@@ -108,7 +110,7 @@
     transform: translateY(0) scale(1);
   }
   50% {
-    transform: translateY(-4px) scale(1.018);
+    transform: translateY(-8px) scale(1.045);
   }
 }
 
@@ -120,37 +122,57 @@
 
 @keyframes dlavie-center-halo {
   0%, 100% {
-    opacity: 0.3;
-    transform: scale(0.96);
+    opacity: 0.28;
+    transform: scale(0.9);
   }
   50% {
-    opacity: 0.58;
-    transform: scale(1.06);
+    opacity: 0.72;
+    transform: scale(1.12);
+  }
+}
+
+@keyframes dlavie-glyph-float {
+  0%, 100% {
+    transform: translateY(0) rotate(-1deg) scale(1);
+  }
+  50% {
+    transform: translateY(-5px) rotate(2deg) scale(1.06);
+  }
+}
+
+@keyframes dlavie-glyph-stroke-pulse {
+  0%, 100% {
+    opacity: 0.62;
+  }
+  50% {
+    opacity: 1;
   }
 }
 
 @keyframes dlavie-mark-fill-pulse {
   0%, 100% {
-    fill-opacity: 0.12;
+    fill-opacity: 0.1;
   }
   50% {
-    fill-opacity: 0.32;
+    fill-opacity: 0.36;
   }
 }
 
-@keyframes dlavie-mark-orbit-opacity {
+@keyframes dlavie-inner-orbit-sweep {
   0%, 100% {
-    opacity: 0.28;
+    opacity: 0.24;
+    transform: rotate(0deg) scale(1);
   }
   50% {
-    opacity: 0.58;
+    opacity: 0.72;
+    transform: rotate(8deg) scale(1.04);
   }
 }
 
 @keyframes dlavie-node-in {
   from {
     opacity: 0;
-    transform: scale(0.45);
+    transform: scale(0.35);
   }
   to {
     opacity: 1;
@@ -160,19 +182,19 @@
 
 @keyframes dlavie-node-pulse {
   0%, 100% {
-    opacity: 0.58;
-    transform: scale(0.9);
+    opacity: 0.55;
+    transform: scale(0.84);
   }
   50% {
     opacity: 1;
-    transform: scale(1.22);
+    transform: scale(1.45);
   }
 }
 
 @media (max-width: 430px) {
   .ai-empty-mark {
-    width: clamp(132px, 37vw, 164px);
-    height: clamp(132px, 37vw, 164px);
+    width: clamp(138px, 39vw, 168px);
+    height: clamp(138px, 39vw, 168px);
   }
 }
 
@@ -180,6 +202,7 @@
   .ai-empty-mark,
   .ai-empty-mark::before,
   .ai-empty-mark::after,
+  .ai-empty-mark svg,
   .ai-empty-mark svg path,
   .ai-empty-mark svg circle {
     animation: none !important;
