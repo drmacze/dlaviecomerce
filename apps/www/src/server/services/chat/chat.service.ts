@@ -35,10 +35,10 @@ export class ChatService {
     if (persist && conversationId) {
       await this.conversations.addMessage({ conversationId, userId: userId!, role: 'user', content: latestUser.content, metadata: request.metadata });
     }
-    const ragChunks =
-      request.use_rag && env.ENABLE_RAG && this.rag
-        ? await this.rag.context(latestUser.content)
-        : [];
+    const shouldUseRag = Boolean(request.use_rag && env.ENABLE_RAG && env.OPENAI_API_KEY && this.rag);
+    const ragChunks = shouldUseRag
+      ? await this.rag!.context(latestUser.content)
+      : [];
     const messages = this.prompts.prepareMessages(
       request.mode,
       request.messages as AIMessage[],
@@ -108,7 +108,7 @@ export class ChatService {
       model: output.model,
       fallback_used: fallbackUsed,
       rag: {
-        enabled: request.use_rag && env.ENABLE_RAG,
+        enabled: shouldUseRag,
         chunks_used: ragChunks.map((c) => ({
           document_id: c.document_id,
           chunk_id: c.chunk_id,
