@@ -6,6 +6,11 @@ const optionalSecret = z
   .string()
   .optional()
   .transform((v) => (v && v.length > 0 ? v : undefined));
+const optionalUrl = z
+  .string()
+  .optional()
+  .transform((v) => (v && v.length > 0 ? v : undefined))
+  .pipe(z.string().url().optional());
 
 export const envSchema = z
   .object({
@@ -27,6 +32,11 @@ export const envSchema = z
     OPENAI_CHAT_MODEL: z.string().default('gpt-4.1-mini'),
     OPENAI_EMBEDDING_MODEL: z.string().default('text-embedding-3-small'),
     OPENAI_EMBEDDING_DIMENSIONS: z.coerce.number().int().positive().default(1536),
+    DLAVIE_AI_PROVIDER: optionalSecret,
+    DLAVIE_AI_API_URL: optionalUrl,
+    DLAVIE_AI_API_KEY: optionalSecret,
+    DLAVIE_AI_MODEL: z.string().default('dlavie-ai'),
+    DLAVIE_AI_TIMEOUT_MS: z.coerce.number().int().min(1000).max(120000).default(30000),
     FALLBACK_AI_PROVIDER: z.string().default('huggingface'),
     HUGGINGFACE_API_KEY: optionalSecret,
     HUGGINGFACE_CHAT_MODEL: optionalSecret,
@@ -63,6 +73,7 @@ export function getEnv(
   });
   const isTestRelaxed = env.NODE_ENV === 'test' || options?.allowTestDefaults;
   const isNextBuild = input.NEXT_PHASE === 'phase-production-build' || input.npm_lifecycle_event === 'build';
+  const configuredPrimaryProvider = env.DLAVIE_AI_PROVIDER ?? env.PRIMARY_AI_PROVIDER;
   const missing: string[] = [];
   if ((!isTestRelaxed || env.NODE_ENV === 'production') && !isNextBuild) {
     for (const key of [
@@ -71,9 +82,15 @@ export function getEnv(
       'SUPABASE_SERVICE_ROLE_KEY',
       'SUPABASE_JWT_SECRET',
       'ADMIN_API_KEY',
-      'OPENAI_API_KEY',
     ] as const) {
       if (!env[key]) missing.push(key);
+    }
+    if (configuredPrimaryProvider === 'dlavie') {
+      for (const key of ['DLAVIE_AI_API_URL', 'DLAVIE_AI_API_KEY'] as const) {
+        if (!env[key]) missing.push(key);
+      }
+    } else if (configuredPrimaryProvider === 'openai' && !env.OPENAI_API_KEY) {
+      missing.push('OPENAI_API_KEY');
     }
     if (env.ENABLE_MODEL_FALLBACK && (!env.HUGGINGFACE_API_KEY || !env.HUGGINGFACE_CHAT_MODEL)) {
       missing.push('HUGGINGFACE_API_KEY', 'HUGGINGFACE_CHAT_MODEL');
