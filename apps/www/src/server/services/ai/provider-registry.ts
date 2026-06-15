@@ -1,12 +1,22 @@
 import { env } from '../../config/env';
 import { AppError } from '../../lib/errors';
 import type { AIProvider } from './ai-provider.interface';
+import { DlavieProvider } from './dlavie.provider';
 import { HuggingFaceProvider } from './huggingface.provider';
 import { OpenAICompatibleProvider } from './openai-compatible.provider';
 
 export class ProviderRegistry {
   private providers = new Map<string, AIProvider>();
   constructor() {
+    this.providers.set(
+      'dlavie',
+      new DlavieProvider({
+        apiKey: env.DLAVIE_AI_API_KEY,
+        apiUrl: env.DLAVIE_AI_API_URL,
+        timeoutMs: env.DLAVIE_AI_TIMEOUT_MS,
+        name: 'dlavie',
+      }),
+    );
     this.providers.set(
       'openai',
       new OpenAICompatibleProvider({
