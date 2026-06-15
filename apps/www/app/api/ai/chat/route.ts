@@ -52,9 +52,12 @@ export async function POST(request: Request) {
       ok: true,
       answer: result.answer,
       source: result.provider,
+      model: result.model,
       mode: parsed.data.mode,
       conversationId: result.conversation_id,
       persisted: result.persisted,
+      fallbackUsed: result.fallback_used,
+      rag: result.rag,
     });
   } catch {
     return NextResponse.json({
