@@ -61,11 +61,16 @@ function extractAssistantContent(payload: unknown): string | undefined {
 
   const firstChoice = Array.isArray(payload.choices) ? payload.choices[0] : undefined;
   const choice = isRecord(firstChoice) ? firstChoice : undefined;
-  const choiceMessage = isRecord(choice?.message) ? choice.message : undefined;
-  const choiceDelta = isRecord(choice?.delta) ? choice.delta : undefined;
-  const payloadMessage = isRecord(payload.message) ? payload.message : undefined;
-  const payloadData = isRecord(payload.data) ? payload.data : undefined;
-  const dataMessage = isRecord(payloadData?.message) ? payloadData.message : undefined;
+  const choiceMessageValue = choice?.message;
+  const choiceDeltaValue = choice?.delta;
+  const payloadMessageValue = payload.message;
+  const payloadDataValue = payload.data;
+  const choiceMessage = isRecord(choiceMessageValue) ? choiceMessageValue : undefined;
+  const choiceDelta = isRecord(choiceDeltaValue) ? choiceDeltaValue : undefined;
+  const payloadMessage = isRecord(payloadMessageValue) ? payloadMessageValue : undefined;
+  const payloadData = isRecord(payloadDataValue) ? payloadDataValue : undefined;
+  const dataMessageValue = payloadData?.message;
+  const dataMessage = isRecord(dataMessageValue) ? dataMessageValue : undefined;
 
   return firstText(
     choiceMessage?.content,
