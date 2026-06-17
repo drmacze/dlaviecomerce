@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode, ElementType, CSSProperties } from 'react';
+import { createElement, type ReactNode, type CSSProperties } from 'react';
 
 type MotionType = 'reveal' | 'parallax' | 'depth-card' | 'split-reveal';
 
@@ -10,12 +10,11 @@ interface RevealSectionProps {
   motion?: MotionType;
   /** Marks this as a named scroll section (tracked by scroll-engine) */
   sectionId?: string;
-  /** Additional data- attributes forwarded to the element */
   delay?: number;
   speed?: number;
   depth?: number;
   stagger?: number;
-  as?: ElementType;
+  as?: keyof JSX.IntrinsicElements;
   className?: string;
   style?: CSSProperties;
   id?: string;
@@ -48,24 +47,24 @@ export function RevealSection({
   speed,
   depth,
   stagger,
-  as: Tag = 'div',
+  as = 'div',
   className,
   style,
   id,
 }: RevealSectionProps) {
-  return (
-    <Tag
-      id={id}
-      className={className}
-      style={style}
-      data-motion={motion}
-      data-scroll-section={sectionId !== undefined ? sectionId : undefined}
-      data-delay={delay}
-      data-speed={speed}
-      data-depth={depth}
-      data-stagger={stagger}
-    >
-      {children}
-    </Tag>
+  return createElement(
+    as,
+    {
+      id,
+      className,
+      style,
+      'data-motion': motion,
+      ...(sectionId !== undefined ? { 'data-scroll-section': sectionId } : {}),
+      ...(delay   !== undefined ? { 'data-delay':   delay   } : {}),
+      ...(speed   !== undefined ? { 'data-speed':   speed   } : {}),
+      ...(depth   !== undefined ? { 'data-depth':   depth   } : {}),
+      ...(stagger !== undefined ? { 'data-stagger': stagger } : {}),
+    },
+    children,
   );
 }
