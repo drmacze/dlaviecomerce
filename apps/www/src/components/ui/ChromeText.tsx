@@ -8,10 +8,6 @@ interface ChromeTextProps {
   className?: string;
 }
 
-/**
- * ChromeText — "Learn more" link with flowing chrome gradient via GSAP.
- * Uses backgroundPosition animation so gradient shifts continuously.
- */
 export function ChromeText({ children, className = '' }: ChromeTextProps) {
   const ref = useRef<HTMLSpanElement>(null);
 
@@ -19,22 +15,11 @@ export function ChromeText({ children, className = '' }: ChromeTextProps) {
     const el = ref.current;
     if (!el) return;
 
-    // We animate a CSS custom property that shifts backgroundPosition
-    gsap.set(el, { '--chrome-pos': '0%' });
-
     const tl = gsap.timeline({ repeat: -1 });
-    tl.to(el, {
-      '--chrome-pos': '100%',
-      duration: 2.5,
-      ease: 'none',
-    })
-    .to(el, {
-      '--chrome-pos': '0%',
-      duration: 2.5,
-      ease: 'none',
-    });
+    tl.to(el, { '--chrome-pos': '100%', duration: 2.5, ease: 'none' })
+      .to(el, { '--chrome-pos': '0%',   duration: 2.5, ease: 'none' });
 
-    return () => tl.kill();
+    return () => { tl.kill(); };   // ← explicit void return
   }, []);
 
   return (
