@@ -1,30 +1,24 @@
 import type { Metadata } from 'next';
-import { Barlow_Condensed, Inter } from 'next/font/google';
-import { SmoothScrollProvider } from '../components/SmoothScrollProvider';
+import localFont from 'next/font/local';
+import { Inter } from 'next/font/google';
+import { SmoothScrollProvider } from '@/components/SmoothScrollProvider';
 import './globals.css';
 import './cinematic.css';
-import '../src/styles/tokens.css';
-import '../src/styles/globals.css';
-import '../src/styles/motion.css';
-import '../src/components/effects/MetallicPaint.css';
-import '../src/components/loading/DlavieLoader.css';
-import '../src/components/security/CopyProtection.css';
-import '../src/components/pwa/InstallTutorial.css';
-import '../src/styles/account.css';
-import '../src/styles/account-auth.css';
-import '../src/styles/ai.css';
-import '../src/styles/home.css';
 
-const dlavieDisplay = Barlow_Condensed({
-  subsets: ['latin'],
-  weight: ['600', '700'],
-  variable: '--font-display',
+const barlowCondensed = localFont({
+  src: [
+    { path: '../src/fonts/BarlowCondensed-Regular.woff2', weight: '400', style: 'normal' },
+    { path: '../src/fonts/BarlowCondensed-Medium.woff2',  weight: '500', style: 'normal' },
+    { path: '../src/fonts/BarlowCondensed-SemiBold.woff2', weight: '600', style: 'normal' },
+    { path: '../src/fonts/BarlowCondensed-Bold.woff2',    weight: '700', style: 'normal' },
+  ],
+  variable: '--font-barlow-condensed',
   display: 'swap',
 });
 
-const dlavieSans = Inter({
+const inter = Inter({
   subsets: ['latin'],
-  variable: '--font-sans',
+  variable: '--font-inter',
   display: 'swap',
 });
 
@@ -33,11 +27,13 @@ export const metadata: Metadata = {
   description: 'An intelligent product ecosystem for DlavieOS, AI agents, PPOB commerce, and connected operations.',
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-lenis-root>
-      <body className={`${dlavieDisplay.variable} ${dlavieSans.variable}`}>
-        <SmoothScrollProvider>{children}</SmoothScrollProvider>
+    <html lang="en" className={`${barlowCondensed.variable} ${inter.variable}`}>
+      <body>
+        <SmoothScrollProvider>
+          {children}
+        </SmoothScrollProvider>
       </body>
     </html>
   );
