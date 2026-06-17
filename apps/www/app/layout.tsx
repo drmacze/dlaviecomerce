@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { Barlow_Condensed, Inter } from 'next/font/google';
+import { SmoothScrollProvider } from '../components/SmoothScrollProvider';
 import './globals.css';
+import './cinematic.css';
 import '../src/styles/tokens.css';
 import '../src/styles/globals.css';
 import '../src/styles/motion.css';
@@ -33,8 +35,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      <body className={`${dlavieDisplay.variable} ${dlavieSans.variable}`}>{children}</body>
+    <html lang="en" data-lenis-root>
+      <body className={`${dlavieDisplay.variable} ${dlavieSans.variable}`}>
+        <SmoothScrollProvider>{children}</SmoothScrollProvider>
+      </body>
     </html>
   );
 }
