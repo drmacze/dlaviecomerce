@@ -448,3 +448,185 @@
   stroke: #A8A8C8;
   flex-shrink: 0;
 }
+
+/* ============================================================
+   DLavie — Floating Sidebar (iOS-glass style)
+   ============================================================ */
+
+.dlv-sidebar {
+  position: fixed;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 150;
+
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+
+  padding: 8px 6px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(14,14,18,0.82);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  box-shadow:
+    0 2px 0 rgba(255,255,255,0.06) inset,
+    0 24px 48px rgba(0,0,0,0.60),
+    0 0 0 0.5px rgba(255,255,255,0.05);
+
+  /* Smooth width expand */
+  transition: padding 0.25s cubic-bezier(0.4,0,0.2,1);
+  min-width: 44px;
+  overflow: visible;
+}
+
+/* Expanded state */
+.dlv-sidebar[data-expanded="true"] {
+  padding: 8px;
+  min-width: 160px;
+}
+
+/* ── Toggle button ── */
+.dlv-sidebar__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.50);
+  cursor: pointer;
+  margin-bottom: 4px;
+  align-self: center;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.dlv-sidebar__toggle:hover {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+}
+
+/* ── Nav container ── */
+.dlv-sidebar__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ── Nav item ── */
+.dlv-sidebar__item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 12px;
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.42);
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: color 0.15s;
+  min-height: 38px;
+}
+.dlv-sidebar__item:hover {
+  color: rgba(255,255,255,0.85);
+}
+.dlv-sidebar__item[data-active="true"] {
+  color: #ffffff;
+}
+
+/* Shared layout active highlight */
+.dlv-sidebar__active-bg {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background: rgba(200,200,220,0.13);
+  border: 1px solid rgba(210,210,235,0.18);
+  box-shadow: 0 0 12px rgba(200,200,230,0.10);
+  z-index: -1;
+}
+
+/* ── Icon ── */
+.dlv-sidebar__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Label (shown when expanded) ── */
+.dlv-sidebar__label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  display: inline-block;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Tooltip (shown when collapsed, on hover) ── */
+.dlv-sidebar__tooltip {
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(20,20,26,0.92);
+  backdrop-filter: blur(16px);
+  color: rgba(255,255,255,0.82);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 200;
+}
+.dlv-sidebar__item:hover .dlv-sidebar__tooltip {
+  opacity: 1;
+}
+
+/* ── Bottom chevron hint ── */
+.dlv-sidebar__chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.20);
+  cursor: pointer;
+  align-self: center;
+  margin-top: 2px;
+  transition: color 0.15s;
+}
+.dlv-sidebar__chevron:hover {
+  color: rgba(255,255,255,0.50);
+}
+
+/* ── Hide on very small screens ── */
+@media (max-width: 480px) {
+  .dlv-sidebar {
+    left: 8px;
+    padding: 6px 4px;
+  }
+  .dlv-sidebar__item {
+    padding: 8px;
+  }
+}
