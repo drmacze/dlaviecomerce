@@ -1,0 +1,179 @@
+/* ─── cinematic.css ─────────────────────────────────────────────────────────
+ * Cinematic scroll visual layer for DLavie www.
+ * Depends on: Lenis + GSAP (via DlavieMotionProvider)
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/* ── Lenis defaults ─────────────────────────────────────────────────────── */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* ── Scroll progress bar ────────────────────────────────────────────────── */
+.dlv-scroll-progress-wrap {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 9999;
+  height: 2px;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.dlv-scroll-progress-bar {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    hsl(230, 100%, 72%),
+    hsl(270, 100%, 78%),
+    hsl(195, 100%, 70%)
+  );
+  transform-origin: left center;
+  box-shadow:
+    0 0 calc(4px + var(--bar-glow, 0) * 12px) hsl(245, 100%, 75%),
+    0 0 calc(8px + var(--bar-glow, 0) * 24px) hsl(270, 100%, 80%);
+  transition: height 0.2s ease;
+}
+
+/* Thicker bar when scrolling fast */
+.dlv-scroll-progress-wrap:has(.dlv-scroll-progress-bar[style*="--bar-glow: 1"]) {
+  height: 3px;
+}
+
+/* ── Custom cinematic cursor ─────────────────────────────────────────────── */
+.dlv-cursor-active,
+.dlv-cursor-active * {
+  cursor: none !important;
+}
+
+.dlv-cursor-dot {
+  position: fixed;
+  inset: 0;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  background: #fff;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 99999;
+  will-change: transform;
+  mix-blend-mode: difference;
+}
+
+.dlv-cursor-ring {
+  position: fixed;
+  inset: 0;
+  width: 32px;
+  height: 32px;
+  margin: -16px 0 0 -16px;
+  border: 1.5px solid rgba(255, 255, 255, 0.55);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 99998;
+  will-change: transform;
+}
+
+/* ── Section motion tokens ───────────────────────────────────────────────── */
+
+/* Reveal: elements tagged [data-motion="reveal"] animate via GSAP */
+[data-motion='reveal'] {
+  opacity: 0;
+  transform: translateY(34px) scale(0.985);
+}
+
+/* Parallax: elements tagged [data-motion="parallax"] drift on scroll */
+[data-motion='parallax'] {
+  will-change: transform;
+}
+
+/* Depth card: [data-motion="depth-card"] get a 3D entrance */
+[data-motion='depth-card'] {
+  will-change: transform, opacity;
+  transform-style: preserve-3d;
+}
+
+/* Split text: [data-motion="split-reveal"] lines clip from below */
+[data-motion='split-reveal'] {
+  overflow: hidden;
+  line-height: 1.08;
+}
+
+.dlv-line {
+  overflow: hidden;
+}
+
+/* ── Scroll section anchors ──────────────────────────────────────────────── */
+[data-scroll-section] {
+  isolation: isolate;
+}
+
+/* ── Background hue morph (driven by ScrollTrigger via CSS vars) ─────────── */
+:root {
+  --dlv-bg-hue-1: 220;
+  --dlv-bg-hue-2: 260;
+  --dlv-scroll-energy: 0;
+  --dlv-scroll-velocity: 0;
+  --dlv-scroll-progress: 0;
+}
+
+/* ── Velocity-reactive blur on fast scroll ───────────────────────────────── */
+.dlv-velocity-blur {
+  filter: blur(calc(var(--dlv-scroll-velocity, 0) * 3px));
+  transition: filter 0.12s ease-out;
+  will-change: filter;
+}
+
+/* ── Cinematic page wrapper ──────────────────────────────────────────────── */
+.dlv-cinematic-page {
+  overflow: hidden;
+  transform-style: preserve-3d;
+  perspective: 1200px;
+}
+
+/* ── Horizontal showcase pinned section ──────────────────────────────────── */
+.dlv-h-showcase {
+  display: flex;
+  flex-wrap: nowrap;
+  width: max-content;
+  will-change: transform;
+}
+
+.dlv-h-panel {
+  width: 100vw;
+  height: 100svh;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+}
+
+/* ── Reduced motion: disable all animations ──────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  [data-motion],
+  .dlv-velocity-blur,
+  .dlv-cursor-dot,
+  .dlv-cursor-ring,
+  .dlv-scroll-progress-bar {
+    animation: none !important;
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+
+  .dlv-cursor-active,
+  .dlv-cursor-active * {
+    cursor: auto !important;
+  }
+}
