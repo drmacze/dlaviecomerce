@@ -2,69 +2,35 @@
 
 import { motion, useReducedMotion } from 'framer-motion';
 import {
-  ArrowRight,
-  Bot,
-  Brain,
-  Database,
-  LayoutDashboard,
-  Play,
-  Users,
-  Workflow,
+  ArrowRight, Bot, Brain, Database,
+  LayoutDashboard, Play, Users, Workflow,
+  Zap, Shield, Globe,
 } from 'lucide-react';
 
 const coreFeatures = [
-  {
-    icon: <Bot aria-hidden="true" />,
-    title: 'AI Core',
-    desc: 'The intelligent foundation that powers reasoning, orchestration, and decision-making across the entire ecosystem.',
-  },
-  {
-    icon: <Users aria-hidden="true" />,
-    title: 'Agents',
-    desc: 'Autonomous agents that execute complex workflows, handle commerce operations, and respond to real-time signals.',
-  },
-  {
-    icon: <Brain aria-hidden="true" />,
-    title: 'Models',
-    desc: 'Flexible model routing with support for frontier models, fine-tuned agents, and local inference when needed.',
-  },
-  {
-    icon: <Database aria-hidden="true" />,
-    title: 'Memory',
-    desc: 'Persistent, contextual memory layer that remembers conversations, transactions, and operational history.',
-  },
-  {
-    icon: <LayoutDashboard aria-hidden="true" />,
-    title: 'Dashboards',
-    desc: 'Beautiful, real-time command surfaces for monitoring agents, commerce metrics, and system health.',
-  },
-  {
-    icon: <Workflow aria-hidden="true" />,
-    title: 'Workflows',
-    desc: 'Visual and code-based orchestration of multi-step processes across AI, commerce, and automation layers.',
-  },
+  { icon: Bot,           title: 'AI Core',       desc: 'Intelligent foundation powering reasoning, orchestration, and decision-making across the ecosystem.' },
+  { icon: Users,         title: 'Agents',         desc: 'Autonomous agents that execute complex workflows, handle commerce, and respond to real-time signals.' },
+  { icon: Brain,         title: 'Models',         desc: 'Flexible model routing with frontier models, fine-tuned agents, and local inference support.' },
+  { icon: Database,      title: 'Memory',         desc: 'Persistent contextual memory that remembers conversations, transactions, and operational history.' },
+  { icon: LayoutDashboard, title: 'Dashboards',  desc: 'Real-time command surfaces for monitoring agents, commerce metrics, and system health.' },
+  { icon: Workflow,      title: 'Workflows',      desc: 'Visual and code-based orchestration of multi-step processes across AI, commerce, and automation.' },
 ];
 
 const ecosystemCards = [
-  {
-    title: 'DLavie Commerce',
-    desc: 'PPOB products, storefront flows, transaction rails, and automated settlement — all connected.',
-  },
-  {
-    title: 'Automation Layer',
-    desc: 'Triggers, agents, and commerce events stay synchronized from signal to final settlement.',
-  },
-  {
-    title: 'DLavie OS',
-    desc: 'The intelligent command layer that orchestrates everything into one cinematic experience.',
-  },
+  { icon: Globe,  title: 'DLavie Commerce', desc: 'PPOB products, storefront flows, transaction rails, and automated settlement — all connected.' },
+  { icon: Zap,    title: 'Automation Layer', desc: 'Triggers, agents, and commerce events stay synchronized from signal to final settlement.' },
+  { icon: Shield, title: 'DLavie OS',       desc: 'The intelligent command layer that orchestrates everything into one unified experience.' },
 ];
 
-export default function DLavieRedesigned() {
-  const shouldReduceMotion = useReducedMotion();
+const SPRING = { type: 'spring', stiffness: 280, damping: 22 } as const;
+
+export default function HomePage() {
+  const reduceMotion = useReducedMotion();
 
   return (
     <main className="dlavie-home">
+
+      {/* ── Nav ── */}
       <nav className="dlavie-home__nav" aria-label="Primary navigation">
         <div className="dlavie-home__nav-inner">
           <a href="#top" className="dlavie-home__brand" aria-label="DLavie home">
@@ -80,53 +46,92 @@ export default function DLavieRedesigned() {
           </div>
 
           <div className="dlavie-home__nav-actions">
-            <a href="/ai" className="dlavie-home__button dlavie-home__button--ghost dlavie-home__button--desktop">
+            <a href="/ai"
+               className="dlavie-home__button dlavie-home__button--ghost dlavie-home__button--desktop">
               Open Workspace
             </a>
-            <a href="#os" className="dlavie-home__button dlavie-home__button--primary dlavie-home__button--compact">
-              Launch DLavie OS
-              <ArrowRight aria-hidden="true" />
+            <a href="/account/register"
+               className="dlavie-home__button dlavie-home__button--primary dlavie-home__button--compact">
+              Get Started
+              <ArrowRight size={14} aria-hidden="true" />
             </a>
           </div>
         </div>
       </nav>
 
-      <section id="top" className="dlavie-home__hero" aria-labelledby="dlavie-home-title">
-        <p className="dlavie-home__eyebrow">Intelligent operating system</p>
+      {/* ── Hero ── */}
+      <section id="top" className="dlavie-home__hero" aria-labelledby="hero-title">
 
-        <h1 id="dlavie-home-title" className="dlavie-home__title">DLavie OS</h1>
+        <motion.p
+          className="dlavie-home__eyebrow"
+          initial={reduceMotion ? false : { opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          Intelligent operating system
+        </motion.p>
 
-        <p className="dlavie-home__subtitle">
+        <motion.h1
+          id="hero-title"
+          className="dlavie-home__title"
+          initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          DLavie OS
+        </motion.h1>
+
+        <motion.p
+          className="dlavie-home__subtitle"
+          initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.32 }}
+        >
           The cinematic command mesh for agents, models, memory, and intelligent operations.
-        </p>
+        </motion.p>
 
-        <p className="dlavie-home__description">
+        <motion.p
+          className="dlavie-home__description"
+          initial={reduceMotion ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.44 }}
+        >
           One parent brand. One unified ecosystem. Decisions, transactions, and workflows — perfectly aligned.
-        </p>
+        </motion.p>
 
-        <div className="dlavie-home__actions">
+        <motion.div
+          className="dlavie-home__actions"
+          initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.52 }}
+        >
           <a href="#os" className="dlavie-home__button dlavie-home__button--primary">
             Explore DLavie OS
           </a>
           <a href="/ai" className="dlavie-home__button dlavie-home__button--secondary">
-            <Play aria-hidden="true" />
+            <Play size={14} aria-hidden="true" />
             Open AI Workspace
           </a>
-        </div>
+        </motion.div>
 
         <p className="dlavie-home__meta">Built for founders • operators • intelligent systems</p>
       </section>
 
-      <section className="dlavie-home__section dlavie-home__section--center dlavie-home__section--band" aria-labelledby="philosophy-title">
-        <p className="dlavie-home__eyebrow">The philosophy</p>
-        <h2 id="philosophy-title" className="dlavie-home__section-heading">
+      {/* ── Philosophy band ── */}
+      <section
+        className="dlavie-home__section dlavie-home__section--center dlavie-home__section--band"
+        aria-labelledby="philosophy-title"
+      >
+        <p className="dlavie-home__eyebrow" style={{ marginInline: 'auto' }}>The philosophy</p>
+        <h2 id="philosophy-title" className="dlavie-home__section-heading" style={{ maxWidth: 640, marginInline: 'auto', marginBottom: 14 }}>
           One parent brand.<br />Connected intelligence.
         </h2>
-        <p className="dlavie-home__section-copy">
+        <p className="dlavie-home__section-copy" style={{ marginInline: 'auto' }}>
           DLavie designs connected digital systems under one cohesive brand — from agent workspaces to transaction rails.
         </p>
       </section>
 
+      {/* ── DLavie OS features ── */}
       <section id="os" className="dlavie-home__section" aria-labelledby="os-title">
         <div className="dlavie-home__section-header">
           <p className="dlavie-home__eyebrow dlavie-home__eyebrow--pill">The core</p>
@@ -137,25 +142,35 @@ export default function DLavieRedesigned() {
         </div>
 
         <div className="dlavie-home__grid dlavie-home__grid--features">
-          {coreFeatures.map((item) => (
-            <motion.article
-              key={item.title}
-              whileHover={shouldReduceMotion ? undefined : { y: -6 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 22 }}
-              className="dlavie-home__card dlavie-home__card--feature"
-            >
-              <div className="dlavie-home__card-icon">{item.icon}</div>
-              <h3 className="dlavie-home__card-title">{item.title}</h3>
-              <p className="dlavie-home__card-copy">{item.desc}</p>
-              <span className="dlavie-home__card-link">
-                Learn more <ArrowRight aria-hidden="true" />
-              </span>
-            </motion.article>
-          ))}
+          {coreFeatures.map((item, i) => {
+            const Icon = item.icon;
+            return (
+              <motion.article
+                key={item.title}
+                className="dlavie-home__card dlavie-home__card--feature"
+                whileHover={reduceMotion ? undefined : { y: -4 }}
+                transition={SPRING}
+              >
+                <div className="dlavie-home__card-icon" aria-hidden="true">
+                  <Icon size={20} strokeWidth={1.75} />
+                </div>
+                <h3 className="dlavie-home__card-title">{item.title}</h3>
+                <p className="dlavie-home__card-copy">{item.desc}</p>
+                <span className="dlavie-home__card-link">
+                  Learn more <ArrowRight size={12} aria-hidden="true" />
+                </span>
+              </motion.article>
+            );
+          })}
         </div>
       </section>
 
-      <section id="ecosystem" className="dlavie-home__section dlavie-home__section--band" aria-labelledby="ecosystem-title">
+      {/* ── Ecosystem ── */}
+      <section
+        id="ecosystem"
+        className="dlavie-home__section dlavie-home__section--band"
+        aria-labelledby="ecosystem-title"
+      >
         <div className="dlavie-home__section-header">
           <p className="dlavie-home__eyebrow">Unified by design</p>
           <h2 id="ecosystem-title" className="dlavie-home__section-heading">
@@ -163,24 +178,39 @@ export default function DLavieRedesigned() {
           </h2>
         </div>
 
-        <div className="dlavie-home__grid dlavie-home__grid--ecosystem">
-          {ecosystemCards.map((item) => (
-            <article key={item.title} className="dlavie-home__card">
-              <h3 className="dlavie-home__card-title">{item.title}</h3>
-              <p className="dlavie-home__card-copy">{item.desc}</p>
-            </article>
-          ))}
+        <div className="dlavie-home__grid dlavie-home__grid--ecosystem" style={{ maxWidth: 1180, marginInline: 'auto' }}>
+          {ecosystemCards.map((item) => {
+            const Icon = item.icon;
+            return (
+              <article key={item.title} className="dlavie-home__card">
+                <div className="dlavie-home__card-icon" aria-hidden="true">
+                  <Icon size={20} strokeWidth={1.75} />
+                </div>
+                <h3 className="dlavie-home__card-title">{item.title}</h3>
+                <p className="dlavie-home__card-copy">{item.desc}</p>
+              </article>
+            );
+          })}
         </div>
       </section>
 
-      <section id="workspace" className="dlavie-home__section dlavie-home__section--center" aria-labelledby="workspace-title">
-        <p className="dlavie-home__eyebrow dlavie-home__eyebrow--pill">The workspace</p>
-        <h2 id="workspace-title" className="dlavie-home__section-heading">Experience the command layer.</h2>
-        <p className="dlavie-home__section-copy dlavie-home__section-copy--wide">
+      {/* ── AI Workspace ── */}
+      <section
+        id="workspace"
+        className="dlavie-home__section dlavie-home__section--center"
+        aria-labelledby="workspace-title"
+      >
+        <p className="dlavie-home__eyebrow dlavie-home__eyebrow--pill" style={{ marginInline: 'auto' }}>
+          The workspace
+        </p>
+        <h2 id="workspace-title" className="dlavie-home__section-heading">
+          Experience the command layer.
+        </h2>
+        <p className="dlavie-home__section-copy dlavie-home__section-copy--wide" style={{ marginInline: 'auto', marginBottom: 32 }}>
           DLavie AI Workspace is where intelligence meets operations. Account-aware, context-rich, and built for real work.
         </p>
 
-        <div className="dlavie-home__actions">
+        <div className="dlavie-home__actions" style={{ justifyContent: 'center' }}>
           <a href="/ai" className="dlavie-home__button dlavie-home__button--primary">
             Open DLavie AI Workspace
           </a>
@@ -190,22 +220,34 @@ export default function DLavieRedesigned() {
         </div>
       </section>
 
-      <section className="dlavie-home__section dlavie-home__section--center dlavie-home__section--cta" aria-labelledby="cta-title">
-        <h2 id="cta-title" className="dlavie-home__cta-heading">Ready to build with intelligence?</h2>
-        <p className="dlavie-home__section-copy">Start with DLavie OS or dive straight into the AI workspace.</p>
-
-        <div className="dlavie-home__actions">
-          <a href="#os" className="dlavie-home__button dlavie-home__button--primary">Explore DLavie OS</a>
-          <a href="/ai" className="dlavie-home__button dlavie-home__button--secondary">Launch AI Workspace →</a>
+      {/* ── CTA ── */}
+      <section
+        className="dlavie-home__section dlavie-home__section--center dlavie-home__section--cta"
+        aria-labelledby="cta-title"
+      >
+        <h2 id="cta-title" className="dlavie-home__cta-heading">
+          Ready to build with intelligence?
+        </h2>
+        <p className="dlavie-home__section-copy" style={{ marginInline: 'auto', marginBottom: 32 }}>
+          Start with DLavie OS or dive straight into the AI workspace.
+        </p>
+        <div className="dlavie-home__actions" style={{ justifyContent: 'center' }}>
+          <a href="/account/register" className="dlavie-home__button dlavie-home__button--primary">
+            Get Started Free
+          </a>
+          <a href="/ai" className="dlavie-home__button dlavie-home__button--secondary">
+            Launch AI Workspace →
+          </a>
         </div>
       </section>
 
+      {/* ── Footer ── */}
       <footer className="dlavie-home__footer">
         <div className="dlavie-home__footer-inner">
           <p>© {new Date().getFullYear()} DLavie. All rights reserved.</p>
           <div className="dlavie-home__footer-links">
-            <a href="#top">Privacy</a>
-            <a href="#top">Terms</a>
+            <a href="#">Privacy</a>
+            <a href="#">Terms</a>
             <a href="https://github.com/drmacze/dlaviecomerce">GitHub</a>
           </div>
           <p>Built with precision in Indonesia</p>
