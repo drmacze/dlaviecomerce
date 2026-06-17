@@ -1,5 +1,5 @@
 import { motionTokens } from './motion-tokens';
-import { gsap, registerDlavieGsap, ScrollTrigger, SplitText } from './gsap-registry';
+import { gsap, registerDlavieGsap, ScrollTrigger } from './gsap-registry';
 
 export function createReveal(root: Element | Document = document) {
   registerDlavieGsap();
@@ -9,17 +9,9 @@ export function createReveal(root: Element | Document = document) {
       const y = Number(element.dataset.y ?? 34);
       gsap.fromTo(
         element,
+        { autoAlpha: 0, y, scale: 0.985 },
         {
-          autoAlpha: 0,
-          y,
-          scale: 0.985,
-          clipPath: 'inset(0 0 18% 0 round 1rem)',
-        },
-        {
-          autoAlpha: 1,
-          y: 0,
-          scale: 1,
-          clipPath: 'inset(0 0 0% 0 round 1rem)',
+          autoAlpha: 1, y: 0, scale: 1,
           duration: motionTokens.duration.slow,
           delay,
           ease: motionTokens.ease.premium,
@@ -46,7 +38,13 @@ export function createParallax(root: Element | Document = document) {
         yPercent: -26 * speed,
         scale: 1 + speed * 0.025,
         ease: 'none',
-        scrollTrigger: { trigger: element, start: 'top bottom', end: 'bottom top', scrub: true, invalidateOnRefresh: true },
+        scrollTrigger: {
+          trigger: element,
+          start: 'top bottom',
+          end: 'bottom top',
+          scrub: true,
+          invalidateOnRefresh: true,
+        },
       });
     });
   });
@@ -62,24 +60,12 @@ export function createDepthCards(root: Element | Document = document) {
       gsap.fromTo(
         element,
         {
-          autoAlpha: 0.52,
-          y: 78 * depth,
-          x: side * 30,
-          scale: 0.9,
-          rotateX: 10,
-          rotateY: side * -7,
-          skewY: side * 0.6,
-          clipPath: 'inset(10% 6% 10% 6% round 1.65rem)',
+          autoAlpha: 0.52, y: 78 * depth, x: side * 30,
+          scale: 0.9, rotateX: 10, rotateY: side * -7, skewY: side * 0.6,
         },
         {
-          autoAlpha: 1,
-          y: -14,
-          x: side * -8,
-          scale: 1,
-          rotateX: -1.25,
-          rotateY: side * 2.2,
-          skewY: 0,
-          clipPath: 'inset(0% 0% 0% 0% round 1.65rem)',
+          autoAlpha: 1, y: -14, x: side * -8,
+          scale: 1, rotateX: -1.25, rotateY: side * 2.2, skewY: 0,
           ease: 'none',
           scrollTrigger: {
             trigger: element,
@@ -95,25 +81,28 @@ export function createDepthCards(root: Element | Document = document) {
   return () => ctx.revert();
 }
 
+/**
+ * createSplitReveal — line-by-line reveal using CSS overflow:hidden clip.
+ * No SplitText (Club plugin) required.
+ */
 export function createSplitReveal(root: Element | Document = document) {
   registerDlavieGsap();
-
-  // Store SplitText instances (not their revert return value) so we can call revert() later
-  const splitInstances: InstanceType<typeof SplitText>[] = [];
-
   const ctx = gsap.context(() => {
     gsap.utils.toArray<HTMLElement>('[data-motion="split-reveal"]', root).forEach((el) => {
       const stagger = Number(el.dataset.stagger ?? motionTokens.stagger.base);
-      const split = new SplitText(el, { type: 'lines,words', linesClass: 'dlv-line' });
-      splitInstances.push(split);
+      // Wrap each word in a clip container manually
+      const text = el.textContent ?? '';
+      const words = text.trim().split(/\s+/);
+      el.innerHTML = words
+        .map(w => `<span class="dlv-word-wrap" style="display:inline-block;overflow:hidden;vertical-align:bottom"><span class="dlv-word" style="display:inline-block">${w}</span></span>`)
+        .join(' ');
 
+      const wordEls = el.querySelectorAll<HTMLElement>('.dlv-word');
       gsap.fromTo(
-        split.words,
-        { autoAlpha: 0, y: '105%', rotateX: -24, transformOrigin: '50% 0%' },
+        wordEls,
+        { autoAlpha: 0, y: '110%', rotateX: -20 },
         {
-          autoAlpha: 1,
-          y: '0%',
-          rotateX: 0,
+          autoAlpha: 1, y: '0%', rotateX: 0,
           duration: motionTokens.duration.slow,
           ease: motionTokens.ease.premium,
           stagger,
@@ -126,11 +115,7 @@ export function createSplitReveal(root: Element | Document = document) {
       );
     });
   });
-
-  return () => {
-    splitInstances.forEach((s) => s.revert());
-    ctx.revert();
-  };
+  return () => ctx.revert();
 }
 
 export function createHorizontalShowcase(root: Element | Document = document) {
@@ -139,7 +124,6 @@ export function createHorizontalShowcase(root: Element | Document = document) {
     gsap.utils.toArray<HTMLElement>('.dlv-h-showcase', root).forEach((showcase) => {
       const panels = showcase.querySelectorAll<HTMLElement>('.dlv-h-panel');
       if (panels.length < 2) return;
-
       gsap.to(panels, {
         xPercent: -(panels.length - 1) * 100,
         ease: 'none',
