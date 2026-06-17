@@ -1,10 +1,10 @@
 'use client';
 
-import { createElement, type ReactNode, type CSSProperties, type ElementType } from 'react';
+import type { ReactNode, CSSProperties, HTMLAttributes } from 'react';
 
 type MotionType = 'reveal' | 'parallax' | 'depth-card' | 'split-reveal';
 
-interface RevealSectionProps {
+interface RevealSectionProps extends HTMLAttributes<HTMLElement> {
   children: ReactNode;
   motion?: MotionType;
   sectionId?: string;
@@ -12,13 +12,15 @@ interface RevealSectionProps {
   speed?: number;
   depth?: number;
   stagger?: number;
-  /** Any valid HTML tag string, e.g. "div", "section", "h2" */
-  as?: string;
   className?: string;
   style?: CSSProperties;
   id?: string;
 }
 
+/**
+ * RevealSection — wraps any block with data-motion attribute for GSAP pickup.
+ * Renders as a <div> by default. For semantic headings use data-motion directly on the element.
+ */
 export function RevealSection({
   children,
   motion = 'reveal',
@@ -27,23 +29,25 @@ export function RevealSection({
   speed,
   depth,
   stagger,
-  as = 'div',
   className,
   style,
   id,
+  ...rest
 }: RevealSectionProps) {
-  const props: Record<string, unknown> = {
-    id,
-    className,
-    style,
-    'data-motion': motion,
-  };
-
-  if (sectionId !== undefined) props['data-scroll-section'] = sectionId;
-  if (delay     !== undefined) props['data-delay']           = delay;
-  if (speed     !== undefined) props['data-speed']           = speed;
-  if (depth     !== undefined) props['data-depth']           = depth;
-  if (stagger   !== undefined) props['data-stagger']         = stagger;
-
-  return createElement(as as ElementType, props, children);
+  return (
+    <div
+      {...rest}
+      id={id}
+      className={className}
+      style={style}
+      data-motion={motion}
+      data-scroll-section={sectionId}
+      data-delay={delay}
+      data-speed={speed}
+      data-depth={depth}
+      data-stagger={stagger}
+    >
+      {children}
+    </div>
+  );
 }
