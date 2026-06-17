@@ -1,6 +1,13 @@
 import { motionTokens } from './motion-tokens';
-import { gsap, registerDlavieGsap, ScrollTrigger } from './gsap-registry';
+import { gsap, registerDlavieGsap, ScrollTrigger, SplitText } from './gsap-registry';
 
+/* ──────────────────────────────────────────────────────────────────────────
+ * createReveal
+ * Scrub-based reveal for [data-motion="reveal"] elements.
+ * Attributes:
+ *   data-delay="0.2"   — stagger delay (seconds)
+ *   data-y="34"        — initial Y offset (px)
+ * ────────────────────────────────────────────────────────────────────────── */
 export function createReveal(root: Element | Document = document) {
   registerDlavieGsap();
   const ctx = gsap.context(() => {
@@ -37,6 +44,12 @@ export function createReveal(root: Element | Document = document) {
   return () => ctx.revert();
 }
 
+/* ──────────────────────────────────────────────────────────────────────────
+ * createParallax
+ * Vertical parallax for [data-motion="parallax"] elements.
+ * Attributes:
+ *   data-speed="0.32"  — parallax speed multiplier (0–1)
+ * ────────────────────────────────────────────────────────────────────────── */
 export function createParallax(root: Element | Document = document) {
   registerDlavieGsap();
   const ctx = gsap.context(() => {
@@ -53,6 +66,12 @@ export function createParallax(root: Element | Document = document) {
   return () => ctx.revert();
 }
 
+/* ──────────────────────────────────────────────────────────────────────────
+ * createDepthCards
+ * 3D card depth entrance for [data-motion="depth-card"] elements.
+ * Attributes:
+ *   data-depth="1"     — depth intensity multiplier
+ * ────────────────────────────────────────────────────────────────────────── */
 export function createDepthCards(root: Element | Document = document) {
   registerDlavieGsap();
   const ctx = gsap.context(() => {
@@ -95,6 +114,84 @@ export function createDepthCards(root: Element | Document = document) {
   return () => ctx.revert();
 }
 
+/* ──────────────────────────────────────────────────────────────────────────
+ * createSplitReveal
+ * Word-by-word cinematic text reveal for [data-motion="split-reveal"] elements.
+ * Uses GSAP SplitText. Each word flies up from below with perspective.
+ * Attributes:
+ *   data-stagger="0.045" — word stagger seconds
+ * ────────────────────────────────────────────────────────────────────────── */
+export function createSplitReveal(root: Element | Document = document) {
+  registerDlavieGsap();
+  const splits: ReturnType<typeof SplitText.prototype.revert>[] = [];
+
+  const ctx = gsap.context(() => {
+    gsap.utils.toArray<HTMLElement>('[data-motion="split-reveal"]', root).forEach((el) => {
+      const stagger = Number(el.dataset.stagger ?? motionTokens.stagger.base);
+      const split = new SplitText(el, { type: 'lines,words', linesClass: 'dlv-line' });
+      splits.push(() => split.revert());
+
+      gsap.fromTo(
+        split.words,
+        { autoAlpha: 0, y: '105%', rotateX: -24, transformOrigin: '50% 0%' },
+        {
+          autoAlpha: 1,
+          y: '0%',
+          rotateX: 0,
+          duration: motionTokens.duration.slow,
+          ease: motionTokens.ease.premium,
+          stagger,
+          scrollTrigger: {
+            trigger: el,
+            start: 'top 84%',
+            toggleActions: 'play none none reverse',
+          },
+          onComplete: () => split.revert(),
+        },
+      );
+    });
+  });
+
+  return () => {
+    splits.forEach((fn) => fn());
+    ctx.revert();
+  };
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * createHorizontalShowcase
+ * Horizontally scrolling pinned section for .dlv-h-showcase containers.
+ * Children: .dlv-h-panel elements (each 100vw wide).
+ * ────────────────────────────────────────────────────────────────────────── */
+export function createHorizontalShowcase(root: Element | Document = document) {
+  registerDlavieGsap();
+  const ctx = gsap.context(() => {
+    gsap.utils.toArray<HTMLElement>('.dlv-h-showcase', root).forEach((showcase) => {
+      const panels = showcase.querySelectorAll<HTMLElement>('.dlv-h-panel');
+      if (panels.length < 2) return;
+
+      gsap.to(panels, {
+        xPercent: -(panels.length - 1) * 100,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: showcase,
+          start: 'top top',
+          end: () => `+=${showcase.scrollWidth - window.innerWidth}`,
+          scrub: 1,
+          pin: true,
+          anticipatePin: 1,
+          invalidateOnRefresh: true,
+        },
+      });
+    });
+  });
+  return () => ctx.revert();
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * refreshMotion
+ * Call after dynamic content changes to recalculate ScrollTrigger bounds.
+ * ────────────────────────────────────────────────────────────────────────── */
 export function refreshMotion() {
   ScrollTrigger.refresh();
 }
