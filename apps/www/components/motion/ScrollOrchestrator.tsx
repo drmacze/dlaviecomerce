@@ -11,174 +11,162 @@ gsap.registerPlugin(ScrollTrigger, Observer);
 export function ScrollOrchestrator() {
   const lenis = useLenis();
 
-  // Sync Lenis → GSAP ticker
+  /* ── 1. Sync Lenis ↔ GSAP ticker ───────────────────────────────────── */
   useEffect(() => {
     if (!lenis) return;
 
-    // Drive Lenis via GSAP ticker so they share one RAF loop
-    const onTick = (time: number) => lenis.raf(time * 1000);
+    function onTick(time: number) {
+      lenis.raf(time * 1000);
+    }
+
     gsap.ticker.add(onTick);
     gsap.ticker.lagSmoothing(0);
 
-    // Feed Lenis scroll pos into ScrollTrigger
-    lenis.on('scroll', ScrollTrigger.update);
+    // Tell ScrollTrigger to use Lenis scroll position
+    lenis.on('scroll', () => ScrollTrigger.update());
+
+    // Refresh ScrollTrigger once Lenis has measured the page
+    const id = setTimeout(() => ScrollTrigger.refresh(), 300);
 
     return () => {
       gsap.ticker.remove(onTick);
-      lenis.off('scroll', ScrollTrigger.update);
+      lenis.off('scroll', () => ScrollTrigger.update());
+      clearTimeout(id);
     };
   }, [lenis]);
 
-  // Cinematic animations
+  /* ── 2. Cinematic animations (runs once, after mount) ───────────────── */
   useEffect(() => {
     if (typeof window === 'undefined') return;
+
+    // Abort on reduced-motion
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-    const ctx = gsap.context(() => {
+    // Wait one frame so DOM is fully painted
+    const raf = requestAnimationFrame(() => {
+      const ctx = gsap.context(() => {
 
-      // ── Nav: slide in from top ──────────────────────────────────────────
-      gsap.fromTo('.dlv-top-nav',
-        { y: -32, autoAlpha: 0 },
-        { y: 0, autoAlpha: 1, duration: 1.0, ease: 'power3.out', delay: 0.1 },
-      );
+        /* ── Set initial hidden states BEFORE animating ── */
+        gsap.set('.dlavie-home__eyebrow',   { autoAlpha: 0, y: 20 });
+        gsap.set('.dlavie-home__title',     { autoAlpha: 0, y: 52, skewY: 5 });
+        gsap.set('.dlavie-home__subtitle',  { autoAlpha: 0, y: 28 });
+        gsap.set('.dlavie-home__description', { autoAlpha: 0, y: 20 });
+        gsap.set('.dlavie-home__actions',   { autoAlpha: 0, y: 16 });
+        gsap.set('.dlavie-home__meta',      { autoAlpha: 0 });
+        gsap.set('.dlv-top-nav',            { autoAlpha: 0, y: -24 });
 
-      // ── Nav: compact on scroll ──────────────────────────────────────────
-      ScrollTrigger.create({
-        trigger: '.dlv-page',
-        start: '80px top',
-        onEnter:  () => document.querySelector('.dlv-top-nav')?.classList.add('dlv-top-nav--compact'),
-        onLeaveBack: () => document.querySelector('.dlv-top-nav')?.classList.remove('dlv-top-nav--compact'),
-      });
+        /* ── Hero sequence (timeline) ── */
+        const hero = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
-      // ── Hero title: reveal word by word (CSS clip trick, no SplitText) ─
-      gsap.fromTo('.dlavie-home__title',
-        { autoAlpha: 0, y: 48, skewY: 4 },
-        { autoAlpha: 1, y: 0, skewY: 0, duration: 1.1, ease: 'power4.out', delay: 0.2 },
-      );
+        hero
+          .to('.dlv-top-nav',              { autoAlpha: 1, y: 0, duration: 0.7 }, 0)
+          .to('.dlavie-home__eyebrow',     { autoAlpha: 1, y: 0, duration: 0.65 }, 0.15)
+          .to('.dlavie-home__title',       { autoAlpha: 1, y: 0, skewY: 0, duration: 1.0, ease: 'power4.out' }, 0.28)
+          .to('.dlavie-home__subtitle',    { autoAlpha: 1, y: 0, duration: 0.75 }, 0.52)
+          .to('.dlavie-home__description', { autoAlpha: 1, y: 0, duration: 0.65 }, 0.64)
+          .to('.dlavie-home__actions',     { autoAlpha: 1, y: 0, duration: 0.6  }, 0.74)
+          .to('.dlavie-home__meta',        { autoAlpha: 1, duration: 0.5 }, 0.88);
 
-      // ── Hero eyebrow ────────────────────────────────────────────────────
-      gsap.fromTo('.dlavie-home__eyebrow',
-        { autoAlpha: 0, y: 20 },
-        { autoAlpha: 1, y: 0, duration: 0.7, ease: 'power3.out', delay: 0.08 },
-      );
-
-      // ── Hero subtitle + description ─────────────────────────────────────
-      gsap.fromTo('.dlavie-home__subtitle, .dlavie-home__description',
-        { autoAlpha: 0, y: 24 },
-        { autoAlpha: 1, y: 0, duration: 0.8, ease: 'power3.out', delay: 0.35, stagger: 0.12 },
-      );
-
-      // ── Hero CTA buttons ────────────────────────────────────────────────
-      gsap.fromTo('.dlavie-home__actions',
-        { autoAlpha: 0, y: 16 },
-        { autoAlpha: 1, y: 0, duration: 0.7, ease: 'power3.out', delay: 0.55 },
-      );
-
-      // ── Hero card: push back on scroll (parallax) ───────────────────────
-      gsap.to('.dlv-hero-card', {
-        yPercent: -12,
-        scale: 0.95,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: '.dlv-hero',
-          start: 'top top',
-          end: 'bottom top',
-          scrub: 1.2,
-          invalidateOnRefresh: true,
-        },
-      });
-
-      // ── Section headings: reveal on scroll ─────────────────────────────
-      gsap.utils.toArray<HTMLElement>('.dlavie-home__section-heading').forEach((el) => {
-        gsap.fromTo(el,
-          { autoAlpha: 0, y: 40 },
-          {
-            autoAlpha: 1, y: 0,
-            duration: 0.9,
-            ease: 'power3.out',
-            scrollTrigger: {
-              trigger: el,
-              start: 'top 88%',
-              toggleActions: 'play none none reverse',
-            },
-          },
-        );
-      });
-
-      // ── Section eyebrows + copy: reveal ────────────────────────────────
-      gsap.utils.toArray<HTMLElement>('.dlavie-home__section-copy, .dlavie-home__eyebrow').forEach((el, i) => {
-        gsap.fromTo(el,
-          { autoAlpha: 0, y: 24 },
-          {
-            autoAlpha: 1, y: 0,
-            duration: 0.75,
-            ease: 'power2.out',
-            delay: 0.1,
-            scrollTrigger: {
-              trigger: el,
-              start: 'top 90%',
-              toggleActions: 'play none none reverse',
-            },
-          },
-        );
-      });
-
-      // ── Cards: 3D depth entrance on scroll ─────────────────────────────
-      gsap.utils.toArray<HTMLElement>('.dlavie-home__card').forEach((card, i) => {
-        const dir = i % 2 === 0 ? -1 : 1;
-        gsap.fromTo(card,
-          { autoAlpha: 0, y: 60, rotateY: dir * 6, scale: 0.93 },
-          {
-            autoAlpha: 1, y: 0, rotateY: 0, scale: 1,
-            duration: 0.85,
-            ease: 'power3.out',
-            delay: (i % 3) * 0.08,
-            scrollTrigger: {
-              trigger: card,
-              start: 'top 90%',
-              toggleActions: 'play none none reverse',
-            },
-          },
-        );
-      });
-
-      // ── CTA section: scale up entrance ─────────────────────────────────
-      gsap.fromTo('.dlavie-home__section--cta',
-        { autoAlpha: 0, scale: 0.97 },
-        {
-          autoAlpha: 1, scale: 1,
-          duration: 0.9,
-          ease: 'power3.out',
+        /* ── Hero parallax (card pushes back on scroll) ── */
+        gsap.to('.dlv-hero-card', {
+          yPercent: -10,
+          scale: 0.96,
+          ease: 'none',
           scrollTrigger: {
-            trigger: '.dlavie-home__section--cta',
-            start: 'top 88%',
-            toggleActions: 'play none none reverse',
+            trigger: '.dlv-hero',
+            start: 'top top',
+            end: 'bottom top',
+            scrub: 1.5,
+            invalidateOnRefresh: true,
           },
-        },
-      );
+        });
 
-      // ── Scroll velocity → CSS var ───────────────────────────────────────
-      Observer.create({
-        target: window,
-        type: 'wheel,touch',
-        tolerance: 10,
-        onChangeY: (self) => {
-          const energy = Math.min(1, Math.abs(self.velocityY) / 2000);
-          document.documentElement.style.setProperty('--dlv-scroll-energy', String(energy.toFixed(3)));
-        },
-        onStop: () => {
-          gsap.to(document.documentElement, {
-            '--dlv-scroll-energy': 0,
-            duration: 0.5,
-            ease: 'power2.out',
-            overwrite: true,
+        /* ── Section headings ── */
+        gsap.utils.toArray<HTMLElement>('.dlavie-home__section-heading').forEach((el) => {
+          gsap.set(el, { autoAlpha: 0, y: 44 });
+          gsap.to(el, {
+            autoAlpha: 1, y: 0, duration: 0.9, ease: 'power3.out',
+            scrollTrigger: {
+              trigger: el, start: 'top 88%',
+              toggleActions: 'play none none reverse',
+            },
           });
-        },
+        });
+
+        /* ── Eyebrows (scroll sections) ── */
+        gsap.utils.toArray<HTMLElement>('[data-scroll-section] .dlavie-home__eyebrow').forEach((el) => {
+          gsap.set(el, { autoAlpha: 0, y: 16 });
+          gsap.to(el, {
+            autoAlpha: 1, y: 0, duration: 0.7, ease: 'power2.out',
+            scrollTrigger: {
+              trigger: el, start: 'top 90%',
+              toggleActions: 'play none none reverse',
+            },
+          });
+        });
+
+        /* ── Section copy ── */
+        gsap.utils.toArray<HTMLElement>('.dlavie-home__section-copy').forEach((el) => {
+          gsap.set(el, { autoAlpha: 0, y: 22 });
+          gsap.to(el, {
+            autoAlpha: 1, y: 0, duration: 0.75, ease: 'power2.out',
+            scrollTrigger: {
+              trigger: el, start: 'top 91%',
+              toggleActions: 'play none none reverse',
+            },
+          });
+        });
+
+        /* ── Cards: staggered float-in ── */
+        gsap.utils.toArray<HTMLElement>('.dlavie-home__card').forEach((card, i) => {
+          gsap.set(card, { autoAlpha: 0, y: 50, scale: 0.94 });
+          gsap.to(card, {
+            autoAlpha: 1, y: 0, scale: 1,
+            duration: 0.8, ease: 'power3.out',
+            delay: (i % 3) * 0.1,
+            scrollTrigger: {
+              trigger: card, start: 'top 92%',
+              toggleActions: 'play none none reverse',
+            },
+          });
+        });
+
+        /* ── CTA section ── */
+        const cta = document.querySelector('.dlavie-home__section--cta');
+        if (cta) {
+          gsap.set(cta, { autoAlpha: 0, y: 40 });
+          gsap.to(cta, {
+            autoAlpha: 1, y: 0, duration: 0.9, ease: 'power3.out',
+            scrollTrigger: {
+              trigger: cta, start: 'top 88%',
+              toggleActions: 'play none none reverse',
+            },
+          });
+        }
+
+        /* ── Scroll velocity → CSS var ── */
+        Observer.create({
+          target: window,
+          type: 'wheel,touch',
+          tolerance: 10,
+          onChangeY: (self) => {
+            const e = Math.min(1, Math.abs(self.velocityY) / 2000);
+            document.documentElement.style.setProperty('--dlv-scroll-energy', e.toFixed(3));
+          },
+          onStop: () => {
+            document.documentElement.style.setProperty('--dlv-scroll-energy', '0');
+          },
+        });
+
       });
 
+      // Refresh after all animations are set
+      ScrollTrigger.refresh();
+
+      return () => ctx.revert();
     });
 
-    return () => ctx.revert();
+    return () => cancelAnimationFrame(raf);
   }, []);
 
   return null;
