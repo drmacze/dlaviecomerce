@@ -15,11 +15,16 @@ export function ChromeText({ children, className = '' }: ChromeTextProps) {
     const el = ref.current;
     if (!el) return;
 
-    const tl = gsap.timeline({ repeat: -1 });
-    tl.to(el, { '--chrome-pos': '100%', duration: 2.5, ease: 'none' })
-      .to(el, { '--chrome-pos': '0%',   duration: 2.5, ease: 'none' });
+    // Animate opacity in a shimmer pulse — safe, no CSS var needed
+    // The gradient is static; we animate a brightness overlay instead
+    const tl = gsap.timeline({ repeat: -1, yoyo: true });
+    tl.to(el, {
+      filter: 'brightness(1.6)',
+      duration: 1.8,
+      ease: 'sine.inOut',
+    });
 
-    return () => { tl.kill(); };   // ← explicit void return
+    return (): void => { tl.kill(); };
   }, []);
 
   return (
