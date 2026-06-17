@@ -299,3 +299,207 @@
 @media(max-width:480px){
   .dlavie-home__title{font-size:clamp(2.8rem,16vw,5rem);}
 }
+
+/* ============================================================
+   DLavie — Silver Chrome Accent System
+   Replaces all blue (#0A84FF) with metallic silver/chrome
+   ============================================================ */
+
+/* ── Silver token overrides ── */
+:root {
+  /* Chrome silver palette */
+  --silver:          #C8C8D0;
+  --silver-bright:   #E8E8F0;
+  --silver-mid:      #A0A0B0;
+  --silver-dim:      #787888;
+  --silver-soft:     rgba(200,200,210,0.13);
+  --silver-glow:     rgba(220,220,235,0.18);
+  --silver-border:   rgba(200,200,215,0.22);
+
+  /* Override blue accent with silver */
+  --blue:            var(--silver-bright);
+  --accent:          var(--silver-bright);
+  --accent-soft:     var(--silver-soft);
+  --accent-glow:     var(--silver-glow);
+  --hero-accent:     var(--silver-bright);
+  --hero-accent-soft:var(--silver-soft);
+  --hero-glow:       var(--silver-glow);
+  --scene-glow:      var(--silver-glow);
+
+  /* Chrome gradient (used in metallic elements) */
+  --chrome-gradient: linear-gradient(
+    135deg,
+    #ffffff 0%,
+    #d4d4e0 18%,
+    #8e8ea0 36%,
+    #c8c8d8 50%,
+    #ffffff 58%,
+    #9090a4 72%,
+    #d0d0e0 86%,
+    #f0f0f8 100%
+  );
+
+  /* Shiny animated gradient */
+  --chrome-shine: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(255,255,255,0.55) 50%,
+    transparent 70%
+  );
+}
+
+/* ── Override nav register button ── */
+.nav-action,
+.dlavie-home__nav-actions .nav-action {
+  border: 1px solid var(--silver-border) !important;
+  background: var(--silver-soft) !important;
+  color: var(--silver-bright) !important;
+}
+.nav-action:hover {
+  background: rgba(200,200,215,0.20) !important;
+  border-color: rgba(220,220,235,0.40) !important;
+}
+
+/* ── Eyebrow pill — silver chrome ── */
+.dlavie-home__eyebrow--pill {
+  background: var(--silver-soft) !important;
+  border-color: var(--silver-border) !important;
+  color: var(--silver-bright) !important;
+  /* metallic shimmer effect */
+  position: relative;
+  overflow: hidden;
+}
+.dlavie-home__eyebrow--pill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--chrome-shine);
+  background-size: 200% 100%;
+  animation: chrome-sweep 3s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes chrome-sweep {
+  0%   { background-position: -100% 0; }
+  60%  { background-position: 200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ── Card icons — chrome metallic ── */
+.dlavie-home__card-icon {
+  background: rgba(180,180,195,0.12) !important;
+  color: var(--silver-bright) !important;
+  /* metallic border */
+  border: 1px solid rgba(200,200,218,0.18);
+  /* subtle inner glow */
+  box-shadow: 
+    0 1px 0 rgba(255,255,255,0.12) inset,
+    0 0 12px rgba(200,200,220,0.08);
+  position: relative;
+  overflow: hidden;
+}
+.dlavie-home__card-icon::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--chrome-gradient);
+  opacity: 0.08;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.dlavie-home__card:hover .dlavie-home__card-icon {
+  background: rgba(200,200,215,0.20) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.18) inset,
+    0 0 20px rgba(210,210,230,0.14);
+}
+
+/* ── "Learn more" link ── */
+.dlavie-home__card-link {
+  /* Chrome gradient text */
+  background: var(--chrome-gradient) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  background-size: 200% 100%;
+  animation: chrome-text-shift 4s ease-in-out infinite;
+  font-weight: 700 !important;
+}
+@keyframes chrome-text-shift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.dlavie-home__card-link svg {
+  /* Can't apply gradient to svg, use silver color */
+  color: var(--silver-mid);
+  -webkit-text-fill-color: initial;
+  flex-shrink: 0;
+}
+
+/* ── Card hover accent glow ── */
+.dlavie-home__card::before {
+  background: radial-gradient(circle at 30% 40%, 
+    rgba(200,200,215,0.07), transparent 60%) !important;
+}
+
+/* ── Section eyebrow (non-pill) silver tint ── */
+.dlavie-home__eyebrow:not(.dlavie-home__eyebrow--pill) {
+  border-color: rgba(200,200,215,0.14);
+  color: rgba(220,220,235,0.55);
+}
+
+/* ── Magnetic / scene buttons — secondary tint silver ── */
+.magnetic-btn--secondary {
+  background: var(--silver-soft) !important;
+  border-color: rgba(200,200,215,0.28) !important;
+  color: var(--silver-bright) !important;
+}
+.magnetic-btn--secondary:hover {
+  background: rgba(200,200,215,0.20) !important;
+  border-color: rgba(220,220,235,0.44) !important;
+}
+
+/* ── Section label chip (scene labels) ── */
+.section-label {
+  border-color: rgba(200,200,215,0.14);
+  color: rgba(220,220,235,0.55);
+}
+.section-label__index {
+  background: var(--chrome-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  background-size: 200%;
+}
+
+/* ── Ambient glow — silver instead of blue ── */
+body::before {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%,
+      rgba(180,180,200,0.10) 0%, transparent 58%),
+    radial-gradient(ellipse 55% 40% at 85% 75%,
+      rgba(160,160,185,0.07) 0%, transparent 52%),
+    #000 !important;
+}
+
+/* ── Hero ambient — chrome tones ── */
+.dlavie-home__hero::before {
+  background:
+    radial-gradient(ellipse 70% 55% at 60% 30%,
+      rgba(180,180,205,0.12), transparent 58%),
+    radial-gradient(ellipse 50% 40% at 85% 70%,
+      rgba(150,150,175,0.08), transparent 52%) !important;
+}
+
+/* ── Focus ring silver ── */
+:focus-visible {
+  outline-color: var(--silver) !important;
+}
+::selection {
+  background: rgba(200,200,215,0.22) !important;
+}
+
+/* ── Scrollbar chrome ── */
+::-webkit-scrollbar-thumb {
+  background: rgba(200,200,215,0.18) !important;
+}
