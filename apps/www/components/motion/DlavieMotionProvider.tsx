@@ -3,7 +3,6 @@
 import type { ReactNode } from 'react';
 import { ReactLenis } from 'lenis/react';
 import { ScrollOrchestrator } from './ScrollOrchestrator';
-import { ScrollProgress } from './ScrollProgress';
 import { CinematicCursor } from './CinematicCursor';
 
 export function DlavieMotionProvider({ children }: { children: ReactNode }) {
@@ -22,7 +21,6 @@ export function DlavieMotionProvider({ children }: { children: ReactNode }) {
       }}
     >
       <ScrollOrchestrator />
-      <ScrollProgress />
       <CinematicCursor />
       {children}
     </ReactLenis>
