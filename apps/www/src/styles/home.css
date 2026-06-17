@@ -1,484 +1,301 @@
-.dlavie-home {
-  --home-bg: #050505;
-  --home-bg-soft: #0d0d0f;
-  --home-surface: rgba(255, 255, 255, 0.055);
-  --home-surface-strong: rgba(255, 255, 255, 0.09);
-  --home-border: rgba(255, 255, 255, 0.13);
-  --home-border-strong: rgba(255, 255, 255, 0.24);
-  --home-text: #ffffff;
-  --home-muted: rgba(255, 255, 255, 0.64);
-  --home-dim: rgba(255, 255, 255, 0.42);
-  --home-blue: #7cc7ff;
-  --home-radius-xl: 32px;
-  --home-radius-lg: 24px;
-  --home-radius-md: 16px;
-  --home-radius-pill: 999px;
-  min-height: 100svh;
-  overflow-x: clip;
+/* ============================================================
+   home.css — DLavie iOS 26/27 Complete Rebuild
+   ============================================================ */
+
+/* ── Root ── */
+.dlavie-home{
+  min-height:100svh;overflow-x:clip;
+  background:#000;color:#fff;
+  font-family:-apple-system,"SF Pro Text","Helvetica Neue",sans-serif;
+  isolation:isolate;
+}
+.dlavie-home *,.dlavie-home *::before,.dlavie-home *::after{box-sizing:border-box;}
+.dlavie-home a{text-decoration:none;color:inherit;}
+.dlavie-home a:focus-visible{outline:2px solid #0A84FF;outline-offset:3px;border-radius:4px;}
+
+/* ── Nav ── */
+.dlavie-home__nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  border-bottom:1px solid rgba(255,255,255,.06);
+  background:rgba(0,0,0,.82);
+  backdrop-filter:blur(40px) saturate(180%);
+  -webkit-backdrop-filter:blur(40px) saturate(180%);
+}
+
+.dlavie-home__nav-inner{
+  width:min(100% - 2rem,1180px);margin-inline:auto;
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  min-height:calc(52px + env(safe-area-inset-top));
+  padding-block:max(.5rem,env(safe-area-inset-top)) .5rem;
+}
+
+.dlavie-home__brand{display:inline-flex;align-items:center;gap:.5rem;flex-shrink:0;}
+
+.dlavie-home__brand-mark{
+  width:30px;height:30px;display:inline-grid;place-items:center;
+  border-radius:50%;background:#fff;color:#000;
+  font-size:15px;font-weight:800;letter-spacing:-.06em;flex-shrink:0;
+}
+.dlavie-home__brand-wordmark{font-size:17px;font-weight:700;letter-spacing:-.04em;}
+
+.dlavie-home__nav-links{display:none;align-items:center;gap:0;}
+.dlavie-home__nav-links a{
+  display:inline-flex;align-items:center;
+  padding:.4rem .8rem;border-radius:10px;
+  color:rgba(255,255,255,.55);font-size:14px;font-weight:600;
+  transition:color .15s,background .15s;
+}
+.dlavie-home__nav-links a:hover{color:#fff;background:rgba(255,255,255,.08);}
+.dlavie-home__footer-links{display:inline-flex;align-items:center;}
+
+.dlavie-home__nav-actions{display:flex;align-items:center;gap:.375rem;flex-shrink:0;}
+
+/* ── Buttons — EXPLICIT colors, no inheritance ── */
+.dlavie-home__button{
+  display:inline-flex;align-items:center;justify-content:center;
+  gap:.4rem;padding:.6875rem 1.25rem;
+  border-radius:9999px;border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.08);
+  color:#ffffff;
+  font-family:-apple-system,sans-serif;
+  font-size:15px;font-weight:600;letter-spacing:-.01em;line-height:1;
+  text-decoration:none;cursor:pointer;white-space:nowrap;
+  -webkit-text-fill-color:#ffffff;
+  transition:background .15s,border-color .15s,transform .2s cubic-bezier(0.34,1.56,0.64,1);
+}
+.dlavie-home__button svg{width:1em;height:1em;flex-shrink:0;}
+.dlavie-home__button:hover{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.26);transform:translateY(-1px);}
+.dlavie-home__button:active{transform:scale(.98);}
+
+/* PRIMARY — white bg, BLACK text, fully explicit */
+.dlavie-home__button--primary{
+  background:#ffffff !important;
+  border-color:transparent !important;
+  color:#000000 !important;
+  -webkit-text-fill-color:#000000 !important;
+  font-weight:700 !important;
+}
+.dlavie-home__button--primary:hover{
+  background:rgba(255,255,255,.88) !important;
+  transform:translateY(-1px);
+  box-shadow:0 8px 24px rgba(255,255,255,.10);
+}
+
+/* SECONDARY — glass */
+.dlavie-home__button--secondary{
+  background:rgba(255,255,255,.06) !important;
+  border-color:rgba(255,255,255,.12) !important;
+  color:#ffffff !important;
+  -webkit-text-fill-color:#ffffff !important;
+}
+.dlavie-home__button--secondary:hover{
+  background:rgba(255,255,255,.10) !important;
+  border-color:rgba(255,255,255,.20) !important;
+}
+
+/* GHOST */
+.dlavie-home__button--ghost{
+  background:transparent !important;border-color:transparent !important;
+  color:rgba(255,255,255,.60) !important;
+  -webkit-text-fill-color:rgba(255,255,255,.60) !important;
+}
+.dlavie-home__button--ghost:hover{color:#fff !important;-webkit-text-fill-color:#fff !important;background:rgba(255,255,255,.06) !important;}
+
+.dlavie-home__button--compact{padding:.5rem .875rem;font-size:13px;}
+.dlavie-home__button--desktop{display:none;}
+
+.dlavie-home__card-link svg,.dlavie-home__card-icon svg{display:block;}
+
+/* ── HERO ── */
+.dlavie-home__hero{
+  position:relative;
+  width:min(100% - 2rem,1180px);margin-inline:auto;
+  display:flex;flex-direction:column;align-items:flex-start;
+  justify-content:center;
+  min-height:100svh;
+  padding-top:calc(80px + env(safe-area-inset-top));
+  padding-bottom:80px;
+  gap:0;
+  /* left-align like Apple product pages */
+}
+
+/* Hero ambient glow */
+.dlavie-home__hero::before{
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
   background:
-    radial-gradient(circle at 50% 0%, rgba(124, 199, 255, 0.16), transparent 30rem),
-    radial-gradient(circle at 20% 18%, rgba(255, 255, 255, 0.08), transparent 22rem),
-    var(--home-bg);
-  color: var(--home-text);
-  font-family: var(--font-sans), Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    radial-gradient(ellipse 70% 55% at 60% 30%,rgba(10,132,255,.18),transparent 58%),
+    radial-gradient(ellipse 50% 40% at 85% 70%,rgba(191,90,242,.11),transparent 52%);
 }
 
-.dlavie-home *,
-.dlavie-home *::before,
-.dlavie-home *::after {
-  box-sizing: border-box;
+.dlavie-home__eyebrow{
+  display:inline-flex;align-items:center;gap:.375rem;
+  margin-bottom:16px;padding:5px 14px;
+  border-radius:9999px;border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.05);backdrop-filter:blur(8px);
+  color:rgba(255,255,255,.55);
+  font-size:11px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;
+}
+.dlavie-home__eyebrow--pill{
+  background:rgba(10,132,255,.12);border-color:rgba(10,132,255,.26);color:#0A84FF;
 }
 
-.dlavie-home a {
-  color: inherit;
-  text-decoration: none;
+/* Big gradient hero title */
+.dlavie-home__title{
+  margin-bottom:16px;
+  font-family:-apple-system,"SF Pro Display","Helvetica Neue",sans-serif;
+  font-size:clamp(3.5rem,14vw,9rem);
+  font-weight:800;letter-spacing:-.055em;line-height:.94;
+  background:linear-gradient(165deg,#ffffff 0%,rgba(255,255,255,.62) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
 }
 
-.dlavie-home a:focus-visible {
-  outline: 2px solid var(--home-blue);
-  outline-offset: 4px;
+.dlavie-home__subtitle{
+  max-width:560px;margin-bottom:10px;
+  font-size:clamp(17px,3vw,22px);font-weight:500;
+  color:rgba(255,255,255,.72);line-height:1.4;letter-spacing:-.02em;
 }
 
-.dlavie-home__nav {
-  position: fixed;
-  top: 0;
-  right: 0;
-  left: 0;
-  z-index: 50;
-  border-bottom: 1px solid var(--home-border);
-  background: rgba(5, 5, 5, 0.92);
-  backdrop-filter: blur(22px) saturate(1.15);
+.dlavie-home__description{
+  max-width:440px;margin-bottom:32px;
+  font-size:15px;color:rgba(255,255,255,.40);line-height:1.6;
 }
 
-.dlavie-home__nav-inner,
-.dlavie-home__section,
-.dlavie-home__hero,
-.dlavie-home__footer-inner {
-  width: min(100% - 2rem, 1180px);
-  margin-inline: auto;
+.dlavie-home__actions{
+  display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+  margin-bottom:28px;
 }
 
-.dlavie-home__nav-inner {
-  display: flex;
-  min-height: calc(4.5rem + env(safe-area-inset-top));
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.9rem;
-  padding-block: max(0.7rem, env(safe-area-inset-top)) 0.7rem;
+.dlavie-home__meta{
+  font-size:12px;color:rgba(255,255,255,.26);letter-spacing:.04em;
 }
 
-.dlavie-home__brand,
-.dlavie-home__nav-actions,
-.dlavie-home__nav-links,
-.dlavie-home__actions,
-.dlavie-home__button,
-.dlavie-home__card-link,
-.dlavie-home__footer-links {
-  display: inline-flex;
-  align-items: center;
+/* ── Sections ── */
+.dlavie-home__section{
+  width:min(100% - 2rem,1180px);margin-inline:auto;padding-block:96px;
+}
+.dlavie-home__section--band{
+  width:100%;
+  background:rgba(255,255,255,.025);
+  border-top:1px solid rgba(255,255,255,.05);
+  border-bottom:1px solid rgba(255,255,255,.05);
+}
+.dlavie-home__section--band>.dlavie-home__section-header,
+.dlavie-home__section--band>.dlavie-home__section-copy,
+.dlavie-home__section--band>.dlavie-home__eyebrow,
+.dlavie-home__section--band>.dlavie-home__grid{
+  width:min(100% - 2rem,1180px);margin-inline:auto;
+}
+.dlavie-home__section--band{padding-block:96px;}
+.dlavie-home__section--center{text-align:center;}
+.dlavie-home__section--center .dlavie-home__eyebrow{margin-inline:auto;}
+.dlavie-home__section--center .dlavie-home__section-copy{margin-inline:auto;}
+.dlavie-home__section--cta{position:relative;}
+.dlavie-home__section--cta::before{
+  content:"";position:absolute;inset:0;z-index:-1;
+  background:radial-gradient(ellipse 65% 60% at 50% 50%,rgba(10,132,255,.09),transparent 65%);
 }
 
-.dlavie-home__brand {
-  flex: 0 0 auto;
-  gap: 0.7rem;
-  min-width: 0;
+.dlavie-home__section-header{
+  max-width:640px;margin-inline:auto;margin-bottom:56px;text-align:center;
 }
 
-.dlavie-home__brand-mark {
-  display: inline-grid;
-  width: 2rem;
-  height: 2rem;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--home-text);
-  color: var(--home-bg);
-  font-size: 1.18rem;
-  font-weight: 800;
-  letter-spacing: -0.1em;
+.dlavie-home__section-heading{
+  margin-bottom:14px;
+  font-family:-apple-system,"SF Pro Display","Helvetica Neue",sans-serif;
+  font-size:clamp(2rem,6vw,4rem);font-weight:800;
+  letter-spacing:-.04em;line-height:1.06;
+  background:linear-gradient(170deg,#fff 0%,rgba(255,255,255,.68) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
 }
 
-.dlavie-home__brand-wordmark {
-  font-size: clamp(1.35rem, 6vw, 1.65rem);
-  font-weight: 700;
-  letter-spacing: -0.06em;
+.dlavie-home__section-copy{
+  max-width:520px;color:rgba(255,255,255,.52);font-size:16px;line-height:1.65;
+}
+.dlavie-home__section-copy--wide{max-width:640px;}
+
+/* ── Feature grid — iOS grouped list ── */
+.dlavie-home__grid{display:grid;}
+.dlavie-home__grid--features{
+  grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));
+  border-radius:20px;border:1px solid rgba(255,255,255,.07);
+  overflow:hidden;background:rgba(255,255,255,.06);gap:1px;
+}
+.dlavie-home__grid--ecosystem{
+  grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:12px;
 }
 
-.dlavie-home__nav-links {
-  display: none;
-  gap: clamp(1rem, 2.8vw, 2.25rem);
-  color: var(--home-muted);
-  font-size: 0.88rem;
-  font-weight: 600;
+/* ── Cards ── */
+.dlavie-home__card{
+  display:flex;flex-direction:column;gap:10px;padding:28px;
+  background:#0a0a0a;position:relative;overflow:hidden;
+  transition:background .2s;
+}
+.dlavie-home__card:hover{background:#111;}
+
+.dlavie-home__grid--ecosystem .dlavie-home__card{
+  border-radius:20px;border:1px solid rgba(255,255,255,.07);
+  background:rgba(255,255,255,.03);backdrop-filter:blur(16px);
+  transition:background .2s,border-color .2s,transform .3s cubic-bezier(0.34,1.56,0.64,1);
+}
+.dlavie-home__grid--ecosystem .dlavie-home__card:hover{
+  background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12);
+  transform:translateY(-4px);
 }
 
-.dlavie-home__nav-links a,
-.dlavie-home__footer-links a {
-  transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease;
+.dlavie-home__card-icon{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:40px;height:40px;border-radius:12px;
+  background:rgba(10,132,255,.14);color:#0A84FF;
+  margin-bottom:4px;flex-shrink:0;transition:background .15s;
+}
+.dlavie-home__card-icon svg{width:20px;height:20px;}
+.dlavie-home__card:hover .dlavie-home__card-icon{background:rgba(10,132,255,.22);}
+
+.dlavie-home__card-title{
+  font-size:16px;font-weight:700;letter-spacing:-.02em;color:#fff;line-height:1.3;
+}
+.dlavie-home__card-copy{
+  font-size:14px;color:rgba(255,255,255,.52);line-height:1.6;flex:1;
+}
+.dlavie-home__card-link{
+  display:inline-flex;align-items:center;gap:3px;margin-top:4px;
+  color:#0A84FF;font-size:13px;font-weight:600;
+  transition:gap .2s cubic-bezier(0.34,1.56,0.64,1);
+}
+.dlavie-home__card-link svg{width:.85em;height:.85em;}
+.dlavie-home__card:hover .dlavie-home__card-link{gap:6px;}
+
+/* ── CTA ── */
+.dlavie-home__cta-heading{
+  margin-bottom:14px;
+  font-family:-apple-system,"SF Pro Display","Helvetica Neue",sans-serif;
+  font-size:clamp(1.75rem,5vw,3rem);font-weight:800;
+  letter-spacing:-.04em;line-height:1.1;
+  background:linear-gradient(170deg,#fff 0%,rgba(255,255,255,.68) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
 }
 
-.dlavie-home__nav-links a:hover,
-.dlavie-home__footer-links a:hover {
-  color: var(--home-text);
+/* ── Footer ── */
+.dlavie-home__footer{
+  border-top:1px solid rgba(255,255,255,.05);
+  background:rgba(255,255,255,.02);padding-block:40px;
 }
-
-.dlavie-home__nav-actions {
-  flex: 0 0 auto;
-  gap: 0.65rem;
+.dlavie-home__footer-inner{
+  width:min(100% - 2rem,1180px);margin-inline:auto;
+  display:flex;flex-wrap:wrap;align-items:center;
+  justify-content:space-between;gap:16px;
 }
+.dlavie-home__footer p{font-size:13px;color:rgba(255,255,255,.28);}
+.dlavie-home__footer-links{gap:24px;color:rgba(255,255,255,.28);font-size:13px;}
+.dlavie-home__footer-links a{transition:color .15s;}
+.dlavie-home__footer-links a:hover{color:rgba(255,255,255,.70);}
 
-.dlavie-home__button {
-  min-height: 2.9rem;
-  justify-content: center;
-  gap: 0.65rem;
-  border: 1px solid var(--home-border);
-  border-radius: var(--home-radius-pill);
-  padding: 0.82rem 1.15rem;
-  font-size: clamp(0.92rem, 2.7vw, 1.02rem);
-  font-weight: 700;
-  line-height: 1;
-  text-align: center;
-  transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease, color 180ms ease;
+/* ── Responsive ── */
+@media(min-width:640px){
+  .dlavie-home__nav-links{display:flex;}
+  .dlavie-home__button--desktop{display:inline-flex;}
 }
-
-.dlavie-home__button svg,
-.dlavie-home__card-link svg,
-.dlavie-home__card-icon svg {
-  width: 1.1em;
-  height: 1.1em;
-  flex: 0 0 auto;
-}
-
-.dlavie-home__button:hover {
-  transform: translateY(-1px);
-}
-
-.dlavie-home__button:active {
-  transform: translateY(0) scale(0.985);
-}
-
-.dlavie-home__button--primary {
-  border-color: var(--home-text);
-  background: var(--home-text);
-  color: var(--home-bg);
-  box-shadow: 0 18px 48px rgba(255, 255, 255, 0.08);
-}
-
-.dlavie-home__button--primary:hover {
-  background: rgba(255, 255, 255, 0.9);
-}
-
-.dlavie-home__button--secondary,
-.dlavie-home__button--ghost {
-  background: rgba(255, 255, 255, 0.02);
-  color: var(--home-text);
-}
-
-.dlavie-home__button--secondary:hover,
-.dlavie-home__button--ghost:hover {
-  border-color: var(--home-border-strong);
-  background: var(--home-surface);
-}
-
-.dlavie-home__button--desktop {
-  display: none;
-}
-
-.dlavie-home__button--compact {
-  max-width: 11.25rem;
-  padding-inline: 1rem;
-  font-size: 0.86rem;
-}
-
-.dlavie-home__hero {
-  min-height: 100svh;
-  display: grid;
-  place-items: center;
-  align-content: center;
-  padding-block: calc(7rem + env(safe-area-inset-top)) 4rem;
-  text-align: center;
-}
-
-.dlavie-home__eyebrow {
-  width: fit-content;
-  margin: 0 auto 1rem;
-  color: var(--home-dim);
-  font-size: clamp(0.68rem, 2.8vw, 0.78rem);
-  font-weight: 800;
-  letter-spacing: 0.18em;
-  line-height: 1.35;
-  text-transform: uppercase;
-}
-
-.dlavie-home__eyebrow--pill {
-  border: 1px solid var(--home-border);
-  border-radius: var(--home-radius-pill);
-  padding: 0.45rem 0.9rem;
-  background: var(--home-surface);
-}
-
-.dlavie-home__title {
-  max-width: 11ch;
-  margin: 0 auto 1rem;
-  font-size: clamp(4.2rem, 19vw, 9.5rem);
-  font-weight: 700;
-  letter-spacing: clamp(-0.34rem, -1vw, -0.12rem);
-  line-height: 0.88;
-}
-
-.dlavie-home__subtitle {
-  max-width: 45rem;
-  margin: 0 auto 1rem;
-  color: rgba(255, 255, 255, 0.82);
-  font-size: clamp(1.45rem, 6.2vw, 2.8rem);
-  font-weight: 600;
-  letter-spacing: -0.045em;
-  line-height: 1.05;
-}
-
-.dlavie-home__description,
-.dlavie-home__section-copy,
-.dlavie-home__card-copy {
-  color: var(--home-muted);
-  line-height: 1.65;
-}
-
-.dlavie-home__description {
-  max-width: 34rem;
-  margin: 0 auto 2rem;
-  font-size: clamp(1rem, 3.7vw, 1.14rem);
-}
-
-.dlavie-home__actions {
-  width: 100%;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0.85rem;
-}
-
-.dlavie-home__actions .dlavie-home__button {
-  width: min(100%, 22rem);
-  border-radius: var(--home-radius-md);
-  padding-block: 1rem;
-}
-
-.dlavie-home__meta {
-  margin: 2.75rem 0 0;
-  color: var(--home-dim);
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.22em;
-  line-height: 1.8;
-  text-transform: uppercase;
-}
-
-.dlavie-home__section {
-  padding-block: clamp(4rem, 9vw, 6rem);
-}
-
-.dlavie-home__section--center {
-  display: grid;
-  justify-items: center;
-  text-align: center;
-}
-
-.dlavie-home__section--band,
-.dlavie-home__section--cta {
-  width: 100%;
-  border-block: 1px solid var(--home-border);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.015));
-  padding-inline: max(1rem, env(safe-area-inset-left)) max(1rem, env(safe-area-inset-right));
-}
-
-.dlavie-home__section-header {
-  max-width: 48rem;
-  margin: 0 auto 2rem;
-  text-align: center;
-}
-
-.dlavie-home__section-heading,
-.dlavie-home__cta-heading {
-  margin: 0 auto 1rem;
-  font-size: clamp(2.5rem, 10vw, 5rem);
-  font-weight: 700;
-  letter-spacing: -0.055em;
-  line-height: 0.98;
-}
-
-.dlavie-home__cta-heading {
-  max-width: 48rem;
-  font-size: clamp(2.1rem, 8vw, 3.6rem);
-}
-
-.dlavie-home__section-copy {
-  max-width: 44rem;
-  margin: 0 auto;
-  font-size: clamp(1rem, 3.4vw, 1.18rem);
-}
-
-.dlavie-home__section-copy--wide {
-  max-width: 52rem;
-  margin-bottom: 2rem;
-  font-size: clamp(1.15rem, 4vw, 1.55rem);
-  line-height: 1.45;
-}
-
-.dlavie-home__grid {
-  display: grid;
-  gap: 1rem;
-}
-
-.dlavie-home__grid--features,
-.dlavie-home__grid--ecosystem {
-  grid-template-columns: 1fr;
-}
-
-.dlavie-home__card {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  border: 1px solid var(--home-border);
-  border-radius: var(--home-radius-lg);
-  padding: clamp(1.25rem, 5vw, 2rem);
-  background: linear-gradient(180deg, var(--home-surface), rgba(255, 255, 255, 0.025));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045), 0 20px 70px rgba(0, 0, 0, 0.22);
-}
-
-.dlavie-home__card--feature {
-  min-height: 20rem;
-  transition: border-color 180ms ease, background-color 180ms ease, transform 180ms ease;
-}
-
-.dlavie-home__card--feature:hover {
-  border-color: var(--home-border-strong);
-  background: linear-gradient(180deg, var(--home-surface-strong), rgba(255, 255, 255, 0.035));
-}
-
-.dlavie-home__card-icon {
-  display: inline-grid;
-  width: 3.5rem;
-  height: 3.5rem;
-  place-items: center;
-  margin-bottom: 1.5rem;
-  border: 1px solid var(--home-border);
-  border-radius: var(--home-radius-md);
-  background: rgba(255, 255, 255, 0.045);
-  color: var(--home-text);
-}
-
-.dlavie-home__card-title {
-  margin: 0 0 0.7rem;
-  font-size: clamp(1.45rem, 5.8vw, 2rem);
-  font-weight: 700;
-  letter-spacing: -0.04em;
-  line-height: 1.08;
-}
-
-.dlavie-home__card-copy {
-  flex: 1;
-  margin: 0;
-  font-size: 0.98rem;
-}
-
-.dlavie-home__card-link {
-  gap: 0.45rem;
-  margin-top: 1.75rem;
-  color: var(--home-muted);
-  font-size: 0.9rem;
-  font-weight: 700;
-}
-
-.dlavie-home__section--cta {
-  border-bottom: 0;
-  background: var(--home-bg-soft);
-}
-
-.dlavie-home__section--cta .dlavie-home__section-copy {
-  margin-bottom: 1.6rem;
-}
-
-.dlavie-home__footer {
-  border-top: 1px solid var(--home-border);
-  color: var(--home-dim);
-  font-size: 0.88rem;
-}
-
-.dlavie-home__footer-inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  padding-block: 2rem calc(2rem + env(safe-area-inset-bottom));
-  text-align: center;
-}
-
-.dlavie-home__footer-inner p {
-  margin: 0;
-}
-
-.dlavie-home__footer-links {
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 1rem;
-}
-
-@media (min-width: 520px) {
-  .dlavie-home__button--desktop {
-    display: inline-flex;
-  }
-
-  .dlavie-home__button--compact {
-    max-width: none;
-  }
-
-  .dlavie-home__actions {
-    flex-direction: row;
-  }
-
-  .dlavie-home__actions .dlavie-home__button {
-    width: auto;
-    min-width: 12rem;
-  }
-}
-
-@media (min-width: 760px) {
-  .dlavie-home__nav-links {
-    display: inline-flex;
-  }
-
-  .dlavie-home__nav-inner,
-  .dlavie-home__section,
-  .dlavie-home__hero,
-  .dlavie-home__footer-inner {
-    width: min(100% - 3rem, 1180px);
-  }
-
-  .dlavie-home__grid--features,
-  .dlavie-home__grid--ecosystem {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .dlavie-home__footer-inner {
-    flex-direction: row;
-    justify-content: space-between;
-    text-align: left;
-  }
-}
-
-@media (min-width: 1024px) {
-  .dlavie-home__grid--features,
-  .dlavie-home__grid--ecosystem {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .dlavie-home *,
-  .dlavie-home *::before,
-  .dlavie-home *::after {
-    scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-  }
+@media(max-width:480px){
+  .dlavie-home__title{font-size:clamp(2.8rem,16vw,5rem);}
 }
