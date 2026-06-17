@@ -300,206 +300,192 @@
   .dlavie-home__title{font-size:clamp(2.8rem,16vw,5rem);}
 }
 
+
 /* ============================================================
-   DLavie — Silver Chrome Accent System
-   Replaces all blue (#0A84FF) with metallic silver/chrome
+   DLavie — Silver Chrome Accent System  v3 (animated shiny)
    ============================================================ */
 
-/* ── Silver token overrides ── */
-:root {
-  /* Chrome silver palette */
-  --silver:          #C8C8D0;
-  --silver-bright:   #E8E8F0;
-  --silver-mid:      #A0A0B0;
-  --silver-dim:      #787888;
-  --silver-soft:     rgba(200,200,210,0.13);
-  --silver-glow:     rgba(220,220,235,0.18);
-  --silver-border:   rgba(200,200,215,0.22);
-
-  /* Override blue accent with silver */
-  --blue:            var(--silver-bright);
-  --accent:          var(--silver-bright);
-  --accent-soft:     var(--silver-soft);
-  --accent-glow:     var(--silver-glow);
-  --hero-accent:     var(--silver-bright);
-  --hero-accent-soft:var(--silver-soft);
-  --hero-glow:       var(--silver-glow);
-  --scene-glow:      var(--silver-glow);
-
-  /* Chrome gradient (used in metallic elements) */
-  --chrome-gradient: linear-gradient(
-    135deg,
-    #ffffff 0%,
-    #d4d4e0 18%,
-    #8e8ea0 36%,
-    #c8c8d8 50%,
-    #ffffff 58%,
-    #9090a4 72%,
-    #d0d0e0 86%,
-    #f0f0f8 100%
-  );
-
-  /* Shiny animated gradient */
-  --chrome-shine: linear-gradient(
-    105deg,
-    transparent 30%,
-    rgba(255,255,255,0.55) 50%,
-    transparent 70%
-  );
-}
-
-/* ── Override nav register button ── */
-.nav-action,
-.dlavie-home__nav-actions .nav-action {
-  border: 1px solid var(--silver-border) !important;
-  background: var(--silver-soft) !important;
-  color: var(--silver-bright) !important;
-}
-.nav-action:hover {
-  background: rgba(200,200,215,0.20) !important;
-  border-color: rgba(220,220,235,0.40) !important;
-}
-
-/* ── Eyebrow pill — silver chrome ── */
-.dlavie-home__eyebrow--pill {
-  background: var(--silver-soft) !important;
-  border-color: var(--silver-border) !important;
-  color: var(--silver-bright) !important;
-  /* metallic shimmer effect */
-  position: relative;
-  overflow: hidden;
-}
-.dlavie-home__eyebrow--pill::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: var(--chrome-shine);
-  background-size: 200% 100%;
-  animation: chrome-sweep 3s ease-in-out infinite;
-  pointer-events: none;
-}
+/* ── Keyframes — HARUS di luar :root ── */
 @keyframes chrome-sweep {
-  0%   { background-position: -100% 0; }
-  60%  { background-position: 200% 0; }
-  100% { background-position: 200% 0; }
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
 }
 
-/* ── Card icons — chrome metallic ── */
+@keyframes chrome-text {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+@keyframes icon-shimmer {
+  0%   { opacity: 0; transform: translateX(-100%) rotate(-20deg); }
+  40%  { opacity: 1; }
+  100% { opacity: 0; transform: translateX(200%) rotate(-20deg); }
+}
+
+@keyframes pill-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(220,220,240,0.12), inset 0 1px 0 rgba(255,255,255,0.08); }
+  50%       { box-shadow: 0 0 20px rgba(220,220,240,0.26), inset 0 1px 0 rgba(255,255,255,0.18); }
+}
+
+/* ── Chrome gradient definition ── */
+:root {
+  --chrome: linear-gradient(
+    105deg,
+    #b0b0c0 0%,
+    #e8e8f4 15%,
+    #ffffff 25%,
+    #c8c8d8 38%,
+    #9090a8 52%,
+    #d8d8e8 65%,
+    #ffffff 75%,
+    #b8b8cc 88%,
+    #c0c0d0 100%
+  );
+  --silver:        #D0D0E0;
+  --silver-bright: #F0F0FA;
+  --silver-mid:    #A0A0B8;
+  --silver-soft:   rgba(200,200,220,0.12);
+  --silver-border: rgba(210,210,230,0.22);
+  --silver-glow:   rgba(220,220,240,0.20);
+}
+
+/* ── Eyebrow pill — animated silver shimmer ── */
+.dlavie-home__eyebrow--pill {
+  background: rgba(200,200,220,0.10) !important;
+  border-color: rgba(210,210,235,0.28) !important;
+  color: #D8D8EC !important;
+  position: relative;
+  overflow: hidden;
+  animation: pill-glow 3s ease-in-out infinite;
+}
+.dlavie-home__eyebrow--pill::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: 0;
+  width: 60%;
+  height: 200%;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(255,255,255,0.55) 50%,
+    transparent 100%
+  );
+  animation: chrome-sweep 2.5s cubic-bezier(0.4,0,0.2,1) infinite;
+  pointer-events: none;
+  transform: skewX(-20deg);
+}
+
+/* ── Card icons — chrome metallic dengan sweep shimmer ── */
 .dlavie-home__card-icon {
-  background: rgba(180,180,195,0.12) !important;
-  color: var(--silver-bright) !important;
-  /* metallic border */
-  border: 1px solid rgba(200,200,218,0.18);
-  /* subtle inner glow */
-  box-shadow: 
-    0 1px 0 rgba(255,255,255,0.12) inset,
-    0 0 12px rgba(200,200,220,0.08);
+  background: linear-gradient(145deg, rgba(160,160,180,0.16), rgba(200,200,220,0.08)) !important;
+  color: #D8D8EC !important;
+  border: 1px solid rgba(200,200,220,0.18) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.14) inset,
+    0 0 0 0.5px rgba(180,180,200,0.12) !important;
   position: relative;
   overflow: hidden;
 }
-.dlavie-home__card-icon::after {
+/* Shimmer sweep on icon */
+.dlavie-home__card-icon::before {
   content: "";
   position: absolute;
-  inset: 0;
-  background: var(--chrome-gradient);
-  opacity: 0.08;
-  border-radius: inherit;
+  top: -50%;
+  left: -75%;
+  width: 50%;
+  height: 200%;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(255,255,255,0.70) 50%,
+    transparent 100%
+  );
+  transform: skewX(-20deg);
+  animation: icon-shimmer 3s ease-in-out infinite;
   pointer-events: none;
 }
+/* Stagger shimmer per card */
+.dlavie-home__card:nth-child(2) .dlavie-home__card-icon::before { animation-delay: 0.4s; }
+.dlavie-home__card:nth-child(3) .dlavie-home__card-icon::before { animation-delay: 0.8s; }
+.dlavie-home__card:nth-child(4) .dlavie-home__card-icon::before { animation-delay: 1.2s; }
+.dlavie-home__card:nth-child(5) .dlavie-home__card-icon::before { animation-delay: 1.6s; }
+.dlavie-home__card:nth-child(6) .dlavie-home__card-icon::before { animation-delay: 2.0s; }
+
 .dlavie-home__card:hover .dlavie-home__card-icon {
-  background: rgba(200,200,215,0.20) !important;
+  background: linear-gradient(145deg, rgba(200,200,220,0.22), rgba(230,230,248,0.12)) !important;
   box-shadow:
-    0 1px 0 rgba(255,255,255,0.18) inset,
-    0 0 20px rgba(210,210,230,0.14);
+    0 1px 0 rgba(255,255,255,0.22) inset,
+    0 0 18px rgba(200,200,230,0.16),
+    0 0 0 0.5px rgba(210,210,230,0.20) !important;
 }
 
-/* ── "Learn more" link ── */
+/* ── "Learn more" — animated chrome gradient text ── */
 .dlavie-home__card-link {
-  /* Chrome gradient text */
-  background: var(--chrome-gradient) !important;
+  background: var(--chrome) !important;
+  background-size: 300% 100% !important;
   -webkit-background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
   background-clip: text !important;
-  background-size: 200% 100%;
-  animation: chrome-text-shift 4s ease-in-out infinite;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+  animation: chrome-text 3s linear infinite !important;
   font-weight: 700 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
 }
-@keyframes chrome-text-shift {
-  0%   { background-position: 0% 50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
+/* SVG arrow — tidak bisa gradient, pakai warna solid */
 .dlavie-home__card-link svg {
-  /* Can't apply gradient to svg, use silver color */
-  color: var(--silver-mid);
-  -webkit-text-fill-color: initial;
+  color: #B8B8CC;
   flex-shrink: 0;
+  /* Reset text-fill untuk svg */
+  fill: none;
+  stroke: #B8B8CC;
 }
 
-/* ── Card hover accent glow ── */
-.dlavie-home__card::before {
-  background: radial-gradient(circle at 30% 40%, 
-    rgba(200,200,215,0.07), transparent 60%) !important;
-}
-
-/* ── Section eyebrow (non-pill) silver tint ── */
-.dlavie-home__eyebrow:not(.dlavie-home__eyebrow--pill) {
-  border-color: rgba(200,200,215,0.14);
-  color: rgba(220,220,235,0.55);
-}
-
-/* ── Magnetic / scene buttons — secondary tint silver ── */
-.magnetic-btn--secondary {
-  background: var(--silver-soft) !important;
-  border-color: rgba(200,200,215,0.28) !important;
-  color: var(--silver-bright) !important;
-}
-.magnetic-btn--secondary:hover {
-  background: rgba(200,200,215,0.20) !important;
-  border-color: rgba(220,220,235,0.44) !important;
-}
-
-/* ── Section label chip (scene labels) ── */
-.section-label {
-  border-color: rgba(200,200,215,0.14);
-  color: rgba(220,220,235,0.55);
-}
-.section-label__index {
-  background: var(--chrome-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  background-size: 200%;
-}
-
-/* ── Ambient glow — silver instead of blue ── */
+/* ── Ambient glow — silver undertone ── */
 body::before {
   background:
     radial-gradient(ellipse 80% 50% at 50% -10%,
-      rgba(180,180,200,0.10) 0%, transparent 58%),
+      rgba(170,170,195,0.09) 0%, transparent 58%),
     radial-gradient(ellipse 55% 40% at 85% 75%,
-      rgba(160,160,185,0.07) 0%, transparent 52%),
+      rgba(150,150,175,0.06) 0%, transparent 52%),
     #000 !important;
 }
 
-/* ── Hero ambient — chrome tones ── */
+/* ── Hero ambient silver ── */
 .dlavie-home__hero::before {
   background:
     radial-gradient(ellipse 70% 55% at 60% 30%,
-      rgba(180,180,205,0.12), transparent 58%),
+      rgba(170,170,195,0.10), transparent 58%),
     radial-gradient(ellipse 50% 40% at 85% 70%,
-      rgba(150,150,175,0.08), transparent 52%) !important;
+      rgba(140,140,165,0.07), transparent 52%) !important;
+}
+
+/* ── Nav register button silver ── */
+.dlavie-home__nav-actions .dlavie-home__button--primary {
+  /* keep white primary button as-is */
+}
+.nav-action {
+  border-color: rgba(200,200,220,0.28) !important;
+  background: rgba(200,200,220,0.10) !important;
+  color: #D0D0E8 !important;
+}
+.nav-action:hover {
+  background: rgba(210,210,230,0.18) !important;
+  border-color: rgba(220,220,240,0.42) !important;
+}
+
+/* ── Section label chip silver ── */
+.section-label__index {
+  background: var(--chrome);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: chrome-text 3s linear infinite;
 }
 
 /* ── Focus ring silver ── */
-:focus-visible {
-  outline-color: var(--silver) !important;
-}
-::selection {
-  background: rgba(200,200,215,0.22) !important;
-}
-
-/* ── Scrollbar chrome ── */
-::-webkit-scrollbar-thumb {
-  background: rgba(200,200,215,0.18) !important;
-}
+:focus-visible { outline-color: #C8C8DC !important; }
+::selection    { background: rgba(200,200,220,0.22) !important; }
