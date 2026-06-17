@@ -1,23 +1,71 @@
-import type { HTMLAttributes, ReactNode } from 'react';
-import { createElement } from 'react';
+'use client';
 
-type RevealTag = 'div' | 'section' | 'article' | 'h2' | 'h3' | 'p' | 'span';
+import type { ReactNode, ElementType, CSSProperties } from 'react';
 
-type RevealSectionProps = HTMLAttributes<HTMLElement> & {
-  as?: RevealTag;
+type MotionType = 'reveal' | 'parallax' | 'depth-card' | 'split-reveal';
+
+interface RevealSectionProps {
   children: ReactNode;
+  /** GSAP motion type — maps to data-motion attribute */
+  motion?: MotionType;
+  /** Marks this as a named scroll section (tracked by scroll-engine) */
+  sectionId?: string;
+  /** Additional data- attributes forwarded to the element */
   delay?: number;
-};
+  speed?: number;
+  depth?: number;
+  stagger?: number;
+  as?: ElementType;
+  className?: string;
+  style?: CSSProperties;
+  id?: string;
+}
 
-export function RevealSection({ as = 'div', children, delay = 0, className, ...props }: RevealSectionProps) {
-  return createElement(
-    as,
-    {
-      ...props,
-      'data-motion': 'reveal',
-      'data-delay': delay,
-      className,
-    },
-    children,
+/**
+ * RevealSection
+ *
+ * Thin wrapper that applies the correct data-motion attribute
+ * for GSAP to pick up in ScrollOrchestrator / effects.ts.
+ *
+ * Usage:
+ *   <RevealSection motion="reveal" delay={0.1}>
+ *     <Card />
+ *   </RevealSection>
+ *
+ *   <RevealSection motion="depth-card" depth={1.5}>
+ *     <FeatureCard />
+ *   </RevealSection>
+ *
+ *   <RevealSection motion="split-reveal" as="h2">
+ *     The future is AI-native
+ *   </RevealSection>
+ */
+export function RevealSection({
+  children,
+  motion = 'reveal',
+  sectionId,
+  delay,
+  speed,
+  depth,
+  stagger,
+  as: Tag = 'div',
+  className,
+  style,
+  id,
+}: RevealSectionProps) {
+  return (
+    <Tag
+      id={id}
+      className={className}
+      style={style}
+      data-motion={motion}
+      data-scroll-section={sectionId !== undefined ? sectionId : undefined}
+      data-delay={delay}
+      data-speed={speed}
+      data-depth={depth}
+      data-stagger={stagger}
+    >
+      {children}
+    </Tag>
   );
 }
