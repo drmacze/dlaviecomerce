@@ -13,24 +13,27 @@ export function ScrollOrchestrator() {
 
   /* ── 1. Sync Lenis ↔ GSAP ticker ───────────────────────────────────── */
   useEffect(() => {
-    if (!lenis) return;
+    const currentLenis = lenis;
+    if (!currentLenis) return;
 
     function onTick(time: number) {
-      lenis.raf(time * 1000);
+      currentLenis.raf(time * 1000);
     }
+
+    const handleScroll = () => ScrollTrigger.update();
 
     gsap.ticker.add(onTick);
     gsap.ticker.lagSmoothing(0);
 
-    // Tell ScrollTrigger to use Lenis scroll position
-    lenis.on('scroll', () => ScrollTrigger.update());
+    // Tell ScrollTrigger to use Lenis scroll position.
+    currentLenis.on('scroll', handleScroll);
 
-    // Refresh ScrollTrigger once Lenis has measured the page
+    // Refresh ScrollTrigger once Lenis has measured the page.
     const id = setTimeout(() => ScrollTrigger.refresh(), 300);
 
     return () => {
       gsap.ticker.remove(onTick);
-      lenis.off('scroll', () => ScrollTrigger.update());
+      currentLenis.off('scroll', handleScroll);
       clearTimeout(id);
     };
   }, [lenis]);
