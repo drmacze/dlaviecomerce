@@ -17,7 +17,7 @@ export function ScrollOrchestrator() {
     if (!currentLenis) return;
 
     function onTick(time: number) {
-      currentLenis.raf(time * 1000);
+      currentLenis?.raf(time * 1000);
     }
 
     const handleScroll = () => ScrollTrigger.update();
