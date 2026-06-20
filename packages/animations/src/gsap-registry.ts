@@ -67,11 +67,13 @@ export class SplitText {
       return Array.from(document.querySelectorAll<HTMLElement>(target));
     }
 
-    if (target instanceof HTMLElement) {
-      return [target];
+    if (target instanceof Element) {
+      return target instanceof HTMLElement ? [target] : [];
     }
 
-    return Array.from(target).filter((element): element is HTMLElement => element instanceof HTMLElement);
+    return Array.from(target as ArrayLike<Element>).filter(
+      (element): element is HTMLElement => element instanceof HTMLElement,
+    );
   }
 
   private splitElement(element: HTMLElement, options: SplitTextOptions): void {
