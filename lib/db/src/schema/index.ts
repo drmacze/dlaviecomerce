@@ -1,1 +1,1 @@
-export * from "./commerce";
+export * from "./commerce.js";
