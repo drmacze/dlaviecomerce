@@ -19,9 +19,7 @@
     "test:watch": "vitest",
     "format": "prettier --write .",
     "format:check": "prettier --check src tests lib/db/src README.md .env.example",
-    "db:generate": "pnpm --filter @workspace/db generate",
     "db:migrate": "pnpm --filter @workspace/db migrate",
-    "db:check": "pnpm --filter @workspace/db check",
     "db:studio": "pnpm --filter @workspace/db studio"
   },
   "dependencies": {
