@@ -18,7 +18,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "format": "prettier --write .",
-    "format:check": "prettier --check src tests lib/db/src README.md .env.example",
+    "format:check": "prettier --check src tests lib/db/src README.md",
     "db:migrate": "pnpm --filter @workspace/db migrate",
     "db:studio": "pnpm --filter @workspace/db studio"
   },
