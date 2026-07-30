@@ -1,0 +1,122 @@
+name: Commerce CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: commerce-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Typecheck, lint, and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.28.2 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check formatting
+        run: pnpm format:check
+
+      - name: Lint API and database code
+        run: pnpm lint
+
+      - name: Typecheck API
+        run: pnpm typecheck
+
+      - name: Run API tests
+        run: pnpm test
+
+      - name: Typecheck storefront
+        run: pnpm --filter @dlavie/www typecheck
+
+  migration:
+    name: PostgreSQL migration smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: dlavie
+          POSTGRES_PASSWORD: dlavie-ci-password
+          POSTGRES_DB: dlavie_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U dlavie -d dlavie_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://dlavie:dlavie-ci-password@localhost:5432/dlavie_ci
+      DATABASE_SSL_MODE: disable
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.28.2 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply migrations
+        run: pnpm db:migrate
+
+      - name: Verify migration idempotency
+        run: pnpm db:migrate
+
+      - name: Verify commerce tables
+        working-directory: lib/db
+        run: |
+          node --input-type=module <<'NODE'
+          import pg from 'pg';
+          const expected = new Set([
+            'customers', 'categories', 'products', 'product_images', 'product_variants',
+            'inventory', 'shipping_methods', 'carts', 'cart_items', 'orders',
+            'order_items', 'payments', 'payment_events', 'inventory_movements'
+          ]);
+          const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+          const { rows } = await pool.query(
+            "select table_name from information_schema.tables where table_schema = 'public'"
+          );
+          const actual = new Set(rows.map((row) => row.table_name));
+          const missing = [...expected].filter((name) => !actual.has(name));
+          await pool.end();
+          if (missing.length > 0) throw new Error(`Missing commerce tables: ${missing.join(', ')}`);
+          console.log(`verified ${expected.size} commerce tables`);
+          NODE
