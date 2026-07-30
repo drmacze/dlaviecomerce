@@ -1,0 +1,45 @@
+name: Temporary Address Type Fix
+
+on:
+  push:
+    branches: [feat/commerce-core-production]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/commerce-core-production
+
+      - name: Update exact optional address type
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('lib/db/src/schema/commerce.ts')
+          content = path.read_text()
+          old = '  line2?: string;\n'
+          new = '  line2?: string | undefined;\n'
+          if content.count(old) != 1:
+              raise SystemExit('Expected exactly one AddressSnapshot line2 declaration.')
+          path.write_text(content.replace(old, new))
+          PY
+
+      - name: Commit type fix
+        run: |
+          if git diff --quiet; then
+            echo "Address type is already correct."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/db/src/schema/commerce.ts
+          git commit -m "fix(types): align optional shipping address field"
+          git push origin HEAD:feat/commerce-core-production
