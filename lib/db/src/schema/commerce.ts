@@ -21,7 +21,7 @@ export type AddressSnapshot = {
   recipientName: string;
   phone: string;
   line1: string;
-  line2?: string;
+  line2?: string | undefined;
   district: string;
   city: string;
   province: string;
