@@ -1,21 +1,28 @@
 {
-  "name": "dlavie-ai-backend",
-  "version": "1.0.0",
-  "description": "Production-ready backend API for DLavie AI.",
+  "name": "dlavie-platform-api",
+  "version": "1.1.0",
+  "description": "DLavie production API for commerce, payments, and optional AI services.",
   "license": "MIT",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@10.28.2",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc -p tsconfig.json",
-    "start": "node dist/server.js",
+    "start": "tsx src/server.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "lint": "eslint src tests",
+    "lint": "eslint src tests lib/db/src",
     "test": "vitest run",
-    "format": "prettier --write ."
+    "test:watch": "vitest",
+    "format": "prettier --write .",
+    "format:check": "prettier --check src tests lib/db/src README.md .env.example",
+    "db:generate": "pnpm --filter @workspace/db generate",
+    "db:migrate": "pnpm --filter @workspace/db migrate",
+    "db:check": "pnpm --filter @workspace/db check",
+    "db:studio": "pnpm --filter @workspace/db studio"
   },
   "dependencies": {
     "@fastify/cors": "^11.1.0",
