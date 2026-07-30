@@ -21,7 +21,7 @@ export const envSchema = z
     TRUST_PROXY: boolish.default(false),
 
     ENABLE_AI: boolish.default(false),
-    ENABLE_COMMERCE: boolish.default(true),
+    ENABLE_COMMERCE: boolish.default(false),
     ENABLE_PAYMENTS: boolish.default(false),
 
     DATABASE_URL: optionalSecret,
