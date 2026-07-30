@@ -54,11 +54,7 @@ function truncate(value: string, maxLength: number): string {
 
 export async function createSnapTransaction(input: SnapTransactionInput): Promise<SnapTransaction> {
   if (!env.ENABLE_PAYMENTS || !env.MIDTRANS_SERVER_KEY) {
-    throw new AppError(
-      'SERVICE_UNAVAILABLE',
-      'Payment processing is not configured.',
-      503,
-    );
+    throw new AppError('SERVICE_UNAVAILABLE', 'Payment processing is not configured.', 503);
   }
 
   const shippingAddress = input.customer.shippingAddress;
@@ -124,11 +120,15 @@ export async function createSnapTransaction(input: SnapTransactionInput): Promis
 
   const responseBody = (await response.json().catch(() => ({}))) as Record<string, unknown>;
   if (!response.ok) {
-    throw new MidtransRequestError('Payment provider rejected the transaction request.', 'rejected', {
-      providerStatus: response.status,
-      providerCode:
-        typeof responseBody.status_code === 'string' ? responseBody.status_code : undefined,
-    });
+    throw new MidtransRequestError(
+      'Payment provider rejected the transaction request.',
+      'rejected',
+      {
+        providerStatus: response.status,
+        providerCode:
+          typeof responseBody.status_code === 'string' ? responseBody.status_code : undefined,
+      },
+    );
   }
 
   const token = responseBody.token;

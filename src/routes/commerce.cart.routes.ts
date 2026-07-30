@@ -115,7 +115,9 @@ async function buildCartView(cartId: string) {
       currency: item.currency,
       availableQuantity: item.availableQuantity,
       purchasable:
-        item.variantActive && item.productStatus === 'active' && item.availableQuantity >= item.quantity,
+        item.variantActive &&
+        item.productStatus === 'active' &&
+        item.availableQuantity >= item.quantity,
     };
   });
 

@@ -188,7 +188,11 @@ export async function commerceCheckoutRoutes(app: FastifyInstance): Promise<void
     },
     async (request, reply) => {
       if (!env.ENABLE_PAYMENTS) {
-        throw new AppError('SERVICE_UNAVAILABLE', 'Checkout is disabled until payments are configured.', 503);
+        throw new AppError(
+          'SERVICE_UNAVAILABLE',
+          'Checkout is disabled until payments are configured.',
+          503,
+        );
       }
 
       const cartId = uuidSchema.parse((request.params as { cartId: string }).cartId);
@@ -221,7 +225,8 @@ export async function commerceCheckoutRoutes(app: FastifyInstance): Promise<void
             ),
           )
           .limit(1);
-        if (!cart) throw new AppError('UNAUTHORIZED', 'Cart credentials are invalid or expired.', 401);
+        if (!cart)
+          throw new AppError('UNAUTHORIZED', 'Cart credentials are invalid or expired.', 401);
 
         const items = await tx
           .select({
@@ -288,12 +293,20 @@ export async function commerceCheckoutRoutes(app: FastifyInstance): Promise<void
               ? 0
               : method.flatRateAmount;
         } else if (input.shippingMethodId || input.shippingAddress) {
-          throw new AppError('BAD_REQUEST', 'Shipping details are not accepted for a digital-only cart.', 400);
+          throw new AppError(
+            'BAD_REQUEST',
+            'Shipping details are not accepted for a digital-only cart.',
+            400,
+          );
         }
 
         const totalAmount = safeAdd(subtotalAmount, shippingAmount);
         if (totalAmount < 1) {
-          throw new AppError('BAD_REQUEST', 'Paid checkout requires a total amount of at least IDR 1.', 400);
+          throw new AppError(
+            'BAD_REQUEST',
+            'Paid checkout requires a total amount of at least IDR 1.',
+            400,
+          );
         }
 
         const [claimedCart] = await tx
@@ -419,7 +432,12 @@ export async function commerceCheckoutRoutes(app: FastifyInstance): Promise<void
         name: `${item.productName} - ${item.variantName}`,
       }));
       if (checkout.shippingAmount > 0) {
-        paymentItems.push({ id: 'SHIPPING', price: checkout.shippingAmount, quantity: 1, name: 'Shipping' });
+        paymentItems.push({
+          id: 'SHIPPING',
+          price: checkout.shippingAmount,
+          quantity: 1,
+          name: 'Shipping',
+        });
       }
 
       try {
@@ -459,12 +477,16 @@ export async function commerceCheckoutRoutes(app: FastifyInstance): Promise<void
       }
 
       reply.header('Cache-Control', 'no-store');
-      return reply.status(201).send({ data: await orderView(checkout.orderNumber, idempotencyKey) });
+      return reply
+        .status(201)
+        .send({ data: await orderView(checkout.orderNumber, idempotencyKey) });
     },
   );
 
   app.get('/v1/orders/:orderNumber', async (request, reply) => {
-    const orderNumber = orderNumberSchema.parse((request.params as { orderNumber: string }).orderNumber);
+    const orderNumber = orderNumberSchema.parse(
+      (request.params as { orderNumber: string }).orderNumber,
+    );
     const orderToken = idempotencyKeySchema.parse(requiredHeader(request, 'x-order-token'));
     reply.header('Cache-Control', 'no-store');
     return { data: await orderView(orderNumber, orderToken) };

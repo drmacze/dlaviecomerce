@@ -64,7 +64,10 @@ export async function commerceCatalogRoutes(app: FastifyInstance): Promise<void>
   app.get('/v1/catalog/products', async (request) => {
     const query = catalogQuerySchema.parse(request.query);
     const searchCondition = query.q
-      ? or(ilike(productsTable.name, `%${query.q}%`), ilike(productsTable.description, `%${query.q}%`))
+      ? or(
+          ilike(productsTable.name, `%${query.q}%`),
+          ilike(productsTable.description, `%${query.q}%`),
+        )
       : undefined;
     const where = and(
       eq(productsTable.status, 'active'),
@@ -140,7 +143,12 @@ export async function commerceCatalogRoutes(app: FastifyInstance): Promise<void>
         })
         .from(productVariantsTable)
         .innerJoin(inventoryTable, eq(inventoryTable.variantId, productVariantsTable.id))
-        .where(and(inArray(productVariantsTable.productId, productIds), eq(productVariantsTable.isActive, true)))
+        .where(
+          and(
+            inArray(productVariantsTable.productId, productIds),
+            eq(productVariantsTable.isActive, true),
+          ),
+        )
         .orderBy(asc(productVariantsTable.priceAmount), asc(productVariantsTable.name)),
     ]);
 
@@ -214,7 +222,12 @@ export async function commerceCatalogRoutes(app: FastifyInstance): Promise<void>
         })
         .from(productVariantsTable)
         .innerJoin(inventoryTable, eq(inventoryTable.variantId, productVariantsTable.id))
-        .where(and(eq(productVariantsTable.productId, product.id), eq(productVariantsTable.isActive, true)))
+        .where(
+          and(
+            eq(productVariantsTable.productId, product.id),
+            eq(productVariantsTable.isActive, true),
+          ),
+        )
         .orderBy(asc(productVariantsTable.priceAmount), asc(productVariantsTable.name)),
     ]);
 

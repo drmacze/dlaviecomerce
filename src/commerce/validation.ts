@@ -71,7 +71,11 @@ export const imageInputSchema = z.object({
 });
 
 export const shippingMethodInputSchema = z.object({
-  code: z.string().trim().toUpperCase().regex(/^[A-Z0-9][A-Z0-9_-]{1,31}$/),
+  code: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(/^[A-Z0-9][A-Z0-9_-]{1,31}$/),
   name: z.string().trim().min(2).max(100),
   flatRateAmount: z.number().int().min(0).max(2_000_000_000),
   freeAboveAmount: z.number().int().min(0).max(2_000_000_000).optional(),
@@ -79,7 +83,12 @@ export const shippingMethodInputSchema = z.object({
 });
 
 export const inventoryAdjustmentSchema = z.object({
-  delta: z.number().int().min(-1_000_000).max(1_000_000).refine((value) => value !== 0),
+  delta: z
+    .number()
+    .int()
+    .min(-1_000_000)
+    .max(1_000_000)
+    .refine((value) => value !== 0),
   reason: z.string().trim().min(3).max(500),
 });
 
@@ -100,7 +109,10 @@ export const addressSchema = z.object({
   district: z.string().trim().min(2).max(120),
   city: z.string().trim().min(2).max(120),
   province: z.string().trim().min(2).max(120),
-  postalCode: z.string().trim().regex(/^[0-9A-Za-z -]{3,12}$/),
+  postalCode: z
+    .string()
+    .trim()
+    .regex(/^[0-9A-Za-z -]{3,12}$/),
   countryCode: z.string().trim().toUpperCase().length(2).default('ID'),
 });
 

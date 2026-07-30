@@ -96,11 +96,11 @@ GET http://localhost:8787/health/ready
 
 Features are disabled by default in application code and must be enabled explicitly.
 
-| Variable | Purpose |
-| --- | --- |
-| `ENABLE_COMMERCE` | Loads catalog, cart, checkout, order, admin, and database modules. |
-| `ENABLE_PAYMENTS` | Enables Midtrans checkout and webhook endpoints. Requires commerce. |
-| `ENABLE_AI` | Loads Supabase authentication, chat, model, conversation, and knowledge routes. |
+| Variable          | Purpose                                                                         |
+| ----------------- | ------------------------------------------------------------------------------- |
+| `ENABLE_COMMERCE` | Loads catalog, cart, checkout, order, admin, and database modules.              |
+| `ENABLE_PAYMENTS` | Enables Midtrans checkout and webhook endpoints. Requires commerce.             |
+| `ENABLE_AI`       | Loads Supabase authentication, chat, model, conversation, and knowledge routes. |
 
 This design prevents a commerce-only deployment from loading or requiring Supabase credentials.
 

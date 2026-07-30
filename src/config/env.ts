@@ -1,9 +1,7 @@
 import 'dotenv/config';
 import { z } from 'zod';
 
-const boolish = z
-  .enum(['true', 'false'])
-  .transform((value) => value === 'true');
+const boolish = z.enum(['true', 'false']).transform((value) => value === 'true');
 
 const optionalSecret = z
   .string()
@@ -54,7 +52,10 @@ export const envSchema = z
     MIDTRANS_SERVER_KEY: optionalSecret,
     MIDTRANS_IS_PRODUCTION: boolish.default(false),
     PAYMENT_EXPIRY_MINUTES: z.coerce.number().int().min(15).max(1440).default(60),
-    ORDER_PREFIX: z.string().regex(/^[A-Z0-9]{2,8}$/).default('DLV'),
+    ORDER_PREFIX: z
+      .string()
+      .regex(/^[A-Z0-9]{2,8}$/)
+      .default('DLV'),
     CART_TTL_DAYS: z.coerce.number().int().min(1).max(30).default(14),
 
     RATE_LIMIT_MAX: z.coerce.number().int().positive().default(60),
@@ -136,7 +137,9 @@ export function getEnv(
   }
 
   if (missing.length > 0) {
-    throw new Error(`Missing or invalid environment variables: ${[...new Set(missing)].join(', ')}`);
+    throw new Error(
+      `Missing or invalid environment variables: ${[...new Set(missing)].join(', ')}`,
+    );
   }
 
   return env;

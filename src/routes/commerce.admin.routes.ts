@@ -40,7 +40,15 @@ const adminOrdersQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(30),
   status: z
-    .enum(['pending_payment', 'paid', 'processing', 'shipped', 'completed', 'cancelled', 'refunded'])
+    .enum([
+      'pending_payment',
+      'paid',
+      'processing',
+      'shipped',
+      'completed',
+      'cancelled',
+      'refunded',
+    ])
     .optional(),
 });
 const orderStatusPatchSchema = z.object({
@@ -57,7 +65,9 @@ async function assertProductReady(productId: string): Promise<void> {
     db
       .select({ id: productVariantsTable.id })
       .from(productVariantsTable)
-      .where(and(eq(productVariantsTable.productId, productId), eq(productVariantsTable.isActive, true)))
+      .where(
+        and(eq(productVariantsTable.productId, productId), eq(productVariantsTable.isActive, true)),
+      )
       .limit(1),
     db
       .select({ id: productImagesTable.id })
@@ -301,31 +311,27 @@ export async function commerceAdminRoutes(app: FastifyInstance): Promise<void> {
     },
   );
 
-  app.get(
-    '/v1/admin/commerce/orders',
-    { preHandler: requireCommerceAdmin },
-    async (request) => {
-      const query = adminOrdersQuerySchema.parse(request.query);
-      const where = query.status ? eq(ordersTable.status, query.status) : undefined;
-      const orders = await db
-        .select({
-          id: ordersTable.id,
-          orderNumber: ordersTable.orderNumber,
-          email: ordersTable.email,
-          status: ordersTable.status,
-          totalAmount: ordersTable.totalAmount,
-          currency: ordersTable.currency,
-          createdAt: ordersTable.createdAt,
-          paidAt: ordersTable.paidAt,
-        })
-        .from(ordersTable)
-        .where(where)
-        .orderBy(desc(ordersTable.createdAt))
-        .limit(query.limit)
-        .offset((query.page - 1) * query.limit);
-      return { data: orders, pagination: { page: query.page, limit: query.limit } };
-    },
-  );
+  app.get('/v1/admin/commerce/orders', { preHandler: requireCommerceAdmin }, async (request) => {
+    const query = adminOrdersQuerySchema.parse(request.query);
+    const where = query.status ? eq(ordersTable.status, query.status) : undefined;
+    const orders = await db
+      .select({
+        id: ordersTable.id,
+        orderNumber: ordersTable.orderNumber,
+        email: ordersTable.email,
+        status: ordersTable.status,
+        totalAmount: ordersTable.totalAmount,
+        currency: ordersTable.currency,
+        createdAt: ordersTable.createdAt,
+        paidAt: ordersTable.paidAt,
+      })
+      .from(ordersTable)
+      .where(where)
+      .orderBy(desc(ordersTable.createdAt))
+      .limit(query.limit)
+      .offset((query.page - 1) * query.limit);
+    return { data: orders, pagination: { page: query.page, limit: query.limit } };
+  });
 
   app.patch(
     '/v1/admin/commerce/orders/:orderId/status',
@@ -345,7 +351,11 @@ export async function commerceAdminRoutes(app: FastifyInstance): Promise<void> {
         .limit(1);
       if (!current) throw new AppError('NOT_FOUND', 'Order was not found.', 404);
       if (!allowedPrevious[input.status].includes(current.status)) {
-        throw new AppError('CONFLICT', `Order cannot move from ${current.status} to ${input.status}.`, 409);
+        throw new AppError(
+          'CONFLICT',
+          `Order cannot move from ${current.status} to ${input.status}.`,
+          409,
+        );
       }
       const [order] = await db
         .update(ordersTable)

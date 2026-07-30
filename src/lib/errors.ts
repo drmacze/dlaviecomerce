@@ -63,13 +63,19 @@ export function sendError(reply: FastifyReply, error: unknown) {
     }
 
     if (error.code === '23505') {
-      return reply.status(409).send(formatError('CONFLICT', 'A record with the same unique value already exists.'));
+      return reply
+        .status(409)
+        .send(formatError('CONFLICT', 'A record with the same unique value already exists.'));
     }
     if (error.code === '23503') {
-      return reply.status(409).send(formatError('CONFLICT', 'The record is still referenced by other data.'));
+      return reply
+        .status(409)
+        .send(formatError('CONFLICT', 'The record is still referenced by other data.'));
     }
     if (error.code === '23514' || error.code === '22P02') {
-      return reply.status(400).send(formatError('BAD_REQUEST', 'The submitted data violates a database constraint.'));
+      return reply
+        .status(400)
+        .send(formatError('BAD_REQUEST', 'The submitted data violates a database constraint.'));
     }
   }
 
