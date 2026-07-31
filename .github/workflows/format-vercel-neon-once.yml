@@ -1,0 +1,52 @@
+name: One-time Vercel Neon Formatter
+
+on:
+  push:
+    branches: [feat/vercel-neon-embedded-commerce]
+    paths: [.github/workflows/format-vercel-neon-once.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/vercel-neon-embedded-commerce
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.28.2 --activate
+
+      - name: Install and format
+        run: |
+          pnpm install --frozen-lockfile
+          python <<'PY'
+          from pathlib import Path
+          workflow = Path('.github/workflows/vercel-neon-ci.yml')
+          text = workflow.read_text()
+          text = text.replace('            apps/www/.env.example \\\n', '')
+          workflow.write_text(text)
+          PY
+          pnpm exec prettier --write \
+            apps/www/src/commerce/embedded.ts \
+            .github/workflows/vercel-neon-ci.yml
+
+      - name: Commit formatting and remove writer
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/format-vercel-neon-once.yml
+          git add apps/www/src/commerce/embedded.ts .github/workflows/vercel-neon-ci.yml
+          git commit -m "style(vercel): format embedded Neon integration"
+          git pull --rebase origin feat/vercel-neon-embedded-commerce
+          git push origin HEAD:feat/vercel-neon-embedded-commerce
