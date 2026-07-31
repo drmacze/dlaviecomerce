@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Barlow_Condensed, Inter } from 'next/font/google';
 import { SmoothScrollProvider } from '../components/SmoothScrollProvider';
+import 'lenis/dist/lenis.css';
 import './globals.css';
 import './cinematic.css';
 import '../src/styles/tokens.css';
@@ -15,6 +16,7 @@ import '../src/styles/account-auth.css';
 import '../src/styles/ai.css';
 import '../src/styles/home.css';
 import '../src/styles/commerce.css';
+import '../src/styles/brand-experience.css';
 
 const dlavieDisplay = Barlow_Condensed({
   subsets: ['latin'],
@@ -33,6 +35,11 @@ export const metadata: Metadata = {
   title: 'DLavie — AI. Commerce. Automation.',
   description:
     'An intelligent product ecosystem for DlavieOS, AI agents, commerce, and connected operations.',
+  icons: {
+    icon: '/brand/dlavie-mark.svg',
+    shortcut: '/brand/dlavie-mark.svg',
+    apple: '/brand/dlavie-mark.svg',
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
