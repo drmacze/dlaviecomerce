@@ -1,6 +1,6 @@
 import 'server-only';
 import crypto from 'node:crypto';
-import type { FastifyInstance, HTTPMethods, InjectOptions } from 'fastify';
+import type { FastifyInstance, InjectOptions } from 'fastify';
 
 export class EmbeddedCommerceConfigurationError extends Error {
   constructor(message: string) {
@@ -106,14 +106,14 @@ export async function embeddedCommerceFetch(
 ): Promise<Response> {
   const app = await embeddedApp(options.origin);
   const injectOptions: InjectOptions = {
-    method: (options.method ?? 'GET') as HTTPMethods,
+    method: (options.method ?? 'GET') as NonNullable<InjectOptions['method']>,
     url: pathname,
     ...(options.headers ? { headers: Object.fromEntries(options.headers.entries()) } : {}),
     ...(options.body ? { payload: Buffer.from(options.body) } : {}),
   };
   const result = await app.inject(injectOptions);
 
-  return new Response(result.rawPayload, {
+  return new Response(result.body, {
     status: result.statusCode,
     headers: responseHeaders(result.headers),
   });
