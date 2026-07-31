@@ -163,6 +163,7 @@ function encryptSession(session: CommerceSession): string {
 }
 
 export function readCommerceSession(request: Request): CommerceSession {
+  encryptionKey();
   const encoded = parseCookieHeader(request.headers.get('cookie'));
   return encoded ? decryptSession(encoded) : emptySession();
 }
@@ -182,8 +183,7 @@ export function setCartCredential(
 }
 
 export function clearCartCredential(session: CommerceSession): CommerceSession {
-  const { cart: _cart, ...withoutCart } = session;
-  return normalizeSession(withoutCart);
+  return normalizeSession({ version: session.version, orders: session.orders });
 }
 
 export function setOrderCredential(
@@ -209,9 +209,4 @@ export function orderCredential(session: CommerceSession, orderNumber: string): 
 export function commerceSessionCookie(session: CommerceSession): string {
   const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
   return `${cookieName()}=${encryptSession(session)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${cookieMaxAgeSeconds}${secure}`;
-}
-
-export function clearCommerceSessionCookie(): string {
-  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
-  return `${cookieName()}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure}`;
 }
