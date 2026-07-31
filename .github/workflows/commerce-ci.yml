@@ -52,7 +52,7 @@ jobs:
         run: pnpm --filter @dlavie/www typecheck
 
   migration:
-    name: PostgreSQL migration smoke test
+    name: PostgreSQL migration and API smoke test
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -72,8 +72,13 @@ jobs:
           --health-retries 10
 
     env:
+      NODE_ENV: test
+      ENABLE_COMMERCE: "true"
+      ENABLE_PAYMENTS: "false"
+      ENABLE_AI: "false"
       DATABASE_URL: postgresql://dlavie:dlavie-ci-password@localhost:5432/dlavie_ci
       DATABASE_SSL_MODE: disable
+      ADMIN_API_KEY: ci-admin-key-used-only-in-disposable-actions-run
 
     steps:
       - name: Checkout
@@ -118,3 +123,6 @@ jobs:
           if (missing.length > 0) throw new Error(`Missing commerce tables: ${missing.join(', ')}`);
           console.log(`verified ${expected.size} commerce tables`);
           NODE
+
+      - name: Run PostgreSQL-backed commerce API smoke test
+        run: pnpm exec tsx tests/commerce.smoke.ts
