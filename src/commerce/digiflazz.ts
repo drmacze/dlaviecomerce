@@ -67,12 +67,9 @@ async function postDigiflazz<T>(path: string, body: Record<string, unknown>): Pr
   try {
     payload = JSON.parse(text) as T;
   } catch {
-    throw new AppError(
-      'CATALOG_PROVIDER_ERROR',
-      'Digiflazz returned an invalid response.',
-      502,
-      { providerStatus: response.status },
-    );
+    throw new AppError('CATALOG_PROVIDER_ERROR', 'Digiflazz returned an invalid response.', 502, {
+      providerStatus: response.status,
+    });
   }
 
   if (!response.ok) {
@@ -123,7 +120,10 @@ export async function requestDigiflazzTransaction(input: {
   return payload.data;
 }
 
-export function verifyDigiflazzWebhook(rawBody: string, signatureHeader: string | undefined): boolean {
+export function verifyDigiflazzWebhook(
+  rawBody: string,
+  signatureHeader: string | undefined,
+): boolean {
   if (!env.DIGIFLAZZ_WEBHOOK_SECRET) return false;
   if (!signatureHeader?.startsWith('sha1=')) return false;
   const expected = `sha1=${crypto

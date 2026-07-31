@@ -11,10 +11,7 @@ import {
   productVariantsTable,
 } from '../../lib/db/src/index.js';
 import { env } from '../config/env.js';
-import {
-  calculateDigiflazzSellingPrice,
-  fetchDigiflazzPriceList,
-} from '../commerce/digiflazz.js';
+import { calculateDigiflazzSellingPrice, fetchDigiflazzPriceList } from '../commerce/digiflazz.js';
 import { requireCommerceAdmin } from '../middleware/commerceAdmin.js';
 
 const syncInputSchema = z.object({
@@ -77,7 +74,10 @@ export async function commerceProviderRoutes(app: FastifyInstance): Promise<void
     { preHandler: requireCommerceAdmin },
     async (request) => {
       const input = syncInputSchema.parse(request.body ?? {});
-      const providerProducts = (await fetchDigiflazzPriceList(input.cmd)).slice(0, input.maxProducts);
+      const providerProducts = (await fetchDigiflazzPriceList(input.cmd)).slice(
+        0,
+        input.maxProducts,
+      );
       const result = {
         received: providerProducts.length,
         createdProducts: 0,
@@ -110,7 +110,7 @@ export async function commerceProviderRoutes(app: FastifyInstance): Promise<void
         const reportedStock = numeric(item.stock);
         const targetStock = item.unlimited_stock
           ? 1_000_000
-          : reportedStock ?? (active ? 10_000 : 0);
+          : (reportedStock ?? (active ? 10_000 : 0));
         const sellingPrice = calculateDigiflazzSellingPrice(
           providerPrice,
           input.markupPercent,
@@ -273,8 +273,7 @@ export async function commerceProviderRoutes(app: FastifyInstance): Promise<void
         data: result,
         pricing: {
           markupPercent: input.markupPercent ?? env.DIGIFLAZZ_MARKUP_PERCENT,
-          minimumMarkupAmount:
-            input.minimumMarkupAmount ?? env.DIGIFLAZZ_MINIMUM_MARKUP_AMOUNT,
+          minimumMarkupAmount: input.minimumMarkupAmount ?? env.DIGIFLAZZ_MINIMUM_MARKUP_AMOUNT,
         },
       };
     },

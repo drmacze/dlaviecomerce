@@ -61,12 +61,7 @@ export const envSchema = z
     DIGIFLAZZ_TESTING: boolish.default(true),
     DIGIFLAZZ_CALLBACK_URL: optionalSecret,
     DIGIFLAZZ_MARKUP_PERCENT: z.coerce.number().min(0).max(100).default(5),
-    DIGIFLAZZ_MINIMUM_MARKUP_AMOUNT: z.coerce
-      .number()
-      .int()
-      .min(0)
-      .max(10_000_000)
-      .default(500),
+    DIGIFLAZZ_MINIMUM_MARKUP_AMOUNT: z.coerce.number().int().min(0).max(10_000_000).default(500),
 
     ORDER_PREFIX: z
       .string()
