@@ -1,12 +1,16 @@
 name: One-time Vercel Neon Formatter
 
 on:
-  push:
-    branches: [feat/vercel-neon-embedded-commerce]
-    paths: [.github/workflows/format-vercel-neon-once.yml]
+  pull_request:
+    branches: [feat/commerce-admin-dashboard]
+    types: [synchronize]
 
 permissions:
   contents: write
+
+concurrency:
+  group: format-vercel-neon-once
+  cancel-in-progress: true
 
 jobs:
   format:
