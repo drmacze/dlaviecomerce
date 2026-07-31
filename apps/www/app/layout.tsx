@@ -1,14 +1,9 @@
 import type { Metadata } from 'next';
-import { cookies, headers } from 'next/headers';
 import { Barlow_Condensed, Inter } from 'next/font/google';
 import { SmoothScrollProvider } from '../components/SmoothScrollProvider';
 import { HomeWordmark } from '../src/components/brand/HomeWordmark';
 import { LocaleExperience } from '../src/components/i18n/LocaleExperience';
-import {
-  DLAVIE_LOCALE_COOKIE,
-  localeFromCountry,
-  normalizeLocale,
-} from '../src/i18n/config';
+import { getRequestLocale } from '../src/i18n/server';
 import 'lenis/dist/lenis.css';
 import './globals.css';
 import './cinematic.css';
@@ -54,12 +49,7 @@ export const metadata: Metadata = {
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const cookieStore = await cookies();
-  const requestHeaders = await headers();
-  const storedLocale = normalizeLocale(cookieStore.get(DLAVIE_LOCALE_COOKIE)?.value);
-  const browserLocale = normalizeLocale(requestHeaders.get('accept-language')?.split(',')[0]);
-  const regionLocale = localeFromCountry(requestHeaders.get('x-vercel-ip-country'));
-  const locale = storedLocale ?? browserLocale ?? regionLocale;
+  const locale = await getRequestLocale();
 
   return (
     <html lang={locale} data-lenis-root suppressHydrationWarning>
