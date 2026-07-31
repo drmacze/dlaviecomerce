@@ -7,17 +7,33 @@ import { kbSearchSchema } from '../src/schemas/knowledge.schema.js';
 describe('security hardening', () => {
   const productionBase = {
     NODE_ENV: 'production',
+    API_BASE_URL: 'https://api.example.com',
+    STOREFRONT_URL: 'https://shop.example.com',
+    CORS_ORIGINS: 'https://shop.example.com',
     SUPABASE_URL: 'https://example.supabase.co',
     SUPABASE_ANON_KEY: 'anon',
     SUPABASE_SERVICE_ROLE_KEY: 'service',
     SUPABASE_JWT_SECRET: 'jwt',
-    ADMIN_API_KEY: 'admin',
+    ADMIN_API_KEY: 'admin-key-with-at-least-thirty-two-characters',
     OPENAI_API_KEY: 'openai',
     ENABLE_MODEL_FALLBACK: 'false',
   };
 
   it('rejects wildcard CORS in production', () => {
     expect(() => getEnv({ ...productionBase, CORS_ORIGINS: '*' })).toThrow(/CORS_ORIGINS/);
+  });
+
+  it('allows Midtrans sandbox for a production-built staging service', () => {
+    const env = getEnv({
+      ...productionBase,
+      ENABLE_COMMERCE: 'true',
+      ENABLE_PAYMENTS: 'true',
+      DATABASE_URL: 'postgresql://user:password@database.example.com:5432/dlavie',
+      MIDTRANS_SERVER_KEY: 'sandbox-server-key',
+      MIDTRANS_IS_PRODUCTION: 'false',
+    });
+    expect(env.ENABLE_PAYMENTS).toBe(true);
+    expect(env.MIDTRANS_IS_PRODUCTION).toBe(false);
   });
 
   it('validates knowledge document ids as UUIDs', () => {
