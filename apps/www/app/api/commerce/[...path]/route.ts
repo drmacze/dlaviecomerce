@@ -48,7 +48,16 @@ function validSegments(segments: string[]): boolean {
 }
 
 function samePath(segments: string[], expected: string[]): boolean {
-  return segments.length === expected.length && segments.every((value, index) => value === expected[index]);
+  return (
+    segments.length === expected.length &&
+    segments.every((value, index) => value === expected[index])
+  );
+}
+
+function isAllowedOrigin(request: Request): boolean {
+  if (request.method === 'GET' || request.method === 'HEAD') return true;
+  const origin = request.headers.get('origin');
+  return !origin || origin === new URL(request.url).origin;
 }
 
 function resolveProxy(
@@ -98,14 +107,14 @@ function resolveProxy(
 
   if (
     (method === 'PUT' || method === 'DELETE') &&
-    segments.length === 6 &&
+    segments.length === 5 &&
     samePath(segments.slice(0, 4), ['v1', 'carts', 'current', 'items'])
   ) {
     if (!session.cart) {
       return errorResponse(401, 'CART_SESSION_REQUIRED', 'No active cart session was found.');
     }
     return {
-      backendPath: ['v1', 'carts', session.cart.id, 'items', segments[4], segments[5]],
+      backendPath: ['v1', 'carts', session.cart.id, 'items', segments[4]],
       kind: 'cart',
       cartToken: session.cart.token,
     };
@@ -122,7 +131,11 @@ function resolveProxy(
     };
   }
 
-  if (method === 'GET' && segments.length === 3 && samePath(segments.slice(0, 2), ['v1', 'orders'])) {
+  if (
+    method === 'GET' &&
+    segments.length === 3 &&
+    samePath(segments.slice(0, 2), ['v1', 'orders'])
+  ) {
     const token = orderCredential(session, segments[2]);
     if (!token) {
       return errorResponse(
@@ -206,6 +219,10 @@ async function proxy(
   context: { params: Promise<{ path: string[] }> },
 ): Promise<Response> {
   const { path } = await context.params;
+
+  if (!isAllowedOrigin(request)) {
+    return errorResponse(403, 'FORBIDDEN', 'Cross-origin commerce mutations are not allowed.');
+  }
 
   let session: CommerceSession;
   try {
@@ -304,7 +321,8 @@ async function proxy(
   const responseHeaders = upstreamHeaders(upstream);
   if (sessionChanged) responseHeaders.set('Set-Cookie', commerceSessionCookie(nextSession));
 
-  const responseBody = payload === null ? (bytes.byteLength > 0 ? bytes : null) : JSON.stringify(payload);
+  const responseBody =
+    payload === null ? (bytes.byteLength > 0 ? bytes : null) : JSON.stringify(payload);
   if (payload !== null) responseHeaders.set('Content-Type', 'application/json; charset=utf-8');
 
   return new Response(responseBody, {
