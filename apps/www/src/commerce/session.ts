@@ -2,6 +2,7 @@ import {
   createCipheriv,
   createDecipheriv,
   createHash,
+  createHmac,
   randomBytes,
 } from 'node:crypto';
 
@@ -184,6 +185,13 @@ export function setCartCredential(
 
 export function clearCartCredential(session: CommerceSession): CommerceSession {
   return normalizeSession({ version: session.version, orders: session.orders });
+}
+
+export function checkoutCredential(session: CommerceSession): string | null {
+  if (!session.cart) return null;
+  return createHmac('sha256', encryptionKey())
+    .update(`checkout:${session.cart.id}:${session.cart.token}`, 'utf8')
+    .digest('hex');
 }
 
 export function setOrderCredential(
