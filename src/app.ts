@@ -57,14 +57,16 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(healthRoutes);
 
   if (env.ENABLE_COMMERCE) {
-    const [catalog, admin, cart, checkout, webhook] = await Promise.all([
+    const [catalog, admin, adminRead, cart, checkout, webhook] = await Promise.all([
       import('./routes/commerce.catalog.routes.js'),
       import('./routes/commerce.admin.routes.js'),
+      import('./routes/commerce.admin.read.routes.js'),
       import('./routes/commerce.cart.routes.js'),
       import('./routes/commerce.checkout.routes.js'),
       import('./routes/commerce.webhook.routes.js'),
     ]);
     await app.register(catalog.commerceCatalogRoutes);
+    await app.register(adminRead.commerceAdminReadRoutes);
     await app.register(admin.commerceAdminRoutes);
     await app.register(cart.commerceCartRoutes);
     await app.register(checkout.commerceCheckoutRoutes);
