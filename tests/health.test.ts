@@ -9,7 +9,7 @@ describe('health routes', () => {
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({
       ok: true,
-      service: 'DLavie Platform API',
+      service: 'DLavie Commerce API',
       version: '1.1.0',
       features: { commerce: false, payments: false, ai: false },
     });
