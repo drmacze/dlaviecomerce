@@ -17,7 +17,8 @@ const copy = {
     description: 'Discover active DLavie products with current pricing and stock information.',
     collection: 'DLavie collection',
     heroTitle: 'Shop with less friction and fewer distractions.',
-    heroCopy: 'Discover DLavie products through a clear catalog, transparent pricing, and live stock information from the commerce system.',
+    heroCopy:
+      'Discover DLavie products through a clear catalog, transparent pricing, and live stock information from the commerce system.',
     principlesLabel: 'Commerce service advantages',
     liveData: 'Live data',
     liveDataCopy: 'Prices and stock are read directly from the system.',
@@ -54,7 +55,8 @@ const copy = {
     unavailable: 'Commerce is not available yet',
     catalogUnavailable: 'The catalog is temporarily unavailable',
     backendMissing: 'The backend is not configured',
-    invalidResponse: 'The commerce service did not return a valid response. No local or fake product data is used as a replacement.',
+    invalidResponse:
+      'The commerce service did not return a valid response. No local or fake product data is used as a replacement.',
     connectDatabase: 'Connect the commerce database before opening the store.',
     back: 'Back to DLavie',
   },
@@ -63,7 +65,8 @@ const copy = {
     description: 'Temukan produk aktif DLavie dengan harga dan ketersediaan stok terkini.',
     collection: 'Koleksi DLavie',
     heroTitle: 'Belanja lebih mudah, tanpa distraksi.',
-    heroCopy: 'Temukan produk DLavie melalui katalog yang jelas, harga transparan, dan informasi stok yang diperbarui langsung dari sistem commerce.',
+    heroCopy:
+      'Temukan produk DLavie melalui katalog yang jelas, harga transparan, dan informasi stok yang diperbarui langsung dari sistem commerce.',
     principlesLabel: 'Keunggulan layanan commerce',
     liveData: 'Data langsung',
     liveDataCopy: 'Harga dan stok dibaca dari sistem.',
@@ -100,7 +103,8 @@ const copy = {
     unavailable: 'Commerce belum tersedia',
     catalogUnavailable: 'Katalog sedang tidak dapat diakses',
     backendMissing: 'Backend belum dikonfigurasi',
-    invalidResponse: 'Layanan commerce tidak memberikan respons yang valid. Tidak ada data lokal atau produk palsu yang digunakan sebagai pengganti.',
+    invalidResponse:
+      'Layanan commerce tidak memberikan respons yang valid. Tidak ada data lokal atau produk palsu yang digunakan sebagai pengganti.',
     connectDatabase: 'Hubungkan database commerce sebelum membuka toko.',
     back: 'Kembali ke DLavie',
   },
@@ -145,7 +149,10 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
       <div className="commerce-page">
         <CommerceHeader />
         <main className="commerce-shell">
-          <section className="commerce-hero commerce-hero--catalog" aria-labelledby="commerce-title">
+          <section
+            className="commerce-hero commerce-hero--catalog"
+            aria-labelledby="commerce-title"
+          >
             <div className="commerce-hero__content">
               <p className="commerce-eyebrow">{labels.collection}</p>
               <h1 id="commerce-title">{labels.heroTitle}</h1>
@@ -155,42 +162,78 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
             <div className="commerce-hero__principles" aria-label={labels.principlesLabel}>
               <div>
                 <RefreshCw size={18} aria-hidden="true" />
-                <span><strong>{labels.liveData}</strong><small>{labels.liveDataCopy}</small></span>
+                <span>
+                  <strong>{labels.liveData}</strong>
+                  <small>{labels.liveDataCopy}</small>
+                </span>
               </div>
               <div>
                 <PackageSearch size={18} aria-hidden="true" />
-                <span><strong>{labels.structured}</strong><small>{labels.structuredCopy}</small></span>
+                <span>
+                  <strong>{labels.structured}</strong>
+                  <small>{labels.structuredCopy}</small>
+                </span>
               </div>
               <div>
                 <ShieldCheck size={18} aria-hidden="true" />
-                <span><strong>{labels.protected}</strong><small>{labels.protectedCopy}</small></span>
+                <span>
+                  <strong>{labels.protected}</strong>
+                  <small>{labels.protectedCopy}</small>
+                </span>
               </div>
             </div>
           </section>
 
           <section className="commerce-catalog" id="catalog" aria-labelledby="catalog-title">
             <div className="commerce-catalog__heading">
-              <div><p className="commerce-eyebrow">{labels.catalog}</p><h2 id="catalog-title">{labels.catalogTitle}</h2></div>
+              <div>
+                <p className="commerce-eyebrow">{labels.catalog}</p>
+                <h2 id="catalog-title">{labels.catalogTitle}</h2>
+              </div>
               <p>{labels.catalogCopy}</p>
             </div>
 
             <form className="commerce-search" action="/shop#catalog" method="get">
               <Search size={18} aria-hidden="true" />
-              <input type="search" name="q" defaultValue={query} minLength={2} maxLength={100} placeholder={labels.searchPlaceholder} aria-label={labels.searchLabel} />
+              <input
+                type="search"
+                name="q"
+                defaultValue={query}
+                minLength={2}
+                maxLength={100}
+                placeholder={labels.searchPlaceholder}
+                aria-label={labels.searchLabel}
+              />
               {category ? <input type="hidden" name="category" value={category} /> : null}
               <button type="submit">{labels.searchButton}</button>
             </form>
 
             <div className="commerce-catalog-layout">
-              <aside className="commerce-category-nav" id="categories" aria-labelledby="categories-title">
-                <div className="commerce-category-nav__heading"><p id="categories-title">{labels.categories}</p><span>{categories.length}</span></div>
+              <aside
+                className="commerce-category-nav"
+                id="categories"
+                aria-labelledby="categories-title"
+              >
+                <div className="commerce-category-nav__heading">
+                  <p id="categories-title">{labels.categories}</p>
+                  <span>{categories.length}</span>
+                </div>
                 <nav aria-label={labels.categoryNav}>
-                  <Link href={pageHref({ page: 1, query }) + '#catalog'} className={!category ? 'is-active' : undefined}>
-                    <span>{labels.allProducts}</span><small>{catalog.pagination.total}</small>
+                  <Link
+                    href={pageHref({ page: 1, query }) + '#catalog'}
+                    className={!category ? 'is-active' : undefined}
+                  >
+                    <span>{labels.allProducts}</span>
+                    <small>{catalog.pagination.total}</small>
                   </Link>
                   {categories.map((item) => (
-                    <Link key={item.id} href={pageHref({ page: 1, query, category: item.slug }) + '#catalog'} className={category === item.slug ? 'is-active' : undefined}>
-                      <span>{item.name}</span><ArrowRight size={14} aria-hidden="true" />
+                    <Link
+                      key={item.id}
+                      href={pageHref({ page: 1, query, category: item.slug }) + '#catalog'}
+                      className={category === item.slug ? 'is-active' : undefined}
+                    >
+                      <span>{item.name}</span>
+                      <ArrowRight size={14} aria-hidden="true" />
                     </Link>
                   ))}
                 </nav>
@@ -198,8 +241,15 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
 
               <div className="commerce-catalog-results">
                 <div className="commerce-results-meta" aria-live="polite">
-                  <p><strong>{catalog.pagination.total}</strong> {labels.products}{query ? ` ${labels.forQuery} “${query}”` : ''}</p>
-                  {category ? <Link href={pageHref({ page: 1, query }) + '#catalog'}>{labels.clearFilter}</Link> : null}
+                  <p>
+                    <strong>{catalog.pagination.total}</strong> {labels.products}
+                    {query ? ` ${labels.forQuery} “${query}”` : ''}
+                  </p>
+                  {category ? (
+                    <Link href={pageHref({ page: 1, query }) + '#catalog'}>
+                      {labels.clearFilter}
+                    </Link>
+                  ) : null}
                 </div>
 
                 {catalog.data.length > 0 ? (
@@ -211,17 +261,45 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
 
                       return (
                         <article className="commerce-product-card" key={product.id}>
-                          <Link className="commerce-product-card__media" href={`/shop/${encodeURIComponent(product.slug)}`} aria-label={`${labels.view} ${product.name}`}>
-                            {image ? <img src={image.url} alt={image.altText} loading="lazy" /> : <span className="commerce-product-card__no-image">{labels.imageMissing}</span>}
-                            {variant.availableQuantity < 1 ? <span className="commerce-badge commerce-badge--sold">{labels.soldOut}</span> : null}
+                          <Link
+                            className="commerce-product-card__media"
+                            href={`/shop/${encodeURIComponent(product.slug)}`}
+                            aria-label={`${labels.view} ${product.name}`}
+                          >
+                            {image ? (
+                              <img src={image.url} alt={image.altText} loading="lazy" />
+                            ) : (
+                              <span className="commerce-product-card__no-image">
+                                {labels.imageMissing}
+                              </span>
+                            )}
+                            {variant.availableQuantity < 1 ? (
+                              <span className="commerce-badge commerce-badge--sold">
+                                {labels.soldOut}
+                              </span>
+                            ) : null}
                           </Link>
                           <div className="commerce-product-card__body">
-                            <p className="commerce-product-card__category">{product.category?.name ?? 'DLavie'}</p>
-                            <h2><Link href={`/shop/${encodeURIComponent(product.slug)}`}>{product.name}</Link></h2>
-                            <p className="commerce-product-card__description">{product.description}</p>
+                            <p className="commerce-product-card__category">
+                              {product.category?.name ?? 'DLavie'}
+                            </p>
+                            <h2>
+                              <Link href={`/shop/${encodeURIComponent(product.slug)}`}>
+                                {product.name}
+                              </Link>
+                            </h2>
+                            <p className="commerce-product-card__description">
+                              {product.description}
+                            </p>
                             <div className="commerce-product-card__footer">
-                              <div><small>{labels.startingFrom}</small><strong>{formatIdr(variant.priceAmount)}</strong></div>
-                              <Link className="commerce-product-card__link" href={`/shop/${encodeURIComponent(product.slug)}`}>
+                              <div>
+                                <small>{labels.startingFrom}</small>
+                                <strong>{formatIdr(variant.priceAmount)}</strong>
+                              </div>
+                              <Link
+                                className="commerce-product-card__link"
+                                href={`/shop/${encodeURIComponent(product.slug)}`}
+                              >
                                 {labels.viewProduct} <ArrowRight size={15} aria-hidden="true" />
                               </Link>
                             </div>
@@ -232,16 +310,33 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
                   </section>
                 ) : (
                   <section className="commerce-empty">
-                    <h2>{labels.emptyTitle}</h2><p>{labels.emptyCopy}</p>
-                    <Link className="commerce-button commerce-button--secondary" href="/shop">{labels.fullCatalog}</Link>
+                    <h2>{labels.emptyTitle}</h2>
+                    <p>{labels.emptyCopy}</p>
+                    <Link className="commerce-button commerce-button--secondary" href="/shop">
+                      {labels.fullCatalog}
+                    </Link>
                   </section>
                 )}
 
                 {totalPages > 1 ? (
                   <nav className="commerce-pagination" aria-label={labels.pagination}>
-                    {page > 1 ? <Link href={pageHref({ page: page - 1, query, category }) + '#catalog'}>{labels.previous}</Link> : <span aria-disabled="true">{labels.previous}</span>}
-                    <strong>{labels.page} {page} {labels.of} {totalPages}</strong>
-                    {page < totalPages ? <Link href={pageHref({ page: page + 1, query, category }) + '#catalog'}>{labels.next}</Link> : <span aria-disabled="true">{labels.next}</span>}
+                    {page > 1 ? (
+                      <Link href={pageHref({ page: page - 1, query, category }) + '#catalog'}>
+                        {labels.previous}
+                      </Link>
+                    ) : (
+                      <span aria-disabled="true">{labels.previous}</span>
+                    )}
+                    <strong>
+                      {labels.page} {page} {labels.of} {totalPages}
+                    </strong>
+                    {page < totalPages ? (
+                      <Link href={pageHref({ page: page + 1, query, category }) + '#catalog'}>
+                        {labels.next}
+                      </Link>
+                    ) : (
+                      <span aria-disabled="true">{labels.next}</span>
+                    )}
                   </nav>
                 ) : null}
               </div>
@@ -262,7 +357,9 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
             <p className="commerce-eyebrow">{labels.unavailable}</p>
             <h1>{configured ? labels.catalogUnavailable : labels.backendMissing}</h1>
             <p>{unavailable ? labels.invalidResponse : labels.connectDatabase}</p>
-            <Link className="commerce-button commerce-button--secondary" href="/">{labels.back}</Link>
+            <Link className="commerce-button commerce-button--secondary" href="/">
+              {labels.back}
+            </Link>
           </section>
         </main>
       </div>

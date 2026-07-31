@@ -46,17 +46,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const locale = await getRequestLocale();
 
   return (
     <html lang={locale} data-lenis-root suppressHydrationWarning>
-      <body
-        className={`${dlavieDisplay.variable} ${dlavieSans.variable}`}
-        suppressHydrationWarning
-      >
+      <body className={`${dlavieDisplay.variable} ${dlavieSans.variable}`} suppressHydrationWarning>
         <LocaleExperience initialLocale={locale}>
           <HomeWordmark />
           <SmoothScrollProvider>{children}</SmoothScrollProvider>
