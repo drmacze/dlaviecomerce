@@ -77,22 +77,17 @@ try {
   const categoryId = categoryResponse.data.id;
   assert.match(categoryId, /^[0-9a-f-]{36}$/i);
 
-  const productResponse = await expectJson<IdResponse>(
-    'POST',
-    '/v1/admin/commerce/products',
-    201,
-    {
-      headers: adminHeaders,
-      payload: {
-        categoryId,
-        name: `CI Product ${suffix}`,
-        slug: `ci-product-${suffix}`,
-        description: 'Ephemeral product used only inside the disposable CI database.',
-        status: 'draft',
-        requiresShipping: false,
-      },
+  const productResponse = await expectJson<IdResponse>('POST', '/v1/admin/commerce/products', 201, {
+    headers: adminHeaders,
+    payload: {
+      categoryId,
+      name: `CI Product ${suffix}`,
+      slug: `ci-product-${suffix}`,
+      description: 'Ephemeral product used only inside the disposable CI database.',
+      status: 'draft',
+      requiresShipping: false,
     },
-  );
+  });
   const productId = productResponse.data.id;
 
   const variantResponse = await expectJson<IdResponse>(
@@ -113,19 +108,14 @@ try {
   );
   const variantId = variantResponse.data.id;
 
-  await expectJson<IdResponse>(
-    'POST',
-    `/v1/admin/commerce/products/${productId}/images`,
-    201,
-    {
-      headers: adminHeaders,
-      payload: {
-        url: `https://example.com/ci-commerce-${suffix}.webp`,
-        altText: `CI product ${suffix}`,
-        isPrimary: true,
-      },
+  await expectJson<IdResponse>('POST', `/v1/admin/commerce/products/${productId}/images`, 201, {
+    headers: adminHeaders,
+    payload: {
+      url: `https://example.com/ci-commerce-${suffix}.webp`,
+      altText: `CI product ${suffix}`,
+      isPrimary: true,
     },
-  );
+  });
 
   const inventoryResponse = await expectJson<InventoryResponse>(
     'POST',
@@ -171,21 +161,16 @@ try {
   assert.equal(cart.data.items[0]?.purchasable, true);
   assert.equal(cart.data.items[0]?.availableQuantity, 5);
 
-  const checkoutDisabled = await expectJson<ErrorResponse>(
-    'POST',
-    `/v1/checkout/${cartId}`,
-    503,
-    {
-      headers: {
-        'x-cart-token': cartToken,
-        'idempotency-key': randomUUID().replaceAll('-', '') + randomUUID().replaceAll('-', ''),
-      },
-      payload: {
-        fullName: 'CI Commerce Verification',
-        email: `ci-${suffix}@example.invalid`,
-      },
+  const checkoutDisabled = await expectJson<ErrorResponse>('POST', `/v1/checkout/${cartId}`, 503, {
+    headers: {
+      'x-cart-token': cartToken,
+      'idempotency-key': randomUUID().replaceAll('-', '') + randomUUID().replaceAll('-', ''),
     },
-  );
+    payload: {
+      fullName: 'CI Commerce Verification',
+      email: `ci-${suffix}@example.invalid`,
+    },
+  });
   assert.equal(checkoutDisabled.error.code, 'SERVICE_UNAVAILABLE');
 
   console.log('commerce API smoke test passed');
