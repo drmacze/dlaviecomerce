@@ -8,10 +8,6 @@ import { formatIdr } from '../../commerce/format';
 import { notifyCartUpdated } from '../../commerce/storage';
 import type { CartView, CheckoutInput, ShippingMethod } from '../../commerce/types';
 
-function createIdempotencyKey(): string {
-  return `${crypto.randomUUID().replaceAll('-', '')}${crypto.randomUUID().replaceAll('-', '')}`;
-}
-
 function text(form: FormData, name: string): string {
   const value = form.get(name);
   return typeof value === 'string' ? value.trim() : '';
@@ -139,11 +135,10 @@ export function CheckoutClient() {
       };
     }
 
-    const idempotencyKey = createIdempotencyKey();
     setStatus('submitting');
     setError(null);
     try {
-      const order = await checkout(idempotencyKey, input);
+      const order = await checkout(input);
       notifyCartUpdated();
 
       if (order.payment?.checkoutUrl) {
