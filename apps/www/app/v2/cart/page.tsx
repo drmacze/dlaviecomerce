@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ShoppingBag, UserRound } from 'lucide-react';
+import { UserRound } from 'lucide-react';
 import { getRequestLocale } from '../../../src/i18n/server';
 import { CartV2Client } from '../../../src/v2/CartV2Client';
 import styles from '../../../src/v2/cart.module.css';
