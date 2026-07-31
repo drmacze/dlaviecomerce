@@ -32,11 +32,9 @@ export type AdminShippingMethod = {
   id: string;
   code: string;
   name: string;
-  description: string | null;
   flatRateAmount: number;
   freeAboveAmount: number | null;
   isActive: boolean;
-  sortOrder: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -151,7 +149,7 @@ export type AdminOrderDetail = AdminOrderListItem & {
     currency: 'IDR';
     providerTransactionId: string | null;
     expiresAt: string | null;
-    paidAt: string | null;
+    terminalProcessedAt: string | null;
     createdAt: string;
     updatedAt: string;
   }>;
