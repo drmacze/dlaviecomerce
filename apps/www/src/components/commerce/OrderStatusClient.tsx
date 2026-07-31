@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { CommerceClientError, getOrder } from '../../commerce/client';
 import { formatDateTime, formatIdr, humanizeStatus } from '../../commerce/format';
-import { readOrderAccess } from '../../commerce/storage';
 import type { OrderView } from '../../commerce/types';
 
 const activeStatuses = new Set(['pending_payment', 'paid', 'processing', 'shipped']);
@@ -18,20 +17,18 @@ export function OrderStatusClient({ orderNumber }: { orderNumber: string }) {
 
   const load = useCallback(
     async (silent = false) => {
-      const token = readOrderAccess(orderNumber);
-      if (!token) {
-        setState('missing-access');
-        return;
-      }
-
       if (silent) setRefreshing(true);
       else setState('loading');
       setError(null);
       try {
-        const current = await getOrder(orderNumber, token);
+        const current = await getOrder(orderNumber);
         setOrder(current);
         setState('ready');
       } catch (requestError) {
+        if (requestError instanceof CommerceClientError && requestError.status === 401) {
+          setState('missing-access');
+          return;
+        }
         setState('error');
         setError(
           requestError instanceof CommerceClientError
@@ -71,10 +68,10 @@ export function OrderStatusClient({ orderNumber }: { orderNumber: string }) {
       <section className="commerce-service-state" role="alert">
         <ShieldAlert size={30} aria-hidden="true" />
         <p className="commerce-eyebrow">Akses pesanan diperlukan</p>
-        <h1>Token pesanan tidak ditemukan di perangkat ini</h1>
+        <h1>Sesi akses pesanan tidak ditemukan</h1>
         <p>
-          Demi privasi, nomor pesanan saja tidak cukup untuk membuka detail. Gunakan perangkat dan
-          browser yang dipakai saat checkout.
+          Demi privasi, nomor pesanan saja tidak cukup untuk membuka detail. Gunakan browser yang
+          dipakai saat checkout dan pastikan cookie situs tidak dihapus.
         </p>
         <Link className="commerce-button commerce-button--secondary" href="/shop">
           Kembali ke katalog
