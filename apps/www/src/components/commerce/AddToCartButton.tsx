@@ -3,8 +3,13 @@
 import { Minus, Plus, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
-import { CommerceClientError, createCart, setCartItem } from '../../commerce/client';
-import { clearCartSession, readCartSession, writeCartSession } from '../../commerce/storage';
+import {
+  CommerceClientError,
+  createCart,
+  getCommerceSession,
+  setCartItem,
+} from '../../commerce/client';
+import { notifyCartUpdated } from '../../commerce/storage';
 
 export function AddToCartButton({
   variantId,
@@ -19,30 +24,29 @@ export function AddToCartButton({
   const maximum = Math.min(availableQuantity, 99);
   const soldOut = maximum < 1;
 
+  async function ensureCart(): Promise<void> {
+    const session = await getCommerceSession();
+    if (!session.cart) await createCart();
+  }
+
   async function add(): Promise<void> {
     if (soldOut || state === 'submitting') return;
     setState('submitting');
     setError(null);
 
     try {
-      let session = readCartSession();
-      if (!session) {
-        session = await createCart();
-        writeCartSession(session);
-      }
-
+      await ensureCart();
       try {
-        await setCartItem(session, variantId, quantity);
+        await setCartItem(variantId, quantity);
       } catch (requestError) {
         if (!(requestError instanceof CommerceClientError) || requestError.status !== 401) {
           throw requestError;
         }
-        clearCartSession();
-        session = await createCart();
-        writeCartSession(session);
-        await setCartItem(session, variantId, quantity);
+        await createCart();
+        await setCartItem(variantId, quantity);
       }
 
+      notifyCartUpdated();
       setState('added');
     } catch (requestError) {
       setState('idle');
