@@ -1,4 +1,8 @@
-import { commerceApiPath, CommerceConfigurationError } from '../../../../../src/commerce/config';
+import {
+  commerceBackendFetch,
+  CommerceConfigurationError,
+  EmbeddedCommerceConfigurationError,
+} from '../../../../../src/commerce/backend';
 import {
   adminSessionCookie,
   AdminSessionConfigurationError,
@@ -99,10 +103,9 @@ async function proxy(
     const current = readAdminSession(request);
     if (!current) return errorResponse(401, 'UNAUTHORIZED', 'Admin sign-in is required.');
     const session = await refreshAdminSession(current);
-    const target = commerceApiPath(
-      `/v1/admin/commerce/${path.map((segment) => encodeURIComponent(segment)).join('/')}`,
-    );
-    target.search = new URL(request.url).search;
+    const backendPath = `/v1/admin/commerce/${path
+      .map((segment) => encodeURIComponent(segment))
+      .join('/')}${new URL(request.url).search}`;
 
     const headers = new Headers({
       Accept: 'application/json',
@@ -116,13 +119,12 @@ async function proxy(
       return errorResponse(413, 'PAYLOAD_TOO_LARGE', 'Admin request body is too large.');
     }
 
-    const upstream = await fetch(target, {
+    const upstream = await commerceBackendFetch(backendPath, {
       method: request.method,
       headers,
       ...(body ? { body } : {}),
-      cache: 'no-store',
-      redirect: 'manual',
-      signal: AbortSignal.timeout(20_000),
+      origin: new URL(request.url).origin,
+      timeoutMs: 20_000,
     });
     const responseHeaders = new Headers({
       'Cache-Control': 'no-store',
@@ -143,7 +145,8 @@ async function proxy(
   } catch (error) {
     const configurationError =
       error instanceof AdminSessionConfigurationError ||
-      error instanceof CommerceConfigurationError;
+      error instanceof CommerceConfigurationError ||
+      error instanceof EmbeddedCommerceConfigurationError;
     const response = errorResponse(
       configurationError ? 503 : 401,
       configurationError ? 'SERVICE_UNAVAILABLE' : 'UNAUTHORIZED',

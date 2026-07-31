@@ -1,9 +1,6 @@
 import 'server-only';
 import { commerceApiPath, CommerceConfigurationError } from './config';
-import {
-  embeddedCommerceFetch,
-  EmbeddedCommerceConfigurationError,
-} from './embedded';
+import { embeddedCommerceFetch, EmbeddedCommerceConfigurationError } from './embedded';
 
 export { CommerceConfigurationError, EmbeddedCommerceConfigurationError };
 
