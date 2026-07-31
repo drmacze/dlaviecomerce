@@ -1,4 +1,4 @@
-name: Temporary Commerce Home Link
+name: Temporary Commerce Storefront Finalizer
 
 on:
   push:
@@ -8,15 +8,28 @@ permissions:
   contents: write
 
 jobs:
-  patch:
+  finalize:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
 
     steps:
       - name: Checkout storefront branch
         uses: actions/checkout@v4
         with:
           ref: feat/commerce-storefront
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.28.2 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Add commerce navigation link
         run: |
@@ -32,19 +45,33 @@ jobs:
               <a href="#os">DLavie OS</a>
               <a href="/shop">Commerce</a>
               <a href="#ecosystem">Ecosystem</a>'''
-          if content.count(old) != 1:
-              raise SystemExit('Expected exactly one primary navigation block.')
-          path.write_text(content.replace(old, new))
+          if content.count(old) == 1:
+              path.write_text(content.replace(old, new))
+          elif content.count(new) != 1:
+              raise SystemExit('Primary navigation block is not in an expected state.')
           PY
 
-      - name: Commit navigation change
+      - name: Format commerce storefront
+        run: |
+          pnpm exec prettier --write \
+            apps/www/app/api/commerce \
+            apps/www/app/cart \
+            apps/www/app/checkout \
+            apps/www/app/orders \
+            apps/www/app/shop \
+            apps/www/src/commerce \
+            apps/www/src/components/commerce \
+            apps/www/src/styles/commerce.css \
+            apps/www/app/layout.tsx
+
+      - name: Commit finalization
         run: |
           if git diff --quiet; then
-            echo "Commerce link is already present."
+            echo "Storefront is already finalized."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add apps/www/app/page.tsx
-          git commit -m "feat(storefront): link homepage to commerce"
+          git add apps/www
+          git commit -m "style(storefront): format commerce and link homepage"
           git push origin HEAD:feat/commerce-storefront
