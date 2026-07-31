@@ -1,0 +1,817 @@
+:root {
+  --dlavie-brand-green: #173c2d;
+  --dlavie-brand-green-soft: #24543f;
+  --dlavie-brand-ivory: #f8f5e8;
+  --dlavie-brand-gold: #d6b86a;
+  --dlavie-brand-ink: #172019;
+}
+
+html[data-dlavie-loading='true'] {
+  overflow: hidden;
+}
+
+.dlavie-brand {
+  --dlavie-brand-copy: var(--dlavie-brand-ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.72rem;
+  min-width: 0;
+  color: var(--dlavie-brand-copy);
+}
+
+.dlavie-brand[data-tone='light'] {
+  --dlavie-brand-copy: var(--dlavie-brand-ivory);
+}
+
+.dlavie-brand__mark {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  overflow: visible;
+  filter: drop-shadow(0 10px 22px rgba(23, 60, 45, 0.13));
+}
+
+.dlavie-brand--compact .dlavie-brand__mark {
+  width: 36px;
+  height: 36px;
+}
+
+.dlavie-mark__base {
+  fill: var(--dlavie-brand-green);
+}
+
+.dlavie-mark__letter {
+  fill: var(--dlavie-brand-ivory);
+}
+
+.dlavie-mark__accent {
+  stroke: var(--dlavie-brand-gold);
+  stroke-width: 7px;
+}
+
+.dlavie-brand[data-tone='light'] .dlavie-mark__base {
+  fill: var(--dlavie-brand-ivory);
+}
+
+.dlavie-brand[data-tone='light'] .dlavie-mark__letter {
+  fill: var(--dlavie-brand-green);
+}
+
+.dlavie-brand__copy {
+  min-width: 0;
+  display: grid;
+  gap: 0.14rem;
+  line-height: 1;
+}
+
+.dlavie-brand__copy strong {
+  color: var(--dlavie-brand-copy);
+  font-family: var(--font-display), var(--font-sans), sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+}
+
+.dlavie-brand__copy small {
+  color: color-mix(in srgb, var(--dlavie-brand-copy) 62%, transparent);
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* Branded loading experience */
+.dlavie-loader {
+  background:
+    linear-gradient(rgba(248, 245, 232, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(248, 245, 232, 0.035) 1px, transparent 1px),
+    radial-gradient(circle at 54% 42%, rgba(214, 184, 106, 0.18), transparent 31rem),
+    linear-gradient(145deg, #0b241a 0%, #102f22 52%, #081c15 100%);
+  background-size: 72px 72px, 72px 72px, auto, auto;
+  transition: opacity 620ms cubic-bezier(0.22, 1, 0.36, 1), visibility 620ms step-end;
+}
+
+.dlavie-loader__backdrop {
+  inset: -14%;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(248, 245, 232, 0.08), transparent 24rem),
+    linear-gradient(112deg, transparent 30%, rgba(214, 184, 106, 0.13) 48%, transparent 65%);
+  filter: blur(2px);
+  animation: dlavie-brand-sheen 2.4s ease-in-out infinite alternate;
+}
+
+.dlavie-loader::after {
+  inset: clamp(1.25rem, 6vw, 4.5rem);
+  border-color: rgba(248, 245, 232, 0.09);
+  border-radius: 28px;
+}
+
+.dlavie-loader__content {
+  gap: 0.75rem;
+}
+
+.dlavie-loader__mark {
+  width: clamp(6.8rem, 16vw, 9.5rem);
+  filter: drop-shadow(0 24px 60px rgba(3, 13, 9, 0.42));
+  animation: dlavie-brand-rise 1.15s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.dlavie-loader__brand-mark {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+}
+
+.dlavie-loader__orbit {
+  position: absolute;
+  inset: -12%;
+  border: 1px solid rgba(214, 184, 106, 0.3);
+  border-top-color: var(--dlavie-brand-gold);
+  border-radius: 50%;
+  animation: dlavie-brand-orbit 2.2s linear infinite;
+}
+
+.dlavie-loader__eyebrow {
+  color: rgba(248, 245, 232, 0.52);
+  font-size: 0.58rem;
+  letter-spacing: 0.24em;
+}
+
+.dlavie-loader__wordmark {
+  color: var(--dlavie-brand-ivory);
+  font-size: clamp(1.25rem, 2.2vw, 1.75rem);
+  letter-spacing: 0.38em;
+  text-shadow: none;
+}
+
+.dlavie-loader__progress {
+  width: min(52vw, 210px);
+  height: 1px;
+  margin-top: 0.4rem;
+  overflow: hidden;
+  background: rgba(248, 245, 232, 0.13);
+}
+
+.dlavie-loader__progress span {
+  display: block;
+  width: 45%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, var(--dlavie-brand-gold), transparent);
+  animation: dlavie-brand-progress 1.1s ease-in-out infinite;
+}
+
+@keyframes dlavie-brand-rise {
+  from {
+    opacity: 0;
+    transform: translateY(22px) scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes dlavie-brand-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes dlavie-brand-progress {
+  from {
+    transform: translateX(-120%);
+  }
+  to {
+    transform: translateX(340%);
+  }
+}
+
+@keyframes dlavie-brand-sheen {
+  from {
+    transform: translate3d(-2%, -1%, 0) scale(1.03);
+    opacity: 0.48;
+  }
+  to {
+    transform: translate3d(2%, 1%, 0) scale(1.08);
+    opacity: 0.82;
+  }
+}
+
+/* Primary navigation identity */
+.nav-brand .dlavie-brand {
+  gap: 0.56rem;
+}
+
+.nav-brand .dlavie-brand__mark {
+  width: 31px;
+  height: 31px;
+  filter: none;
+}
+
+.nav-brand .dlavie-brand__copy strong {
+  font-size: 0.9rem;
+}
+
+/* Commerce navigation and interactions */
+.commerce-header__brand .dlavie-brand {
+  display: inline-flex;
+  gap: 0.62rem;
+}
+
+.commerce-header__brand .dlavie-brand__copy strong {
+  font-size: 0.98rem;
+}
+
+.commerce-header__account,
+.commerce-header__cart {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.6rem 0.82rem;
+  border: 1px solid var(--commerce-border);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 750;
+  transition:
+    transform 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease;
+}
+
+.commerce-header__account {
+  color: var(--commerce-text);
+  background: var(--commerce-surface);
+}
+
+.commerce-header__account:hover {
+  color: var(--commerce-accent);
+  border-color: var(--commerce-accent);
+  transform: translateY(-1px);
+}
+
+.commerce-header__cart:hover {
+  transform: translateY(-1px);
+}
+
+.commerce-hero__principles > div,
+.commerce-category-nav nav a,
+.commerce-search,
+.commerce-product-card {
+  will-change: transform;
+}
+
+.commerce-hero__principles > div {
+  transition:
+    padding-left 220ms ease,
+    color 220ms ease,
+    border-color 220ms ease;
+}
+
+.commerce-hero__principles > div:hover {
+  padding-left: 0.45rem;
+  border-color: var(--commerce-border-strong);
+}
+
+.commerce-search {
+  transition:
+    transform 220ms ease,
+    border-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.commerce-search:focus-within {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 36px rgba(23, 60, 45, 0.1);
+}
+
+.commerce-product-card {
+  transform-origin: center center;
+  backface-visibility: hidden;
+  transition:
+    border-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.commerce-product-card:hover {
+  border-color: var(--commerce-border-strong);
+  box-shadow: 0 22px 58px rgba(23, 60, 45, 0.12);
+}
+
+.commerce-product-card__media img {
+  transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.commerce-product-card:hover .commerce-product-card__media img {
+  transform: scale(1.035);
+}
+
+/* Account login and dashboard */
+.account-shell {
+  min-height: 100svh;
+  padding: clamp(1rem, 4vw, 3rem);
+  display: grid;
+  place-items: center;
+  color: var(--dlavie-brand-ink);
+  background:
+    radial-gradient(circle at 84% 10%, rgba(214, 184, 106, 0.15), transparent 28rem),
+    #f3f2ec;
+}
+
+.account-card,
+.account-dashboard {
+  width: min(100%, 1120px);
+  border: 1px solid #d9ddd7;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 30px 90px rgba(23, 60, 45, 0.12);
+  overflow: hidden;
+}
+
+.account-card {
+  min-height: min(760px, calc(100svh - 2rem));
+  display: grid;
+  grid-template-columns: minmax(360px, 0.9fr) minmax(420px, 1.1fr);
+}
+
+.account-card::before,
+.account-card::after,
+.account-panel::before,
+.account-panel::after {
+  content: none;
+}
+
+.account-visual {
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: clamp(1.5rem, 4vw, 3.25rem);
+  color: var(--dlavie-brand-ivory);
+  background:
+    linear-gradient(rgba(248, 245, 232, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(248, 245, 232, 0.035) 1px, transparent 1px),
+    radial-gradient(circle at 50% 38%, rgba(214, 184, 106, 0.16), transparent 19rem),
+    var(--dlavie-brand-green);
+  background-size: 64px 64px, 64px 64px, auto, auto;
+}
+
+.account-brand {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  color: inherit;
+  text-decoration: none;
+}
+
+.account-visual__brand-stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+  isolation: isolate;
+}
+
+.account-visual__mark {
+  position: relative;
+  z-index: 2;
+  width: clamp(9rem, 18vw, 13rem);
+  filter: drop-shadow(0 30px 58px rgba(3, 15, 10, 0.42));
+}
+
+.account-visual__halo {
+  position: absolute;
+  width: min(78%, 290px);
+  aspect-ratio: 1;
+  border: 1px solid rgba(214, 184, 106, 0.35);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 30px rgba(248, 245, 232, 0.025),
+    0 0 90px rgba(214, 184, 106, 0.2);
+  animation: account-halo 7s linear infinite;
+}
+
+@keyframes account-halo {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.account-visual__copy {
+  max-width: 500px;
+}
+
+.account-visual__copy h2 {
+  margin: 0.5rem 0 0.85rem;
+  color: var(--dlavie-brand-ivory);
+  font-size: clamp(1.7rem, 3.3vw, 2.8rem);
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  line-height: 1.06;
+}
+
+.account-visual__copy > p:last-child {
+  margin: 0;
+  color: rgba(248, 245, 232, 0.68);
+  font-size: 0.86rem;
+  line-height: 1.7;
+}
+
+.account-signal {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.account-signal span {
+  min-width: 0;
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.85rem;
+  border: 1px solid rgba(248, 245, 232, 0.12);
+  border-radius: 10px;
+  background: rgba(248, 245, 232, 0.045);
+}
+
+.account-signal svg {
+  color: var(--dlavie-brand-gold);
+}
+
+.account-signal b {
+  color: var(--dlavie-brand-ivory);
+  font-size: 0.7rem;
+}
+
+.account-signal em {
+  color: rgba(248, 245, 232, 0.52);
+  font-size: 0.58rem;
+  font-style: normal;
+}
+
+.account-panel {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(2rem, 6vw, 5rem);
+  color: var(--dlavie-brand-ink);
+  background: #fff;
+}
+
+.account-panel__kicker {
+  margin: 0;
+  color: var(--dlavie-brand-green-soft);
+  font-size: 0.64rem;
+  font-weight: 850;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.account-heading {
+  margin: 0.75rem 0 0;
+  color: var(--dlavie-brand-ink);
+  font-size: clamp(2.35rem, 5vw, 4rem);
+  font-weight: 600;
+  letter-spacing: -0.055em;
+  line-height: 1;
+}
+
+.account-panel__copy {
+  max-width: 600px;
+  margin: 1.15rem 0 0;
+  color: #687069;
+  font-size: 0.92rem;
+  line-height: 1.7;
+}
+
+.account-form {
+  display: grid;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.account-field {
+  display: grid;
+  gap: 0.48rem;
+  color: var(--dlavie-brand-ink);
+}
+
+.account-field > span {
+  color: #39443c;
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.account-field input,
+.account-field select {
+  width: 100%;
+  min-height: 50px;
+  padding: 0 0.95rem;
+  border: 1px solid #cfd5cf;
+  border-radius: 8px;
+  outline: none;
+  color: var(--dlavie-brand-ink);
+  background: #fafaf7;
+  box-shadow: none;
+  font: inherit;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.account-field[data-active='true'] input,
+.account-field[data-active='true'] select {
+  border-color: var(--dlavie-brand-green-soft);
+  box-shadow: 0 0 0 3px rgba(36, 84, 63, 0.1);
+  transform: translateY(-1px);
+}
+
+.account-field__hint {
+  min-height: 1rem;
+  color: #89918b;
+  font-size: 0.63rem;
+  font-style: normal;
+  line-height: 1.45;
+}
+
+.account-submit {
+  min-height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0 1.15rem;
+  border: 1px solid var(--dlavie-brand-green);
+  border-radius: 8px;
+  color: var(--dlavie-brand-ivory);
+  background: var(--dlavie-brand-green);
+  cursor: pointer;
+  font-weight: 800;
+  transition:
+    transform 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.account-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: #0f2f22;
+  box-shadow: 0 16px 34px rgba(23, 60, 45, 0.2);
+}
+
+.account-submit:disabled {
+  cursor: wait;
+  opacity: 0.66;
+}
+
+.account-status {
+  margin: 0;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid #d7ddd8;
+  border-radius: 8px;
+  color: #415047;
+  background: #f5f7f4;
+  font-size: 0.72rem;
+  line-height: 1.55;
+}
+
+.account-status[data-tone='error'] {
+  color: #8d3434;
+  border-color: #e4c5c5;
+  background: #fff5f5;
+}
+
+.account-switch,
+.account-note {
+  color: #7b847e;
+  font-size: 0.72rem;
+  line-height: 1.55;
+}
+
+.account-switch {
+  margin: 1.4rem 0 0;
+}
+
+.account-switch a {
+  color: var(--dlavie-brand-green-soft);
+  font-weight: 800;
+}
+
+.account-note {
+  margin: 0.55rem 0 0;
+}
+
+.account-dashboard {
+  padding: clamp(1.5rem, 4vw, 3.5rem);
+}
+
+.account-dashboard__header,
+.account-dashboard__actions,
+.account-dashboard__actions a,
+.account-dashboard__logout {
+  display: flex;
+  align-items: center;
+}
+
+.account-dashboard__header {
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.account-dashboard__actions {
+  gap: 0.65rem;
+}
+
+.account-dashboard__actions a,
+.account-dashboard__logout {
+  min-height: 40px;
+  gap: 0.42rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #d6dbd7;
+  border-radius: 7px;
+  color: #435047;
+  background: #fff;
+  font-size: 0.72rem;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.account-dashboard__logout {
+  cursor: pointer;
+}
+
+.account-dashboard__hero {
+  padding: clamp(3rem, 8vw, 6.5rem) 0;
+  border-bottom: 1px solid #dfe3df;
+}
+
+.account-dashboard__hero h1 {
+  margin: 0.65rem 0 0.75rem;
+  font-size: clamp(2.8rem, 7vw, 5.6rem);
+  font-weight: 600;
+  letter-spacing: -0.06em;
+  line-height: 0.98;
+}
+
+.account-dashboard__hero > p:last-child {
+  margin: 0;
+  color: #7b847e;
+}
+
+.account-dashboard__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  padding-top: 2rem;
+}
+
+.account-dashboard__grid article {
+  min-width: 0;
+  padding: 1.25rem;
+  border: 1px solid #dfe3df;
+  border-radius: 10px;
+  background: #fafaf7;
+}
+
+.account-dashboard__grid span,
+.account-dashboard__grid strong,
+.account-dashboard__grid p {
+  display: block;
+}
+
+.account-dashboard__grid span {
+  color: #879089;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.account-dashboard__grid strong {
+  margin-top: 0.65rem;
+  font-size: 1.1rem;
+}
+
+.account-dashboard__grid p {
+  margin: 0.65rem 0 0;
+  color: #6c756f;
+  font-size: 0.76rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 960px) {
+  .account-card {
+    grid-template-columns: 1fr;
+  }
+
+  .account-visual {
+    min-height: 520px;
+  }
+
+  .account-panel {
+    padding: clamp(2rem, 8vw, 4rem);
+  }
+
+  .commerce-header__nav {
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 720px) {
+  .dlavie-brand__mark {
+    width: 34px;
+    height: 34px;
+  }
+
+  .commerce-header__account span,
+  .commerce-header__cart span,
+  .commerce-header__utility p {
+    display: none;
+  }
+
+  .commerce-header__account,
+  .commerce-header__cart {
+    width: 40px;
+    padding-inline: 0;
+  }
+
+  .commerce-header__actions {
+    gap: 0.4rem;
+  }
+
+  .account-shell {
+    padding: 0;
+    place-items: stretch;
+  }
+
+  .account-card,
+  .account-dashboard {
+    min-height: 100svh;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .account-visual {
+    min-height: 430px;
+    padding: 1.35rem;
+  }
+
+  .account-visual__brand-stage {
+    min-height: 150px;
+  }
+
+  .account-signal {
+    grid-template-columns: 1fr;
+  }
+
+  .account-signal span {
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+  }
+
+  .account-panel {
+    padding: 2.25rem 1.25rem 3rem;
+  }
+
+  .account-dashboard__header {
+    align-items: flex-start;
+  }
+
+  .account-dashboard__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .account-dashboard__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dlavie-loader__backdrop,
+  .dlavie-loader__mark,
+  .dlavie-loader__orbit,
+  .dlavie-loader__progress span,
+  .account-visual__halo {
+    animation: none;
+  }
+
+  .commerce-product-card,
+  .commerce-product-card__media img,
+  .commerce-search,
+  .commerce-header__account,
+  .commerce-header__cart,
+  .account-submit,
+  .account-field input,
+  .account-field select {
+    transition-duration: 1ms;
+  }
+}
