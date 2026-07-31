@@ -1,0 +1,60 @@
+name: Admin Commerce CI
+
+on:
+  pull_request:
+    branches: [feat/commerce-storefront, main]
+  push:
+    branches: [feat/commerce-admin-dashboard]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: admin-commerce-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  admin:
+    name: Format, lint, test, typecheck, and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.28.2 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check admin formatting
+        run: |
+          pnpm exec prettier --check \
+            apps/www/app/admin \
+            apps/www/app/api/admin \
+            apps/www/src/admin \
+            apps/www/src/components/admin \
+            apps/www/src/styles/admin.css
+
+      - name: Lint storefront
+        run: pnpm --filter @dlavie/www lint
+
+      - name: Test storefront
+        run: pnpm --filter @dlavie/www test -- --runInBand
+
+      - name: Typecheck storefront
+        run: pnpm --filter @dlavie/www typecheck
+
+      - name: Build storefront
+        run: pnpm --filter @dlavie/www build
