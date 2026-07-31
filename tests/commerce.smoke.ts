@@ -36,8 +36,8 @@ async function expectJson<T>(
   const response = await app.inject({
     method,
     url,
-    headers: options.headers,
-    payload: options.payload,
+    ...(options.headers ? { headers: options.headers } : {}),
+    ...(options.payload ? { payload: options.payload } : {}),
   });
   assert.equal(
     response.statusCode,
