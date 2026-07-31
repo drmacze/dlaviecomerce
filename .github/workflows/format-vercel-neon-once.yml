@@ -31,26 +31,16 @@ jobs:
           corepack enable
           corepack prepare pnpm@10.28.2 --activate
 
-      - name: Install and format
+      - name: Refresh lockfile and format source
         run: |
-          pnpm install --frozen-lockfile
-          python <<'PY'
-          from pathlib import Path
-          workflow = Path('.github/workflows/vercel-neon-ci.yml')
-          text = workflow.read_text()
-          text = text.replace('            apps/www/.env.example \\\n', '')
-          workflow.write_text(text)
-          PY
-          pnpm exec prettier --write \
-            apps/www/src/commerce/embedded.ts \
-            .github/workflows/vercel-neon-ci.yml
+          pnpm install --no-frozen-lockfile
+          pnpm exec prettier --write apps/www/src/commerce/embedded.ts
 
-      - name: Commit formatting and remove writer
+      - name: Commit generated changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git rm .github/workflows/format-vercel-neon-once.yml
-          git add apps/www/src/commerce/embedded.ts .github/workflows/vercel-neon-ci.yml
-          git commit -m "style(vercel): format embedded Neon integration"
+          git add pnpm-lock.yaml apps/www/src/commerce/embedded.ts
+          git commit -m "build(vercel): finalize embedded database dependencies" || exit 0
           git pull --rebase origin feat/vercel-neon-embedded-commerce
           git push origin HEAD:feat/vercel-neon-embedded-commerce
