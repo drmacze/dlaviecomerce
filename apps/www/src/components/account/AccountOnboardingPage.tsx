@@ -26,11 +26,6 @@ const DISCOVERY_OPTIONS: Option[] = [
     en: 'Article, publication, or media',
     id: 'Artikel, publikasi, atau media',
   },
-  {
-    value: 'existing-product',
-    en: 'Another DLavie product',
-    id: 'Produk DLavie lainnya',
-  },
   { value: 'other', en: 'Other', id: 'Lainnya' },
 ];
 
@@ -38,8 +33,8 @@ const ROLE_OPTIONS: Option[] = [
   { value: 'personal', en: 'Personal customer', id: 'Pelanggan pribadi' },
   {
     value: 'business-owner',
-    en: 'Business owner or founder',
-    id: 'Pemilik bisnis atau founder',
+    en: 'Business owner or reseller',
+    id: 'Pemilik bisnis atau reseller',
   },
   {
     value: 'operator',
@@ -47,71 +42,54 @@ const ROLE_OPTIONS: Option[] = [
     id: 'Operasional atau administrasi',
   },
   {
-    value: 'technology',
-    en: 'Technology or development',
-    id: 'Teknologi atau pengembangan',
-  },
-  {
     value: 'partner',
-    en: 'Agency or potential partner',
-    id: 'Agensi atau calon partner',
+    en: 'Potential commerce partner',
+    id: 'Calon partner commerce',
   },
   { value: 'exploring', en: 'Still exploring', id: 'Masih menjelajah' },
 ];
 
 const GOAL_OPTIONS: Option[] = [
-  {
-    value: 'shop',
-    en: 'Discover and purchase products',
-    id: 'Menemukan dan membeli produk',
-  },
-  {
-    value: 'business',
-    en: 'Support business operations',
-    id: 'Mendukung operasional bisnis',
-  },
-  { value: 'automation', en: 'Explore automation', id: 'Mengeksplorasi automation' },
-  {
-    value: 'ai',
-    en: 'Use AI tools and workspace',
-    id: 'Menggunakan alat dan workspace AI',
-  },
-  { value: 'partnership', en: 'Explore a partnership', id: 'Menjelajahi kerja sama' },
+  { value: 'mobile-credit', en: 'Buy mobile credit or data', id: 'Membeli pulsa atau paket data' },
+  { value: 'voucher', en: 'Buy game and digital vouchers', id: 'Membeli voucher game dan digital' },
+  { value: 'bills', en: 'Pay bills and postpaid products', id: 'Membayar tagihan dan produk pascabayar' },
+  { value: 'repeat-orders', en: 'Track and repeat previous orders', id: 'Melacak dan mengulang pesanan' },
+  { value: 'reseller', en: 'Explore reseller opportunities', id: 'Menjelajahi peluang reseller' },
 ];
 
 const copy = {
   en: {
-    kicker: 'Personalize your experience',
-    title: 'A few details before you continue.',
+    kicker: 'Set up your commerce experience',
+    title: 'A few details before your first transaction.',
     description:
-      'Your answers help DLavie select the right language, product path, and account experience.',
+      'Your answers set the interface language and help DLavie show the most relevant digital product categories.',
     country: 'Country or region',
     discovery: 'How did you first hear about DLavie Commerce?',
     role: 'Which description fits you best?',
-    goals: 'What would you like to do first?',
+    goals: 'Which products are you interested in?',
     language: 'Interface language',
     languageValue: 'English',
-    submit: 'Continue to DLavie',
+    submit: 'Continue to the catalog',
     saving: 'Saving preferences',
     privacy: 'These preferences are stored securely in your DLavie Account profile.',
-    required: 'Please complete all required fields and select at least one goal.',
+    required: 'Please complete all required fields and select at least one product interest.',
     error: 'Your preferences could not be saved. Please try again.',
   },
   id: {
-    kicker: 'Personalisasi pengalaman Anda',
-    title: 'Beberapa informasi sebelum melanjutkan.',
+    kicker: 'Atur pengalaman commerce Anda',
+    title: 'Beberapa informasi sebelum transaksi pertama.',
     description:
-      'Jawaban Anda membantu DLavie memilih bahasa, jalur produk, dan pengalaman akun yang paling relevan.',
+      'Jawaban Anda menentukan bahasa antarmuka dan membantu DLavie menampilkan kategori produk digital yang paling relevan.',
     country: 'Negara atau wilayah',
     discovery: 'Dari mana Anda pertama kali mengetahui DLavie Commerce?',
     role: 'Deskripsi mana yang paling sesuai dengan Anda?',
-    goals: 'Apa yang ingin Anda lakukan terlebih dahulu?',
+    goals: 'Produk apa yang paling Anda butuhkan?',
     language: 'Bahasa antarmuka',
     languageValue: 'Bahasa Indonesia',
-    submit: 'Lanjut ke DLavie',
+    submit: 'Lanjut ke katalog',
     saving: 'Menyimpan preferensi',
     privacy: 'Preferensi ini disimpan secara aman di profil DLavie Account Anda.',
-    required: 'Lengkapi seluruh kolom wajib dan pilih setidaknya satu tujuan.',
+    required: 'Lengkapi seluruh kolom wajib dan pilih setidaknya satu minat produk.',
     error: 'Preferensi belum dapat disimpan. Silakan coba kembali.',
   },
 } as const;
@@ -170,7 +148,7 @@ export function AccountOnboardingPage({ defaultCountry }: { defaultCountry?: str
           return;
         }
 
-        window.location.assign(result.redirectTo ?? '/account/dashboard');
+        window.location.assign(result.redirectTo ?? '/shop');
       } catch {
         setStatus(labels.error);
       }
@@ -181,8 +159,8 @@ export function AccountOnboardingPage({ defaultCountry }: { defaultCountry?: str
     <main className="onboarding-shell">
       <section className="onboarding-card" aria-labelledby="onboarding-title">
         <header className="onboarding-header">
-          <a href="/" aria-label="DLavie home">
-            <DlavieBrand product="Account" compact />
+          <a href="/shop" aria-label="DLavie Commerce">
+            <DlavieBrand product="Commerce" compact />
           </a>
           <div className="onboarding-step" aria-label="Onboarding step 1 of 1">
             <span>01</span>
@@ -200,11 +178,7 @@ export function AccountOnboardingPage({ defaultCountry }: { defaultCountry?: str
         <form className="onboarding-form" onSubmit={submit}>
           <label className="onboarding-field">
             <span>{labels.country}</span>
-            <select
-              value={country}
-              onChange={(event) => selectCountry(event.target.value)}
-              required
-            >
+            <select value={country} onChange={(event) => selectCountry(event.target.value)} required>
               <option value="">—</option>
               {COUNTRY_OPTIONS.map((item) => (
                 <option key={item.code} value={item.code}>
@@ -216,11 +190,7 @@ export function AccountOnboardingPage({ defaultCountry }: { defaultCountry?: str
 
           <label className="onboarding-field">
             <span>{labels.discovery}</span>
-            <select
-              value={discovery}
-              onChange={(event) => setDiscovery(event.target.value)}
-              required
-            >
+            <select value={discovery} onChange={(event) => setDiscovery(event.target.value)} required>
               <option value="">—</option>
               {DISCOVERY_OPTIONS.map((item) => (
                 <option key={item.value} value={item.value}>
@@ -232,11 +202,7 @@ export function AccountOnboardingPage({ defaultCountry }: { defaultCountry?: str
 
           <label className="onboarding-field">
             <span>{labels.role}</span>
-            <select
-              value={role}
-              onChange={(event) => setRole(event.target.value)}
-              required
-            >
+            <select value={role} onChange={(event) => setRole(event.target.value)} required>
               <option value="">—</option>
               {ROLE_OPTIONS.map((item) => (
                 <option key={item.value} value={item.value}>

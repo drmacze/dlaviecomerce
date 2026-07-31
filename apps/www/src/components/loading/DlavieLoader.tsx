@@ -12,7 +12,7 @@ export function DlavieLoader({ isLeaving, onExited }: DlavieLoaderProps) {
       data-state={isLeaving ? 'leaving' : 'visible'}
       role="status"
       aria-live="polite"
-      aria-label="DLavie is preparing your experience"
+      aria-label="Memuat DLavie Commerce"
       onTransitionEnd={(event) => {
         if (event.target === event.currentTarget && event.propertyName === 'opacity' && isLeaving) {
           onExited();
@@ -24,7 +24,7 @@ export function DlavieLoader({ isLeaving, onExited }: DlavieLoaderProps) {
           <span>DLavie</span>
           <i />
         </div>
-        <p>Preparing your experience</p>
+        <p>Commerce</p>
       </div>
     </div>
   );

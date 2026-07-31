@@ -57,33 +57,22 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(healthRoutes);
 
   if (env.ENABLE_COMMERCE) {
-    const [catalog, admin, adminRead, cart, checkout, webhook] = await Promise.all([
+    const [catalog, admin, adminRead, cart, checkout, webhook, provider] = await Promise.all([
       import('./routes/commerce.catalog.routes.js'),
       import('./routes/commerce.admin.routes.js'),
       import('./routes/commerce.admin.read.routes.js'),
       import('./routes/commerce.cart.routes.js'),
       import('./routes/commerce.checkout.routes.js'),
       import('./routes/commerce.webhook.routes.js'),
+      import('./routes/commerce.provider.routes.js'),
     ]);
     await app.register(catalog.commerceCatalogRoutes);
     await app.register(adminRead.commerceAdminReadRoutes);
     await app.register(admin.commerceAdminRoutes);
+    await app.register(provider.commerceProviderRoutes);
     await app.register(cart.commerceCartRoutes);
     await app.register(checkout.commerceCheckoutRoutes);
     if (env.ENABLE_PAYMENTS) await app.register(webhook.commerceWebhookRoutes);
-  }
-
-  if (env.ENABLE_AI) {
-    const [models, chat, conversations, knowledge] = await Promise.all([
-      import('./routes/models.routes.js'),
-      import('./routes/chat.routes.js'),
-      import('./routes/conversations.routes.js'),
-      import('./routes/knowledge.routes.js'),
-    ]);
-    await app.register(models.modelsRoutes);
-    await app.register(chat.chatRoutes);
-    await app.register(conversations.conversationsRoutes);
-    await app.register(knowledge.knowledgeRoutes);
   }
 
   return app;
