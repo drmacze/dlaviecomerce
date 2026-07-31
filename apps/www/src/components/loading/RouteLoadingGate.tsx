@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { DlavieLoader } from './DlavieLoader';
 
-const SESSION_KEY = 'dlavie:experience-loader:v2';
+const SESSION_KEY = 'dlavie:experience-loader:v3';
 const ELIGIBLE_PREFIXES = ['/shop', '/cart', '/checkout', '/orders', '/account', '/admin'];
 
 function isEligibleRoute(pathname: string): boolean {
@@ -34,8 +34,8 @@ export function RouteLoadingGate() {
     }
 
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const minimumDuration = reducedMotion ? 320 : 1150;
-    const maximumDuration = reducedMotion ? 700 : 2300;
+    const minimumDuration = reducedMotion ? 240 : 900;
+    const maximumDuration = reducedMotion ? 520 : 1800;
 
     setIsMounted(true);
     setIsLeaving(false);
