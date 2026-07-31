@@ -1,17 +1,30 @@
 'use client';
 
-import Link from 'next/link';
 import { ShoppingBag } from 'lucide-react';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { readCartSession, subscribeToCartUpdates } from '../../commerce/storage';
+import { getCommerceSession } from '../../commerce/client';
+import { subscribeToCartUpdates } from '../../commerce/storage';
 
 export function CartLink() {
   const [hasCart, setHasCart] = useState(false);
 
   useEffect(() => {
-    const refresh = () => setHasCart(Boolean(readCartSession()));
-    refresh();
-    return subscribeToCartUpdates(refresh);
+    let active = true;
+    const refresh = async () => {
+      try {
+        const session = await getCommerceSession();
+        if (active) setHasCart(Boolean(session.cart));
+      } catch {
+        if (active) setHasCart(false);
+      }
+    };
+    void refresh();
+    const unsubscribe = subscribeToCartUpdates(() => void refresh());
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, []);
 
   return (
