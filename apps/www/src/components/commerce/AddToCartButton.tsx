@@ -3,8 +3,13 @@
 import { Minus, Plus, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
-import { CommerceClientError, createCart, setCartItem } from '../../commerce/client';
-import { clearCartSession, readCartSession, writeCartSession } from '../../commerce/storage';
+import {
+  clearCartSession,
+  CommerceClientError,
+  createCart,
+  getCartSession,
+  setCartItem,
+} from '../../commerce/client';
 
 export function AddToCartButton({
   variantId,
@@ -25,11 +30,8 @@ export function AddToCartButton({
     setError(null);
 
     try {
-      let session = readCartSession();
-      if (!session) {
-        session = await createCart();
-        writeCartSession(session);
-      }
+      let session = await getCartSession();
+      if (!session) session = await createCart();
 
       try {
         await setCartItem(session, variantId, quantity);
@@ -37,9 +39,8 @@ export function AddToCartButton({
         if (!(requestError instanceof CommerceClientError) || requestError.status !== 401) {
           throw requestError;
         }
-        clearCartSession();
+        await clearCartSession();
         session = await createCart();
-        writeCartSession(session);
         await setCartItem(session, variantId, quantity);
       }
 
