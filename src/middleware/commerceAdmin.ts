@@ -8,11 +8,8 @@ import { safeEqual } from '../utils/crypto.js';
 
 function hasValidAutomationKey(request: FastifyRequest): boolean {
   const key = request.headers['x-admin-api-key'];
-  return (
-    typeof key === 'string' &&
-    Boolean(env.ADMIN_API_KEY) &&
-    safeEqual(key, env.ADMIN_API_KEY as string)
-  );
+  const configuredKey = env.ADMIN_API_KEY;
+  return typeof key === 'string' && Boolean(configuredKey) && safeEqual(key, configuredKey!);
 }
 
 async function requireAdminUser(request: FastifyRequest): Promise<void> {
