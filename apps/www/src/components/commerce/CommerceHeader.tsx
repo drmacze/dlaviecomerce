@@ -2,19 +2,46 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { ArrowUpRight, UserRound } from 'lucide-react';
 import { DlavieBrand } from '../brand/DlavieBrand';
+import { getRequestLocale } from '../../i18n/server';
 import { DLAVIE_ACCESS_COOKIE } from '../../lib/supabase/session';
 import { CartLink } from './CartLink';
 
+const copy = {
+  en: {
+    utility: 'Prices and stock are updated directly from the commerce system',
+    ecosystem: 'DLavie ecosystem',
+    nav: 'Store navigation',
+    shop: 'Shop',
+    categories: 'Categories',
+    catalog: 'Catalog',
+    about: 'About',
+    account: 'Account',
+    login: 'Sign in',
+  },
+  id: {
+    utility: 'Harga dan stok diperbarui langsung dari sistem commerce',
+    ecosystem: 'Ekosistem DLavie',
+    nav: 'Navigasi utama toko',
+    shop: 'Belanja',
+    categories: 'Kategori',
+    catalog: 'Katalog',
+    about: 'Tentang',
+    account: 'Akun',
+    login: 'Masuk',
+  },
+} as const;
+
 export async function CommerceHeader() {
-  const cookieStore = await cookies();
+  const [cookieStore, locale] = await Promise.all([cookies(), getRequestLocale()]);
   const hasAccountSession = Boolean(cookieStore.get(DLAVIE_ACCESS_COOKIE)?.value);
+  const labels = copy[locale];
 
   return (
     <header className="commerce-header">
       <div className="commerce-header__utility">
-        <p>Harga dan stok diperbarui langsung dari sistem commerce</p>
+        <p>{labels.utility}</p>
         <Link href="/">
-          Ekosistem DLavie <ArrowUpRight size={13} aria-hidden="true" />
+          {labels.ecosystem} <ArrowUpRight size={13} aria-hidden="true" />
         </Link>
       </div>
 
@@ -23,11 +50,11 @@ export async function CommerceHeader() {
           <DlavieBrand product="Commerce" compact />
         </Link>
 
-        <nav className="commerce-header__nav" aria-label="Navigasi utama toko">
-          <Link href="/shop">Belanja</Link>
-          <Link href="/shop#categories">Kategori</Link>
-          <Link href="/shop#catalog">Katalog</Link>
-          <Link href="/">Tentang</Link>
+        <nav className="commerce-header__nav" aria-label={labels.nav}>
+          <Link href="/shop">{labels.shop}</Link>
+          <Link href="/shop#categories">{labels.categories}</Link>
+          <Link href="/shop#catalog">{labels.catalog}</Link>
+          <Link href="/">{labels.about}</Link>
         </nav>
 
         <div className="commerce-header__actions">
@@ -36,7 +63,7 @@ export async function CommerceHeader() {
             href={hasAccountSession ? '/account/dashboard' : '/account/login'}
           >
             <UserRound size={17} aria-hidden="true" />
-            <span>{hasAccountSession ? 'Akun' : 'Masuk'}</span>
+            <span>{hasAccountSession ? labels.account : labels.login}</span>
           </Link>
           <CartLink />
         </div>

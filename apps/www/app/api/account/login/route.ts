@@ -1,10 +1,16 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAuthEndpoint, getSupabaseRequestHeaders } from '../../../../src/lib/supabase/url';
-import { DLAVIE_ACCESS_COOKIE, DLAVIE_REFRESH_COOKIE, getAuthMessage, isSecureCookieRuntime, type DlavieAuthPayload } from '../../../../src/lib/supabase/session';
+import {
+  DLAVIE_ACCESS_COOKIE,
+  DLAVIE_REFRESH_COOKIE,
+  getAuthMessage,
+  isSecureCookieRuntime,
+  type DlavieAuthPayload,
+} from '../../../../src/lib/supabase/session';
 
 async function readPayload(response: Response) {
   try {
-    return await response.json() as DlavieAuthPayload;
+    return (await response.json()) as DlavieAuthPayload;
   } catch {
     return {} as DlavieAuthPayload;
   }
@@ -30,12 +36,20 @@ export async function POST(request: Request) {
 
   if (!response.ok || !payload.access_token || !payload.refresh_token) {
     return NextResponse.json(
-      { ok: false, message: getAuthMessage(payload, 'Unable to sign in. Check your email and password.') },
-      { status: response.status || 401 }
+      {
+        ok: false,
+        message: getAuthMessage(payload, 'Unable to sign in. Check your email and password.'),
+      },
+      { status: response.status || 401 },
     );
   }
 
-  const result = NextResponse.json({ ok: true, redirectTo: '/account/dashboard' });
+  const onboardingCompleted =
+    typeof payload.user?.user_metadata?.onboarding_completed_at === 'string';
+  const result = NextResponse.json({
+    ok: true,
+    redirectTo: onboardingCompleted ? '/account/dashboard' : '/account/onboarding',
+  });
   const secure = isSecureCookieRuntime();
 
   result.cookies.set(DLAVIE_ACCESS_COOKIE, payload.access_token, {

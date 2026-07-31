@@ -1,10 +1,19 @@
 import { NextResponse } from 'next/server';
-import { getSupabaseAuthEndpoint, getSupabaseRequestHeaders } from '../../../../src/lib/supabase/url';
-import { DLAVIE_ACCESS_COOKIE, DLAVIE_REFRESH_COOKIE, getAuthMessage, isSecureCookieRuntime, type DlavieAuthPayload } from '../../../../src/lib/supabase/session';
+import {
+  getSupabaseAuthEndpoint,
+  getSupabaseRequestHeaders,
+} from '../../../../src/lib/supabase/url';
+import {
+  DLAVIE_ACCESS_COOKIE,
+  DLAVIE_REFRESH_COOKIE,
+  getAuthMessage,
+  isSecureCookieRuntime,
+  type DlavieAuthPayload,
+} from '../../../../src/lib/supabase/session';
 
 async function readPayload(response: Response) {
   try {
-    return await response.json() as DlavieAuthPayload;
+    return (await response.json()) as DlavieAuthPayload;
   } catch {
     return {} as DlavieAuthPayload;
   }
@@ -18,11 +27,17 @@ export async function POST(request: Request) {
   const interest = String(body.interest ?? 'commerce');
 
   if (!name || !email || !password) {
-    return NextResponse.json({ ok: false, message: 'Name, email, and password are required.' }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, message: 'Name, email, and password are required.' },
+      { status: 400 },
+    );
   }
 
-  if (password.length < 8) {
-    return NextResponse.json({ ok: false, message: 'Password must contain at least 8 characters.' }, { status: 400 });
+  if (password.length < 12) {
+    return NextResponse.json(
+      { ok: false, message: 'Password must contain at least 12 characters.' },
+      { status: 400 },
+    );
   }
 
   const response = await fetch(getSupabaseAuthEndpoint('/signup'), {
@@ -45,7 +60,7 @@ export async function POST(request: Request) {
   if (!response.ok) {
     return NextResponse.json(
       { ok: false, message: getAuthMessage(payload, 'Unable to create your DLavie Account.') },
-      { status: response.status || 400 }
+      { status: response.status || 400 },
     );
   }
 
@@ -53,12 +68,13 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ok: true,
       requiresConfirmation: true,
-      message: 'Account created. Please check your email to confirm your DLavie Account before signing in.',
+      message:
+        'Account created. Please check your email to confirm your DLavie Account before signing in.',
       redirectTo: '/account/login',
     });
   }
 
-  const result = NextResponse.json({ ok: true, redirectTo: '/account/dashboard' });
+  const result = NextResponse.json({ ok: true, redirectTo: '/account/onboarding' });
   const secure = isSecureCookieRuntime();
 
   result.cookies.set(DLAVIE_ACCESS_COOKIE, payload.access_token, {

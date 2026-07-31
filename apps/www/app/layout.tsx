@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import { Barlow_Condensed, Inter } from 'next/font/google';
 import { SmoothScrollProvider } from '../components/SmoothScrollProvider';
+import { HomeWordmark } from '../src/components/brand/HomeWordmark';
+import { LocaleExperience } from '../src/components/i18n/LocaleExperience';
+import { getRequestLocale } from '../src/i18n/server';
 import 'lenis/dist/lenis.css';
 import './globals.css';
 import './cinematic.css';
@@ -17,6 +20,7 @@ import '../src/styles/ai.css';
 import '../src/styles/home.css';
 import '../src/styles/commerce.css';
 import '../src/styles/brand-experience.css';
+import '../src/styles/onboarding-localization.css';
 
 const dlavieDisplay = Barlow_Condensed({
   subsets: ['latin'],
@@ -42,11 +46,16 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const locale = await getRequestLocale();
+
   return (
-    <html lang="en" data-lenis-root>
-      <body className={`${dlavieDisplay.variable} ${dlavieSans.variable}`}>
-        <SmoothScrollProvider>{children}</SmoothScrollProvider>
+    <html lang={locale} data-lenis-root suppressHydrationWarning>
+      <body className={`${dlavieDisplay.variable} ${dlavieSans.variable}`} suppressHydrationWarning>
+        <LocaleExperience initialLocale={locale}>
+          <HomeWordmark />
+          <SmoothScrollProvider>{children}</SmoothScrollProvider>
+        </LocaleExperience>
       </body>
     </html>
   );

@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { ArrowUpRight, LogOut, ShoppingBag } from 'lucide-react';
+import { ArrowUpRight, Globe2, LogOut, ShoppingBag } from 'lucide-react';
 import { DlavieBrand } from '../../../src/components/brand/DlavieBrand';
+import { COUNTRY_OPTIONS } from '../../../src/i18n/config';
 import { getSupabaseAuthEndpoint, getSupabaseRequestHeaders } from '../../../src/lib/supabase/url';
 import {
   DLAVIE_ACCESS_COOKIE,
@@ -45,6 +46,10 @@ export default async function AccountDashboardPage() {
     redirect('/account/login');
   }
 
+  if (typeof user.user_metadata?.onboarding_completed_at !== 'string') {
+    redirect('/account/onboarding');
+  }
+
   const fullName =
     typeof user.user_metadata?.full_name === 'string'
       ? user.user_metadata.full_name
@@ -53,6 +58,14 @@ export default async function AccountDashboardPage() {
     typeof user.user_metadata?.product_interest === 'string'
       ? user.user_metadata.product_interest
       : 'full ecosystem';
+  const countryCode =
+    typeof user.user_metadata?.country_code === 'string' ? user.user_metadata.country_code : 'OTHER';
+  const locale = user.user_metadata?.locale === 'id' ? 'id' : 'en';
+  const country = COUNTRY_OPTIONS.find((item) => item.code === countryCode)?.[locale] ?? countryCode;
+  const discovery =
+    typeof user.user_metadata?.discovery_source === 'string'
+      ? user.user_metadata.discovery_source.replaceAll('-', ' ')
+      : 'not specified';
 
   return (
     <main className="account-shell account-dashboard-shell">
@@ -91,12 +104,19 @@ export default async function AccountDashboardPage() {
           <article>
             <span>Minat produk</span>
             <strong>{productInterest}</strong>
-            <p>Preferensi ini membantu mengarahkan onboarding ke Commerce, AI, atau Automation.</p>
+            <p>Preferensi ini membantu mengarahkan pengalaman ke Commerce, AI, atau Automation.</p>
           </article>
           <article>
-            <span>Keamanan</span>
-            <strong>Supabase Auth</strong>
-            <p>Session dilindungi cookie HTTP-only yang diatur langsung oleh server DLavie.</p>
+            <span>Negara dan bahasa</span>
+            <strong className="account-dashboard__inline-value">
+              <Globe2 size={17} aria-hidden="true" /> {country} · {locale === 'id' ? 'Bahasa Indonesia' : 'English'}
+            </strong>
+            <p>Bahasa antarmuka mengikuti negara yang dipilih saat onboarding.</p>
+          </article>
+          <article>
+            <span>Sumber penemuan</span>
+            <strong>{discovery}</strong>
+            <p>Informasi ini membantu DLavie memperbaiki pengalaman dan komunikasi produk.</p>
           </article>
         </div>
       </section>
