@@ -43,11 +43,17 @@ jobs:
           content = path.read_text()
           old = '''            <div className="dlavie-home__nav-links">
               <a href="#os">DLavie OS</a>
-              <a href="#ecosystem">Ecosystem</a>'''
+              <a href="#ecosystem">Ecosystem</a>
+              <a href="#workspace">AI Workspace</a>
+              <a href="/ai">Docs</a>
+            </div>'''
           new = '''            <div className="dlavie-home__nav-links">
               <a href="#os">DLavie OS</a>
               <a href="/shop">Commerce</a>
-              <a href="#ecosystem">Ecosystem</a>'''
+              <a href="#ecosystem">Ecosystem</a>
+              <a href="#workspace">AI Workspace</a>
+              <a href="/ai">Docs</a>
+            </div>'''
           if content.count(old) == 1:
               path.write_text(content.replace(old, new))
           elif content.count(new) != 1:
