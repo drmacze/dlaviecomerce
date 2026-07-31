@@ -88,19 +88,19 @@ export async function commerceProviderRoutes(app: FastifyInstance): Promise<void
       };
 
       for (const item of providerProducts) {
-        const providerSku = String(item.buyer_sku_code ?? '').trim();
-        const productName = String(item.product_name ?? '').trim();
+        const providerSku = (item.buyer_sku_code ?? '').trim();
+        const productName = (item.product_name ?? '').trim();
         const providerPrice = numeric(item.price);
         if (!providerSku || !productName || providerPrice === null || providerPrice <= 0) {
           result.skipped += 1;
           continue;
         }
 
-        const categoryName = String(item.category ?? 'Digital').trim() || 'Digital';
-        const brand = String(item.brand ?? '').trim();
-        const type = String(item.type ?? '').trim();
+        const categoryName = (item.category ?? 'Digital').trim() || 'Digital';
+        const brand = (item.brand ?? '').trim();
+        const type = (item.type ?? '').trim();
         const description =
-          String(item.desc ?? '').trim() ||
+          (item.desc ?? '').trim() ||
           [brand, type, categoryName].filter(Boolean).join(' · ') ||
           'Produk digital DLavie Commerce.';
         const categorySlug = `digiflazz-${slugify(categoryName)}`;
