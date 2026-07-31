@@ -5,6 +5,7 @@ import type {
   CartSession,
   CartView,
   CheckoutInput,
+  CommerceSessionState,
   OrderView,
   ShippingMethod,
 } from './types';
@@ -46,6 +47,7 @@ async function request<T>(
     },
     ...(options.body ? { body: JSON.stringify(options.body) } : {}),
     cache: 'no-store',
+    credentials: 'same-origin',
   });
 
   if (!response.ok) throw await readError(response);
@@ -53,44 +55,36 @@ async function request<T>(
   return (await response.json()) as T;
 }
 
+export async function getCommerceSession(): Promise<CommerceSessionState> {
+  const response = await request<{ data: CommerceSessionState }>('/session');
+  return response.data;
+}
+
 export async function createCart(): Promise<CartSession> {
   const response = await request<{ data: CartSession }>('/v1/carts', { method: 'POST' });
   return response.data;
 }
 
-export async function getCart(session: CartSession): Promise<CartView> {
-  const response = await request<{ data: CartView }>(
-    `/v1/carts/${encodeURIComponent(session.id)}`,
-    {
-      headers: { 'X-Cart-Token': session.token },
-    },
-  );
+export async function getCart(): Promise<CartView> {
+  const response = await request<{ data: CartView }>('/v1/carts/current');
   return response.data;
 }
 
-export async function setCartItem(
-  session: CartSession,
-  variantId: string,
-  quantity: number,
-): Promise<CartView> {
+export async function setCartItem(variantId: string, quantity: number): Promise<CartView> {
   const response = await request<{ data: CartView }>(
-    `/v1/carts/${encodeURIComponent(session.id)}/items/${encodeURIComponent(variantId)}`,
+    `/v1/carts/current/items/${encodeURIComponent(variantId)}`,
     {
       method: 'PUT',
-      headers: { 'X-Cart-Token': session.token },
       body: { quantity },
     },
   );
   return response.data;
 }
 
-export async function removeCartItem(session: CartSession, variantId: string): Promise<CartView> {
+export async function removeCartItem(variantId: string): Promise<CartView> {
   const response = await request<{ data: CartView }>(
-    `/v1/carts/${encodeURIComponent(session.id)}/items/${encodeURIComponent(variantId)}`,
-    {
-      method: 'DELETE',
-      headers: { 'X-Cart-Token': session.token },
-    },
+    `/v1/carts/current/items/${encodeURIComponent(variantId)}`,
+    { method: 'DELETE' },
   );
   return response.data;
 }
@@ -101,7 +95,6 @@ export async function getShippingMethods(): Promise<ShippingMethod[]> {
 }
 
 export async function checkout(
-  session: CartSession,
   idempotencyKey: string,
   input: CheckoutInput,
 ): Promise<OrderView> {
@@ -113,24 +106,17 @@ export async function checkout(
     ...(input.shippingAddress ? { shippingAddress: input.shippingAddress } : {}),
     ...(input.customerNote ? { customerNote: input.customerNote } : {}),
   };
-  const response = await request<{ data: OrderView }>(
-    `/v1/checkout/${encodeURIComponent(session.id)}`,
-    {
-      method: 'POST',
-      headers: {
-        'X-Cart-Token': session.token,
-        'Idempotency-Key': idempotencyKey,
-      },
-      body,
-    },
-  );
+  const response = await request<{ data: OrderView }>('/v1/checkout/current', {
+    method: 'POST',
+    headers: { 'Idempotency-Key': idempotencyKey },
+    body,
+  });
   return response.data;
 }
 
-export async function getOrder(orderNumber: string, token: string): Promise<OrderView> {
+export async function getOrder(orderNumber: string): Promise<OrderView> {
   const response = await request<{ data: OrderView }>(
     `/v1/orders/${encodeURIComponent(orderNumber)}`,
-    { headers: { 'X-Order-Token': token } },
   );
   return response.data;
 }
