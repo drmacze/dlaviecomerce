@@ -21,7 +21,10 @@ export const cartItemTargetsTable = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
-    primaryKey({ columns: [table.cartId, table.variantId], name: 'cart_item_targets_pk' }),
+    primaryKey({
+      columns: [table.cartId, table.variantId],
+      name: 'cart_item_targets_pk',
+    }),
     index('cart_item_targets_variant_idx').on(table.variantId),
     check(
       'cart_item_targets_kind_valid',
