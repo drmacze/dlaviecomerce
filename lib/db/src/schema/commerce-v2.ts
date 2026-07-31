@@ -9,6 +9,7 @@ import {
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
+import { orderItemsTable } from './commerce.js';
 
 export const cartItemTargetsTable = pgTable(
   'cart_item_targets',
@@ -28,5 +29,25 @@ export const cartItemTargetsTable = pgTable(
       sql`${table.kind} in ('phone', 'meter_number', 'customer_id', 'game_id', 'account_id')`,
     ),
     check('cart_item_targets_value_valid', sql`char_length(${table.value}) between 3 and 64`),
+  ],
+);
+
+export const orderItemTargetsTable = pgTable(
+  'order_item_targets',
+  {
+    orderItemId: uuid('order_item_id')
+      .primaryKey()
+      .references(() => orderItemsTable.id, { onDelete: 'cascade' }),
+    kind: varchar('kind', { length: 32 }).notNull(),
+    value: text('value').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index('order_item_targets_kind_idx').on(table.kind),
+    check(
+      'order_item_targets_kind_valid',
+      sql`${table.kind} in ('phone', 'meter_number', 'customer_id', 'game_id', 'account_id')`,
+    ),
+    check('order_item_targets_value_valid', sql`char_length(${table.value}) between 3 and 64`),
   ],
 );
