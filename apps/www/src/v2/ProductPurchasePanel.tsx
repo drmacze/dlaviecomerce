@@ -1,7 +1,14 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { Check, ChevronRight, Info, ShieldCheck } from 'lucide-react';
+import { useMemo, useState, type FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
+import { Check, ChevronRight, LoaderCircle, ShieldCheck } from 'lucide-react';
+import {
+  CommerceClientError,
+  createCart,
+  getCommerceSession,
+  setCartItem,
+} from '../commerce/client';
 import { formatIdr } from '../commerce/format';
 import type { ProductDetail } from '../commerce/types';
 import {
@@ -28,11 +35,10 @@ const copy = {
     stock: 'Tersedia',
     unavailable: 'Tidak tersedia',
     total: 'Harga produk',
-    validate: 'Periksa pilihan',
-    verified: 'Pilihan dan data tujuan sudah valid.',
-    gateNotice:
-      'Keranjang server v2 akan diaktifkan pada tahap transaksi. Belum ada pesanan atau pembayaran yang dibuat.',
-    secure: 'Data tujuan hanya akan dikirim ke server commerce saat transaksi v2 diaktifkan.',
+    add: 'Tambahkan ke keranjang',
+    adding: 'Menyimpan pilihan',
+    failed: 'Pilihan belum dapat disimpan. Periksa koneksi lalu coba kembali.',
+    secure: 'Nomor atau ID tujuan disimpan bersama item cart di server commerce.',
   },
   en: {
     chooseVariant: 'Choose an amount or variant',
@@ -43,21 +49,22 @@ const copy = {
     stock: 'Available',
     unavailable: 'Unavailable',
     total: 'Product price',
-    validate: 'Review selection',
-    verified: 'The selection and destination are valid.',
-    gateNotice:
-      'The v2 server cart will be enabled in the transaction gate. No order or payment has been created.',
-    secure: 'Destination data will only be sent to the commerce server when v2 transactions are enabled.',
+    add: 'Add to cart',
+    adding: 'Saving selection',
+    failed: 'The selection could not be saved. Check the connection and try again.',
+    secure: 'The destination number or ID is stored with the cart item on the commerce server.',
   },
 } as const;
 
 export function ProductPurchasePanel({ locale, product }: Props) {
+  const router = useRouter();
   const t = copy[locale];
   const availableVariants = product.variants.filter((variant) => variant.availableQuantity > 0);
   const [variantId, setVariantId] = useState(availableVariants[0]?.id ?? product.variants[0]?.id ?? '');
   const [targetValue, setTargetValue] = useState('');
   const [errorCode, setErrorCode] = useState<'required' | 'length' | 'format' | null>(null);
-  const [verified, setVerified] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const selectedVariant = useMemo(
     () => product.variants.find((variant) => variant.id === variantId) ?? product.variants[0],
@@ -68,17 +75,31 @@ export function ProductPurchasePanel({ locale, product }: Props) {
     [product, selectedVariant],
   );
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setVerified(false);
+    setServerError(null);
     const result = validateCustomerTarget(profile, targetValue);
     if (!result.ok) {
       setErrorCode(result.code);
       return;
     }
-    setTargetValue(normalizeCustomerTarget(profile, targetValue));
+    if (!selectedVariant || selectedVariant.availableQuantity < 1) return;
+
+    const normalizedValue = normalizeCustomerTarget(profile, targetValue);
+    setTargetValue(normalizedValue);
     setErrorCode(null);
-    setVerified(true);
+    setSubmitting(true);
+
+    try {
+      const session = await getCommerceSession();
+      if (!session.cart) await createCart();
+      await setCartItem(selectedVariant.id, 1, result.target);
+      router.push('/v2/cart');
+      router.refresh();
+    } catch (error) {
+      setServerError(error instanceof CommerceClientError ? error.message : t.failed);
+      setSubmitting(false);
+    }
   }
 
   const errorMessage = errorCode ? t[errorCode] : null;
@@ -106,10 +127,10 @@ export function ProductPurchasePanel({ locale, product }: Props) {
                   name="variant"
                   value={variant.id}
                   checked={active}
-                  disabled={!available}
+                  disabled={!available || submitting}
                   onChange={() => {
                     setVariantId(variant.id);
-                    setVerified(false);
+                    setServerError(null);
                   }}
                 />
                 <span>
@@ -145,10 +166,11 @@ export function ProductPurchasePanel({ locale, product }: Props) {
             placeholder={profile.placeholder[locale]}
             aria-invalid={Boolean(errorMessage)}
             aria-describedby="target-help target-error"
+            disabled={submitting}
             onChange={(event) => {
               setTargetValue(event.target.value);
               setErrorCode(null);
-              setVerified(false);
+              setServerError(null);
             }}
           />
           <small id="target-help">{profile.hint[locale]}</small>
@@ -163,17 +185,20 @@ export function ProductPurchasePanel({ locale, product }: Props) {
           <small>{t.total}</small>
           <strong>{selectedVariant ? formatIdr(selectedVariant.priceAmount) : '—'}</strong>
         </span>
-        <button type="submit" disabled={!purchasable}>
-          {verified ? <Check size={17} aria-hidden="true" /> : null}
-          {verified ? t.verified : t.validate}
-          {!verified ? <ChevronRight size={17} aria-hidden="true" /> : null}
+        <button type="submit" disabled={!purchasable || submitting}>
+          {submitting ? (
+            <LoaderCircle className={styles.spin} size={17} aria-hidden="true" />
+          ) : (
+            <Check size={17} aria-hidden="true" />
+          )}
+          {submitting ? t.adding : t.add}
+          {!submitting ? <ChevronRight size={17} aria-hidden="true" /> : null}
         </button>
       </div>
 
-      {verified ? (
-        <div className={styles.gateNotice} role="status">
-          <Info size={18} aria-hidden="true" />
-          <p>{t.gateNotice}</p>
+      {serverError ? (
+        <div className={styles.gateNotice} role="alert">
+          <p>{serverError}</p>
         </div>
       ) : null}
 
