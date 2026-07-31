@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { getCatalogCategories, getCatalogProducts } from '../../src/commerce/server';
 import type { CatalogCategory, CatalogProduct } from '../../src/commerce/types';
 import { getRequestLocale } from '../../src/i18n/server';
-import { StorefrontV2 } from '../../src/v2/StorefrontV2';
+import { StorefrontCatalogV2 } from '../../src/v2/StorefrontCatalogV2';
 
 export const metadata: Metadata = {
   title: 'DLavie Commerce v2',
@@ -39,7 +39,7 @@ export default async function CommerceV2Page({ searchParams }: { searchParams: S
   }
 
   return (
-    <StorefrontV2
+    <StorefrontCatalogV2
       locale={locale}
       categories={categories}
       products={products}
