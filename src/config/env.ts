@@ -12,7 +12,7 @@ export const envSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     PORT: z.coerce.number().int().positive().default(8787),
-    APP_NAME: z.string().default('DLavie Platform API'),
+    APP_NAME: z.string().default('DLavie Commerce API'),
     API_BASE_URL: z.string().url().default('http://localhost:8787'),
     STOREFRONT_URL: z.string().url().default('http://localhost:3000'),
     CORS_ORIGINS: z.string().default('http://localhost:3000,http://localhost:5173'),
@@ -21,6 +21,7 @@ export const envSchema = z
     ENABLE_AI: boolish.default(false),
     ENABLE_COMMERCE: boolish.default(false),
     ENABLE_PAYMENTS: boolish.default(false),
+    ENABLE_DIGIFLAZZ: boolish.default(false),
 
     DATABASE_URL: optionalSecret,
     DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(50).default(10),
@@ -52,6 +53,21 @@ export const envSchema = z
     MIDTRANS_SERVER_KEY: optionalSecret,
     MIDTRANS_IS_PRODUCTION: boolish.default(false),
     PAYMENT_EXPIRY_MINUTES: z.coerce.number().int().min(15).max(1440).default(60),
+
+    DIGIFLAZZ_USERNAME: optionalSecret,
+    DIGIFLAZZ_API_KEY: optionalSecret,
+    DIGIFLAZZ_BASE_URL: z.string().url().default('https://api.digiflazz.com'),
+    DIGIFLAZZ_WEBHOOK_SECRET: optionalSecret,
+    DIGIFLAZZ_TESTING: boolish.default(true),
+    DIGIFLAZZ_CALLBACK_URL: optionalSecret,
+    DIGIFLAZZ_MARKUP_PERCENT: z.coerce.number().min(0).max(100).default(5),
+    DIGIFLAZZ_MINIMUM_MARKUP_AMOUNT: z.coerce
+      .number()
+      .int()
+      .min(0)
+      .max(10_000_000)
+      .default(500),
+
     ORDER_PREFIX: z
       .string()
       .regex(/^[A-Z0-9]{2,8}$/)
@@ -77,6 +93,14 @@ export const envSchema = z
         code: z.ZodIssueCode.custom,
         path: ['ENABLE_PAYMENTS'],
         message: 'ENABLE_PAYMENTS requires ENABLE_COMMERCE=true.',
+      });
+    }
+
+    if (value.ENABLE_DIGIFLAZZ && !value.ENABLE_COMMERCE) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['ENABLE_DIGIFLAZZ'],
+        message: 'ENABLE_DIGIFLAZZ requires ENABLE_COMMERCE=true.',
       });
     }
   });
@@ -116,6 +140,11 @@ export function getEnv(
     missing.push('MIDTRANS_SERVER_KEY');
   }
 
+  if (!relaxed && env.ENABLE_DIGIFLAZZ) {
+    if (!env.DIGIFLAZZ_USERNAME) missing.push('DIGIFLAZZ_USERNAME');
+    if (!env.DIGIFLAZZ_API_KEY) missing.push('DIGIFLAZZ_API_KEY');
+  }
+
   if (!relaxed && env.ADMIN_API_KEY && env.ADMIN_API_KEY.length < 32) {
     missing.push('ADMIN_API_KEY(minimum 32 characters)');
   }
@@ -131,6 +160,9 @@ export function getEnv(
     }
     if (!env.API_BASE_URL.startsWith('https://')) missing.push('API_BASE_URL(https required)');
     if (!env.STOREFRONT_URL.startsWith('https://')) missing.push('STOREFRONT_URL(https required)');
+    if (env.DIGIFLAZZ_CALLBACK_URL && !env.DIGIFLAZZ_CALLBACK_URL.startsWith('https://')) {
+      missing.push('DIGIFLAZZ_CALLBACK_URL(https required)');
+    }
   }
 
   if (missing.length > 0) {
