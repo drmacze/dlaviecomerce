@@ -17,11 +17,13 @@ const TRANSLATABLE_ATTRIBUTES = ['placeholder', 'title', 'aria-label'] as const;
 function shouldSkip(element: Element | null): boolean {
   if (!element) return false;
   if (SKIP_TAGS.has(element.tagName)) return true;
-  if (element.closest('[data-no-auto-translate="true"], [contenteditable="true"]')) return true;
+  if (element.closest('[data-no-auto-translate="true"], [contenteditable="true"]')) {
+    return true;
+  }
   return false;
 }
 
-function translateElement(root: ParentNode, locale: DlavieLocale) {
+function translateElement(root: Document | Element, locale: DlavieLocale) {
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   const textNodes: Text[] = [];
 
@@ -38,7 +40,9 @@ function translateElement(root: ParentNode, locale: DlavieLocale) {
     if (next !== current) node.nodeValue = next;
   });
 
-  const elements = root instanceof Element ? [root, ...Array.from(root.querySelectorAll('*'))] : Array.from(root.querySelectorAll('*'));
+  const descendants = Array.from(root.querySelectorAll('*'));
+  const elements = root instanceof Element ? [root, ...descendants] : descendants;
+
   elements.forEach((element) => {
     if (shouldSkip(element)) return;
     TRANSLATABLE_ATTRIBUTES.forEach((attribute) => {
@@ -62,7 +66,7 @@ export function LocaleExperience({
   useEffect(() => {
     document.documentElement.lang = locale;
     document.documentElement.dataset.dlavieLocale = locale;
-    translateElement(document.body, locale);
+    translateElement(document, locale);
 
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
@@ -76,6 +80,7 @@ export function LocaleExperience({
             }
             return;
           }
+
           if (node instanceof Element) translateElement(node, locale);
         });
       });
