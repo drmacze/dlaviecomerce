@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { ArrowUpRight, UserRound } from 'lucide-react';
+import { ReceiptText, UserRound } from 'lucide-react';
 import { DlavieBrand } from '../brand/DlavieBrand';
 import { getRequestLocale } from '../../i18n/server';
 import { DLAVIE_ACCESS_COOKIE } from '../../lib/supabase/session';
@@ -8,24 +8,22 @@ import { CartLink } from './CartLink';
 
 const copy = {
   en: {
-    utility: 'Prices and stock are updated directly from the commerce system',
-    ecosystem: 'DLavie ecosystem',
-    nav: 'Store navigation',
-    shop: 'Shop',
+    utility: 'Digital products by Digiflazz · Secure payments by Midtrans',
+    orders: 'Track order',
+    nav: 'Commerce navigation',
+    shop: 'Products',
     categories: 'Categories',
     catalog: 'Catalog',
-    about: 'About',
     account: 'Account',
     login: 'Sign in',
   },
   id: {
-    utility: 'Harga dan stok diperbarui langsung dari sistem commerce',
-    ecosystem: 'Ekosistem DLavie',
-    nav: 'Navigasi utama toko',
-    shop: 'Belanja',
+    utility: 'Produk digital Digiflazz · Pembayaran aman melalui Midtrans',
+    orders: 'Lacak pesanan',
+    nav: 'Navigasi commerce',
+    shop: 'Produk',
     categories: 'Kategori',
     catalog: 'Katalog',
-    about: 'Tentang',
     account: 'Akun',
     login: 'Masuk',
   },
@@ -40,8 +38,8 @@ export async function CommerceHeader() {
     <header className="commerce-header">
       <div className="commerce-header__utility">
         <p>{labels.utility}</p>
-        <Link href="/">
-          {labels.ecosystem} <ArrowUpRight size={13} aria-hidden="true" />
+        <Link href="/orders">
+          <ReceiptText size={13} aria-hidden="true" /> {labels.orders}
         </Link>
       </div>
 
@@ -54,7 +52,6 @@ export async function CommerceHeader() {
           <Link href="/shop">{labels.shop}</Link>
           <Link href="/shop#categories">{labels.categories}</Link>
           <Link href="/shop#catalog">{labels.catalog}</Link>
-          <Link href="/">{labels.about}</Link>
         </nav>
 
         <div className="commerce-header__actions">
