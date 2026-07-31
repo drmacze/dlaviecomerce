@@ -172,6 +172,10 @@ jobs:
           docker run --detach --name dlavie-commerce-api-ci --network host \
             --env NODE_ENV=production \
             --env PORT=8787 \
+            --env API_BASE_URL=https://api-ci.example.com \
+            --env STOREFRONT_URL=https://storefront-ci.example.com \
+            --env CORS_ORIGINS=https://storefront-ci.example.com \
+            --env TRUST_PROXY=true \
             --env ENABLE_COMMERCE=true \
             --env ENABLE_PAYMENTS=false \
             --env ENABLE_AI=false \
