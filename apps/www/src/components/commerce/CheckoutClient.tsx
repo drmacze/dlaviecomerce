@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { checkout, CommerceClientError, getCart, getShippingMethods } from '../../commerce/client';
 import { formatIdr } from '../../commerce/format';
-import { clearCartSession, readCartSession, writeOrderAccess } from '../../commerce/storage';
-import type { CartSession, CartView, CheckoutInput, ShippingMethod } from '../../commerce/types';
+import { notifyCartUpdated } from '../../commerce/storage';
+import type { CartView, CheckoutInput, ShippingMethod } from '../../commerce/types';
 
 function createIdempotencyKey(): string {
   return `${crypto.randomUUID().replaceAll('-', '')}${crypto.randomUUID().replaceAll('-', '')}`;
@@ -18,7 +18,6 @@ function text(form: FormData, name: string): string {
 }
 
 export function CheckoutClient() {
-  const [session, setSession] = useState<CartSession | null>(null);
   const [cart, setCart] = useState<CartView | null>(null);
   const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([]);
   const [selectedShipping, setSelectedShipping] = useState('');
@@ -28,17 +27,10 @@ export function CheckoutClient() {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const currentSession = readCartSession();
-    if (!currentSession) {
-      setStatus('empty');
-      return;
-    }
-
-    setSession(currentSession);
     setStatus('loading');
     setError(null);
     try {
-      const currentCart = await getCart(currentSession);
+      const currentCart = await getCart();
       if (currentCart.items.length === 0) {
         setCart(currentCart);
         setStatus('empty');
@@ -59,8 +51,8 @@ export function CheckoutClient() {
       setStatus('ready');
     } catch (requestError) {
       if (requestError instanceof CommerceClientError && requestError.status === 401) {
-        clearCartSession();
         setStatus('empty');
+        notifyCartUpdated();
         return;
       }
       setStatus('error');
@@ -95,7 +87,7 @@ export function CheckoutClient() {
 
   async function submit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    if (!session || !cart || status === 'submitting') return;
+    if (!cart || status === 'submitting') return;
 
     const form = new FormData(event.currentTarget);
     const fullName = text(form, 'fullName');
@@ -151,9 +143,8 @@ export function CheckoutClient() {
     setStatus('submitting');
     setError(null);
     try {
-      const order = await checkout(session, idempotencyKey, input);
-      writeOrderAccess(order.orderNumber, idempotencyKey);
-      clearCartSession();
+      const order = await checkout(idempotencyKey, input);
+      notifyCartUpdated();
 
       if (order.payment?.checkoutUrl) {
         window.location.assign(order.payment.checkoutUrl);
