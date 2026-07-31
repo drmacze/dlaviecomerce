@@ -25,45 +25,30 @@ jobs:
 
           customer = Path('apps/www/app/api/commerce/[...path]/route.ts')
           text = customer.read_text()
-          text = text.replace(
-              "import { commerceApiPath, CommerceConfigurationError } from '../../../../src/commerce/config';",
-              "import {\n  commerceBackendFetch,\n  CommerceConfigurationError,\n  EmbeddedCommerceConfigurationError,\n} from '../../../../src/commerce/backend';",
-          )
-          old_target = """  let target: URL;
-          try {
-            target = commerceApiPath(
-              `/${resolution.backendPath.map((segment) => encodeURIComponent(segment)).join('/')}`,
-            );
-          } catch (error) {
-            const message =
-              error instanceof CommerceConfigurationError
-                ? error.message
-                : 'Commerce API configuration is invalid.';
-            return errorResponse(503, 'SERVICE_UNAVAILABLE', message);
-          }
+          old_import = "import { commerceApiPath, CommerceConfigurationError } from '../../../../src/commerce/config';"
+          new_import = """import {
+            commerceBackendFetch,
+            CommerceConfigurationError,
+            EmbeddedCommerceConfigurationError,
+          } from '../../../../src/commerce/backend';"""
+          if old_import not in text:
+              raise SystemExit('customer import not found')
+          text = text.replace(old_import, new_import)
 
-          target.search = new URL(request.url).search;
-          """
-          new_target = """  const backendPath = `/${resolution.backendPath
+          start = text.index('  let target: URL;')
+          end = text.index('  const headers = new Headers();', start)
+          target = """  const backendPath = `/${resolution.backendPath
             .map((segment) => encodeURIComponent(segment))
             .join('/')}${new URL(request.url).search}`;
+
           """
-          if old_target not in text:
-              raise SystemExit('customer target block not found')
-          text = text.replace(old_target, new_target)
-          old_fetch = """    upstream = await fetch(target, {
-              method: request.method,
-              headers,
-              ...(hasBody ? { body: await request.arrayBuffer() } : {}),
-              cache: 'no-store',
-              redirect: 'manual',
-              signal: AbortSignal.timeout(20_000),
-            });
-          } catch {
-            return errorResponse(503, 'SERVICE_UNAVAILABLE', 'Commerce service is currently unreachable.');
-          }
-          """
-          new_fetch = """    upstream = await commerceBackendFetch(backendPath, {
+          text = text[:start] + target + text[end:]
+
+          declaration = text.index('  let upstream: Response;')
+          start = text.index('  try {', declaration)
+          end = text.index('  const bytes = await upstream.arrayBuffer();', start)
+          request = """  try {
+            upstream = await commerceBackendFetch(backendPath, {
               method: request.method,
               headers,
               ...(hasBody ? { body: await request.arrayBuffer() } : {}),
@@ -78,39 +63,34 @@ jobs:
                 : 'Commerce service is currently unreachable.';
             return errorResponse(503, 'SERVICE_UNAVAILABLE', message);
           }
+
           """
-          if old_fetch not in text:
-              raise SystemExit('customer fetch block not found')
-          customer.write_text(text.replace(old_fetch, new_fetch))
+          customer.write_text(text[:start] + request + text[end:])
 
           admin = Path('apps/www/app/api/admin/commerce/[...path]/route.ts')
           text = admin.read_text()
-          text = text.replace(
-              "import { commerceApiPath, CommerceConfigurationError } from '../../../../../src/commerce/config';",
-              "import {\n  commerceBackendFetch,\n  CommerceConfigurationError,\n  EmbeddedCommerceConfigurationError,\n} from '../../../../../src/commerce/backend';",
-          )
-          old_target = """    const target = commerceApiPath(
-              `/v1/admin/commerce/${path.map((segment) => encodeURIComponent(segment)).join('/')}`,
-            );
-            target.search = new URL(request.url).search;
-          """
-          new_target = """    const backendPath = `/v1/admin/commerce/${path
+          old_import = "import { commerceApiPath, CommerceConfigurationError } from '../../../../../src/commerce/config';"
+          new_import = """import {
+            commerceBackendFetch,
+            CommerceConfigurationError,
+            EmbeddedCommerceConfigurationError,
+          } from '../../../../../src/commerce/backend';"""
+          if old_import not in text:
+              raise SystemExit('admin import not found')
+          text = text.replace(old_import, new_import)
+
+          start = text.index('    const target = commerceApiPath(')
+          end = text.index('    const headers = new Headers', start)
+          target = """    const backendPath = `/v1/admin/commerce/${path
               .map((segment) => encodeURIComponent(segment))
               .join('/')}${new URL(request.url).search}`;
+
           """
-          if old_target not in text:
-              raise SystemExit('admin target block not found')
-          text = text.replace(old_target, new_target)
-          old_fetch = """    const upstream = await fetch(target, {
-              method: request.method,
-              headers,
-              ...(body ? { body } : {}),
-              cache: 'no-store',
-              redirect: 'manual',
-              signal: AbortSignal.timeout(20_000),
-            });
-          """
-          new_fetch = """    const upstream = await commerceBackendFetch(backendPath, {
+          text = text[:start] + target + text[end:]
+
+          start = text.index('    const upstream = await fetch(')
+          end = text.index('    const responseHeaders = new Headers', start)
+          request = """    const upstream = await commerceBackendFetch(backendPath, {
               method: request.method,
               headers,
               ...(body ? { body } : {}),
@@ -118,9 +98,7 @@ jobs:
               timeoutMs: 20_000,
             });
           """
-          if old_fetch not in text:
-              raise SystemExit('admin fetch block not found')
-          text = text.replace(old_fetch, new_fetch)
+          text = text[:start] + request + text[end:]
           text = text.replace(
               "error instanceof AdminSessionConfigurationError ||\n      error instanceof CommerceConfigurationError;",
               "error instanceof AdminSessionConfigurationError ||\n      error instanceof CommerceConfigurationError ||\n      error instanceof EmbeddedCommerceConfigurationError;",
@@ -162,4 +140,5 @@ jobs:
             apps/www/next.config.ts \
             lib/db/src/migrate.ts
           git commit -m "feat(vercel): run commerce directly on Neon" || exit 0
+          git pull --rebase origin feat/vercel-neon-embedded-commerce
           git push origin HEAD:feat/vercel-neon-embedded-commerce
