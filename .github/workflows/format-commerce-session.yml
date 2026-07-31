@@ -1,0 +1,46 @@
+name: One-time Commerce Session Formatter
+
+on:
+  push:
+    branches: [feat/commerce-storefront]
+    paths: [.github/workflows/format-commerce-session.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/commerce-storefront
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.28.2 --activate
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Format hardened commerce session files
+        run: |
+          pnpm exec prettier --write \
+            'apps/www/app/api/commerce/[...path]/route.ts' \
+            apps/www/src/commerce/session.ts \
+            apps/www/src/commerce/session.test.ts
+      - name: Commit formatting
+        run: |
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            'apps/www/app/api/commerce/[...path]/route.ts' \
+            apps/www/src/commerce/session.ts \
+            apps/www/src/commerce/session.test.ts
+          git commit -m "style(storefront): format hardened commerce session"
+          git push origin HEAD:feat/commerce-storefront
