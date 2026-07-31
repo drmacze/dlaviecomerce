@@ -16,6 +16,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: feat/commerce-core-production
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -44,4 +45,5 @@ jobs:
             docs/commerce-production-deployment.md \
             .github/workflows/commerce-ci.yml
           git commit -m "build(api): finalize production container runtime"
+          git pull --rebase origin feat/commerce-core-production
           git push origin HEAD:feat/commerce-core-production
