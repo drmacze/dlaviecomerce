@@ -193,7 +193,8 @@ const copy = {
     stepOne: 'Pilih produk',
     stepOneCopy: 'Cari melalui katalog atau buka kategori yang sesuai dengan kebutuhan saat ini.',
     stepTwo: 'Periksa dan bayar',
-    stepTwoCopy: 'Konfirmasi produk lalu selesaikan pembayaran melalui alur Midtrans yang terlindungi.',
+    stepTwoCopy:
+      'Konfirmasi produk lalu selesaikan pembayaran melalui alur Midtrans yang terlindungi.',
     stepThree: 'Pantau pesanan',
     stepThreeCopy: 'Gunakan halaman pesanan untuk memeriksa status transaksi dan pemrosesan.',
     closingEyebrow: 'DLavie Commerce',
@@ -350,7 +351,11 @@ function CommerceCategoryShowcase({
   categories: CatalogCategory[];
 }) {
   return (
-    <section className="commerce-home-categories" id="categories" aria-labelledby="home-categories-title">
+    <section
+      className="commerce-home-categories"
+      id="categories"
+      aria-labelledby="home-categories-title"
+    >
       <div className="commerce-home-section-heading">
         <div>
           <p className="commerce-eyebrow">{labels.categoriesEyebrow}</p>
@@ -567,10 +572,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
             </form>
 
             <div className="commerce-catalog-layout">
-              <aside
-                className="commerce-category-nav"
-                aria-labelledby="categories-title"
-              >
+              <aside className="commerce-category-nav" aria-labelledby="categories-title">
                 <div className="commerce-category-nav__heading">
                   <p id="categories-title">{labels.categories}</p>
                   <span>{categories.length}</span>
