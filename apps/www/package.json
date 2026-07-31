@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --port 3000",
-    "build": "next build",
+    "build": "pnpm --dir ../.. exec tsc -p tsconfig.json && next build",
     "start": "next start",
     "lint": "eslint .",
     "test": "jest --passWithNoTests",
@@ -36,7 +36,7 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^25.3.3",
     "@types/react": "^19.2.0",
-    "@types/react-dom": "^19.2.0",
+    "@types/react-dom": "^19.2.3",
     "@types/three": "^0.184.1",
     "eslint": "^9.39.4",
     "globals": "^17.6.0",
