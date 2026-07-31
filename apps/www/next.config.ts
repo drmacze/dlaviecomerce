@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   outputFileTracingRoot: monorepoRoot,
   outputFileTracingIncludes: {
-    '/*': ['../../lib/db/drizzle/*.sql'],
+    '/*': ['../../dist/**/*', '../../lib/db/drizzle/*.sql'],
   },
   turbopack: {
     root: monorepoRoot,
