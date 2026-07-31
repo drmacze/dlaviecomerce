@@ -1,6 +1,9 @@
 name: One-time Vercel Neon Finalizer
 
 on:
+  pull_request:
+    branches: [feat/commerce-admin-dashboard]
+    types: [opened, synchronize, reopened]
   push:
     branches: [feat/vercel-neon-embedded-commerce]
     paths: [.github/workflows/finalize-vercel-neon.yml]
@@ -127,10 +130,11 @@ jobs:
             apps/www/next.config.ts \
             lib/db/src/migrate.ts
 
-      - name: Commit finalization
+      - name: Commit finalization and remove writer workflow
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/finalize-vercel-neon.yml
           git add \
             apps/www/app/api/commerce/[...path]/route.ts \
             apps/www/app/api/admin/commerce/[...path]/route.ts \
@@ -139,6 +143,6 @@ jobs:
             apps/www/src/commerce/server.ts \
             apps/www/next.config.ts \
             lib/db/src/migrate.ts
-          git commit -m "feat(vercel): run commerce directly on Neon" || exit 0
+          git commit -m "feat(vercel): run commerce directly on Neon"
           git pull --rebase origin feat/vercel-neon-embedded-commerce
           git push origin HEAD:feat/vercel-neon-embedded-commerce
