@@ -10,6 +10,11 @@ import type {
   ShippingMethod,
 } from './types';
 
+export type CustomerReferenceInput = {
+  kind: 'phone' | 'meter_number' | 'customer_id' | 'game_id' | 'account_id';
+  value: string;
+};
+
 export class CommerceClientError extends Error {
   constructor(
     message: string,
@@ -70,12 +75,19 @@ export async function getCart(): Promise<CartView> {
   return response.data;
 }
 
-export async function setCartItem(variantId: string, quantity: number): Promise<CartView> {
+export async function setCartItem(
+  variantId: string,
+  quantity: number,
+  customerReference?: CustomerReferenceInput,
+): Promise<CartView> {
   const response = await request<{ data: CartView }>(
     `/v1/carts/current/items/${encodeURIComponent(variantId)}`,
     {
       method: 'PUT',
-      body: { quantity },
+      body: {
+        quantity,
+        ...(customerReference ? { customerReference } : {}),
+      },
     },
   );
   return response.data;
