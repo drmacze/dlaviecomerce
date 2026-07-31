@@ -6,9 +6,10 @@ import {
 
 describe('customer reference validation', () => {
   it('normalizes numeric references before persistence', () => {
-    expect(
-      normalizeCustomerReference({ kind: 'phone', value: '0812-3456 7890' }),
-    ).toEqual({ kind: 'phone', value: '081234567890' });
+    expect(normalizeCustomerReference({ kind: 'phone', value: '0812-3456 7890' })).toEqual({
+      kind: 'phone',
+      value: '081234567890',
+    });
   });
 
   it('accepts a target-aware cart mutation', () => {
