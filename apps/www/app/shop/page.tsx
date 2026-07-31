@@ -48,7 +48,10 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
       <div className="commerce-page">
         <CommerceHeader />
         <main className="commerce-shell">
-          <section className="commerce-hero commerce-hero--catalog" aria-labelledby="commerce-title">
+          <section
+            className="commerce-hero commerce-hero--catalog"
+            aria-labelledby="commerce-title"
+          >
             <div className="commerce-hero__content">
               <p className="commerce-eyebrow">Koleksi DLavie</p>
               <h1 id="commerce-title">Belanja lebih mudah, tanpa distraksi.</h1>
@@ -108,7 +111,11 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
             </form>
 
             <div className="commerce-catalog-layout">
-              <aside className="commerce-category-nav" id="categories" aria-labelledby="categories-title">
+              <aside
+                className="commerce-category-nav"
+                id="categories"
+                aria-labelledby="categories-title"
+              >
                 <div className="commerce-category-nav__heading">
                   <p id="categories-title">Kategori</p>
                   <span>{categories.length}</span>
@@ -167,7 +174,9 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
                               </span>
                             )}
                             {variant.availableQuantity < 1 ? (
-                              <span className="commerce-badge commerce-badge--sold">Stok habis</span>
+                              <span className="commerce-badge commerce-badge--sold">
+                                Stok habis
+                              </span>
                             ) : null}
                           </Link>
                           <div className="commerce-product-card__body">
@@ -202,7 +211,9 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
                 ) : (
                   <section className="commerce-empty">
                     <h2>Belum ada produk yang cocok</h2>
-                    <p>Ubah kata pencarian atau kategori. Tidak ada produk contoh yang ditampilkan.</p>
+                    <p>
+                      Ubah kata pencarian atau kategori. Tidak ada produk contoh yang ditampilkan.
+                    </p>
                     <Link className="commerce-button commerce-button--secondary" href="/shop">
                       Lihat seluruh katalog
                     </Link>
