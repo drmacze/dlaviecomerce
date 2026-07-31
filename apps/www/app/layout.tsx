@@ -53,7 +53,10 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} data-lenis-root suppressHydrationWarning>
-      <body className={`${dlavieDisplay.variable} ${dlavieSans.variable}`} suppressHydrationWarning>
+      <body
+        className={`${dlavieDisplay.variable} ${dlavieSans.variable}`}
+        suppressHydrationWarning
+      >
         <LocaleExperience initialLocale={locale}>
           <HomeWordmark />
           <SmoothScrollProvider>{children}</SmoothScrollProvider>
