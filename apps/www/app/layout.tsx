@@ -14,6 +14,7 @@ import '../src/styles/account.css';
 import '../src/styles/account-auth.css';
 import '../src/styles/ai.css';
 import '../src/styles/home.css';
+import '../src/styles/commerce.css';
 
 const dlavieDisplay = Barlow_Condensed({
   subsets: ['latin'],
@@ -30,7 +31,8 @@ const dlavieSans = Inter({
 
 export const metadata: Metadata = {
   title: 'DLavie — AI. Commerce. Automation.',
-  description: 'An intelligent product ecosystem for DlavieOS, AI agents, PPOB commerce, and connected operations.',
+  description:
+    'An intelligent product ecosystem for DlavieOS, AI agents, commerce, and connected operations.',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
