@@ -12,7 +12,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc -p tsconfig.json",
-    "start": "tsx src/server.ts",
+    "start": "node --enable-source-maps dist/src/server.js",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint src tests lib/db/src",
     "test": "vitest run",
@@ -20,6 +20,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check src tests lib/db/src README.md",
     "db:migrate": "pnpm --filter @workspace/db migrate",
+    "db:migrate:prod": "node lib/db/scripts/migrate.mjs",
     "db:studio": "pnpm --filter @workspace/db studio"
   },
   "dependencies": {
@@ -28,7 +29,9 @@
     "@fastify/rate-limit": "^10.3.0",
     "@supabase/supabase-js": "^2.87.1",
     "dotenv": "^17.2.3",
+    "drizzle-orm": "^0.45.2",
     "fastify": "^5.6.2",
+    "pg": "^8.20.0",
     "pino": "^10.1.0",
     "zod": "^4.1.13"
   },
