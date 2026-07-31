@@ -111,8 +111,7 @@ async function proxy(
     const contentType = request.headers.get('content-type');
     if (contentType) headers.set('Content-Type', contentType);
 
-    const hasBody = request.method !== 'GET' && request.method !== 'HEAD';
-    const body = hasBody ? await request.arrayBuffer() : undefined;
+    const body = request.method === 'GET' ? undefined : await request.arrayBuffer();
     if (body && body.byteLength > maximumBodyBytes) {
       return errorResponse(413, 'PAYLOAD_TOO_LARGE', 'Admin request body is too large.');
     }
