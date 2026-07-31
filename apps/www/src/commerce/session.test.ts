@@ -1,4 +1,5 @@
 import {
+  checkoutCredential,
   commerceSessionCookie,
   CommerceSessionConfigurationError,
   publicCommerceSession,
@@ -54,6 +55,20 @@ describe('encrypted commerce session', () => {
       cart: { id: 'cart-id', expiresAt },
       orderNumbers: ['DLV-ORDER-1'],
     });
+  });
+
+  it('derives a deterministic checkout credential without exposing the cart token', () => {
+    const session = setCartCredential(emptySession(), {
+      id: 'cart-id',
+      token: 'c'.repeat(64),
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+    });
+
+    const credential = checkoutCredential(session);
+    expect(credential).toHaveLength(64);
+    expect(credential).toBe(checkoutCredential(session));
+    expect(credential).not.toContain(session.cart?.token ?? '');
+    expect(checkoutCredential(emptySession())).toBeNull();
   });
 
   it('rejects a tampered authenticated cookie', () => {
