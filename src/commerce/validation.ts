@@ -37,6 +37,7 @@ export const productInputSchema = z.object({
 
 export const productPatchSchema = productInputSchema
   .partial()
+  .extend({ categoryId: uuidSchema.nullable().optional() })
   .refine((value) => Object.keys(value).length > 0, 'At least one field is required.');
 
 const attributesSchema = z.record(z.string().min(1).max(50), z.string().max(200)).default({});

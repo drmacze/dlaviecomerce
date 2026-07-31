@@ -303,7 +303,7 @@ export async function commerceAdminRoutes(app: FastifyInstance): Promise<void> {
           type: input.delta > 0 ? 'restock' : 'adjustment',
           quantityDelta: input.delta,
           reason: input.reason,
-          actor: 'admin-api-key',
+          actor: request.user ? `user:${request.user.id}` : 'admin-api-key',
         });
         return updated;
       });

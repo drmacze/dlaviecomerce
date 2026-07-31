@@ -62,7 +62,7 @@ export async function commerceAdminReadRoutes(app: FastifyInstance): Promise<voi
         .select({
           onHand: sql<number>`coalesce(sum(${inventoryTable.onHand}), 0)::int`,
           reserved: sql<number>`coalesce(sum(${inventoryTable.reserved}), 0)::int`,
-          lowStockVariants: sql<number>`count(*) filter (where (${inventoryTable.onHand} - ${inventoryTable.reserved}) <= ${inventoryTable.lowStockThreshold})::int`,
+          lowStockVariants: sql<number>`count(*) filter (where (${inventoryTable.onHand} - ${inventoryTable.reserved}) <= ${inventoryTable.reorderLevel})::int`,
         })
         .from(inventoryTable),
     ]);
@@ -94,10 +94,7 @@ export async function commerceAdminReadRoutes(app: FastifyInstance): Promise<voi
     '/v1/admin/commerce/shipping-methods',
     { preHandler: requireCommerceAdmin },
     async () => ({
-      data: await db
-        .select()
-        .from(shippingMethodsTable)
-        .orderBy(asc(shippingMethodsTable.sortOrder), asc(shippingMethodsTable.name)),
+      data: await db.select().from(shippingMethodsTable).orderBy(asc(shippingMethodsTable.name)),
     }),
   );
 
@@ -153,7 +150,7 @@ export async function commerceAdminReadRoutes(app: FastifyInstance): Promise<voi
                 isActive: productVariantsTable.isActive,
                 onHand: inventoryTable.onHand,
                 reserved: inventoryTable.reserved,
-                lowStockThreshold: inventoryTable.lowStockThreshold,
+                lowStockThreshold: inventoryTable.reorderLevel,
               })
               .from(productVariantsTable)
               .leftJoin(inventoryTable, eq(inventoryTable.variantId, productVariantsTable.id))
@@ -238,7 +235,7 @@ export async function commerceAdminReadRoutes(app: FastifyInstance): Promise<voi
             isActive: productVariantsTable.isActive,
             onHand: inventoryTable.onHand,
             reserved: inventoryTable.reserved,
-            lowStockThreshold: inventoryTable.lowStockThreshold,
+            lowStockThreshold: inventoryTable.reorderLevel,
             updatedAt: productVariantsTable.updatedAt,
           })
           .from(productVariantsTable)
@@ -311,7 +308,7 @@ export async function commerceAdminReadRoutes(app: FastifyInstance): Promise<voi
             currency: paymentsTable.currency,
             providerTransactionId: paymentsTable.providerTransactionId,
             expiresAt: paymentsTable.expiresAt,
-            paidAt: paymentsTable.paidAt,
+            terminalProcessedAt: paymentsTable.terminalProcessedAt,
             createdAt: paymentsTable.createdAt,
             updatedAt: paymentsTable.updatedAt,
           })
