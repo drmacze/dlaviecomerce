@@ -2,7 +2,7 @@
 
 import { FormEvent, useState, useTransition } from 'react';
 import Link from 'next/link';
-import { ArrowRight, LockKeyhole, ShoppingBag, Sparkles } from 'lucide-react';
+import { ArrowRight, CreditCard, LockKeyhole, ReceiptText, ShoppingBag } from 'lucide-react';
 import { DlavieBrand, DlavieMark } from '../brand/DlavieBrand';
 import { useDlavieLocale } from '../i18n/LocaleExperience';
 import { NeonField } from './NeonField';
@@ -23,23 +23,22 @@ type AccountApiResponse = {
 
 const copy = {
   en: {
-    ecosystem: 'One identity, the entire ecosystem',
-    visualTitle: 'Access commerce, AI, and automation through one secure account.',
-    visualCopy: 'Sessions are protected with server-set HTTP-only cookies and credentials are never exposed to browser JavaScript.',
-    createKicker: 'Create new access',
-    loginKicker: 'Secure access',
-    createTitle: 'Create a DLavie account',
-    loginTitle: 'Sign in to DLavie',
-    createCopy: 'Create the identity you will use for shopping, product access, and connected DLavie services.',
-    loginCopy: 'Sign in to continue your commerce activity and manage access to DLavie products.',
+    kicker: 'One account for every transaction',
+    visualTitle: 'Buy digital products and keep every order in one secure place.',
+    visualCopy:
+      'DLavie Commerce connects a Digiflazz-powered catalog with Midtrans payment processing and server-managed account sessions.',
+    createKicker: 'Create commerce access',
+    loginKicker: 'Secure commerce access',
+    createTitle: 'Create your DLavie account',
+    loginTitle: 'Sign in to DLavie Commerce',
+    createCopy: 'Create an account to purchase products, track orders, and review transaction history.',
+    loginCopy: 'Sign in to continue shopping and manage your DLavie Commerce orders.',
     name: 'Full name',
     namePlaceholder: 'Your name',
-    nameHint: 'Use your real name for workspace identity and account recovery.',
+    nameHint: 'Use your real name for account recovery and transaction records.',
     email: 'Email',
-    emailPlaceholder: 'you@company.com',
-    emailHint: 'Use your primary email address for DLavie access.',
-    interest: 'Product interest',
-    interestHint: 'Choose the product path you would like to explore first.',
+    emailPlaceholder: 'you@example.com',
+    emailHint: 'Order updates and account notices will be sent to this address.',
     password: 'Password',
     passwordHint: 'Use at least 12 characters with a strong combination.',
     submitCreate: 'Create account',
@@ -55,27 +54,26 @@ const copy = {
     connectionError: 'The connection was interrupted. Check your network and try again.',
   },
   id: {
-    ecosystem: 'Satu identitas, seluruh ekosistem',
-    visualTitle: 'Akses commerce, AI, dan automation melalui satu akun aman.',
-    visualCopy: 'Session dilindungi cookie HTTP-only yang diatur server dan kredensial tidak pernah diekspos ke JavaScript browser.',
-    createKicker: 'Buat akses baru',
-    loginKicker: 'Akses aman',
+    kicker: 'Satu akun untuk setiap transaksi',
+    visualTitle: 'Beli produk digital dan simpan seluruh pesanan dalam satu tempat yang aman.',
+    visualCopy:
+      'DLavie Commerce menghubungkan katalog Digiflazz, pembayaran Midtrans, dan session akun yang dikelola langsung oleh server.',
+    createKicker: 'Buat akses commerce',
+    loginKicker: 'Akses commerce aman',
     createTitle: 'Buat akun DLavie',
-    loginTitle: 'Masuk ke DLavie',
-    createCopy: 'Buat identitas yang akan digunakan untuk belanja, akses produk, dan layanan DLavie yang terhubung.',
-    loginCopy: 'Masuk untuk melanjutkan aktivitas commerce dan mengelola akses ke produk DLavie.',
+    loginTitle: 'Masuk ke DLavie Commerce',
+    createCopy: 'Buat akun untuk membeli produk, melacak pesanan, dan melihat riwayat transaksi.',
+    loginCopy: 'Masuk untuk melanjutkan belanja dan mengelola pesanan DLavie Commerce.',
     name: 'Nama lengkap',
     namePlaceholder: 'Nama Anda',
-    nameHint: 'Gunakan nama asli untuk identitas workspace dan pemulihan akun.',
+    nameHint: 'Gunakan nama asli untuk pemulihan akun dan catatan transaksi.',
     email: 'Email',
-    emailPlaceholder: 'anda@perusahaan.com',
-    emailHint: 'Gunakan alamat email utama untuk akses DLavie.',
-    interest: 'Produk yang diminati',
-    interestHint: 'Pilih jalur produk yang ingin dijelajahi terlebih dahulu.',
+    emailPlaceholder: 'anda@contoh.com',
+    emailHint: 'Pembaruan pesanan dan pemberitahuan akun akan dikirim ke alamat ini.',
     password: 'Kata sandi',
     passwordHint: 'Gunakan minimal 12 karakter dengan kombinasi yang kuat.',
     submitCreate: 'Buat akun',
-    submitLogin: 'Masuk ke akun',
+    submitLogin: 'Masuk',
     processing: 'Memproses',
     existing: 'Sudah punya akun?',
     newUser: 'Belum punya akun?',
@@ -88,28 +86,12 @@ const copy = {
   },
 } as const;
 
-const productOptions = {
-  en: [
-    { label: 'DLavie Commerce', value: 'commerce' },
-    { label: 'DLavie AI', value: 'ai' },
-    { label: 'Automation ecosystem', value: 'automation' },
-    { label: 'The full DLavie ecosystem', value: 'all' },
-  ],
-  id: [
-    { label: 'DLavie Commerce', value: 'commerce' },
-    { label: 'DLavie AI', value: 'ai' },
-    { label: 'Ekosistem automation', value: 'automation' },
-    { label: 'Seluruh ekosistem DLavie', value: 'all' },
-  ],
-} as const;
-
 export function AccountAccessPage({ mode }: AccountAccessPageProps) {
   const { locale } = useDlavieLocale();
   const labels = copy[locale];
   const isRegister = mode === 'register';
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [interest, setInterest] = useState('commerce');
   const [password, setPassword] = useState('');
   const [status, setStatus] = useState<{ tone: 'info' | 'error'; message: string } | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -123,21 +105,18 @@ export function AccountAccessPage({ mode }: AccountAccessPageProps) {
         const response = await fetch(isRegister ? '/api/account/register' : '/api/account/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email, interest, password }),
+          body: JSON.stringify({ name, email, interest: 'commerce', password }),
         });
-
         const result = (await response.json().catch(() => ({}))) as AccountApiResponse;
 
         if (!response.ok || !result.ok) {
           setStatus({ tone: 'error', message: result.message ?? labels.requestError });
           return;
         }
-
         if (result.requiresConfirmation) {
           setStatus({ tone: 'info', message: result.message ?? labels.confirmation });
           return;
         }
-
         window.location.assign(result.redirectTo ?? '/account/onboarding');
       } catch {
         setStatus({ tone: 'error', message: labels.connectionError });
@@ -149,8 +128,8 @@ export function AccountAccessPage({ mode }: AccountAccessPageProps) {
     <main className="account-shell">
       <section className="account-card" data-mode={mode} aria-labelledby="account-title">
         <aside className="account-visual account-visual--brand">
-          <Link className="account-brand" href="/" aria-label="DLavie home">
-            <DlavieBrand product="Account" tone="light" compact />
+          <Link className="account-brand" href="/shop" aria-label="DLavie Commerce">
+            <DlavieBrand product="Commerce" tone="light" compact />
           </Link>
 
           <div className="account-visual__brand-stage" aria-hidden="true">
@@ -159,15 +138,16 @@ export function AccountAccessPage({ mode }: AccountAccessPageProps) {
           </div>
 
           <div className="account-visual__copy">
-            <p className="account-panel__kicker">{labels.ecosystem}</p>
+            <p className="account-panel__kicker">{labels.kicker}</p>
             <h2>{labels.visualTitle}</h2>
             <p>{labels.visualCopy}</p>
           </div>
 
-          <div className="account-signal" aria-label="DLavie services">
-            <span><ShoppingBag size={16} aria-hidden="true" /><b>Commerce</b><em>Ready</em></span>
-            <span><Sparkles size={16} aria-hidden="true" /><b>AI</b><em>Connected</em></span>
-            <span><LockKeyhole size={16} aria-hidden="true" /><b>Security</b><em>Protected</em></span>
+          <div className="account-signal" aria-label="DLavie Commerce services">
+            <span><ShoppingBag size={16} aria-hidden="true" /><b>Digiflazz</b><em>Catalog</em></span>
+            <span><CreditCard size={16} aria-hidden="true" /><b>Midtrans</b><em>Payment</em></span>
+            <span><ReceiptText size={16} aria-hidden="true" /><b>Orders</b><em>Tracked</em></span>
+            <span><LockKeyhole size={16} aria-hidden="true" /><b>Account</b><em>Protected</em></span>
           </div>
         </aside>
 
@@ -184,10 +164,6 @@ export function AccountAccessPage({ mode }: AccountAccessPageProps) {
             ) : null}
 
             <NeonField label={labels.email} name="email" type="email" autoComplete="email" placeholder={labels.emailPlaceholder} value={email} onChange={(event) => setEmail(event.target.value)} hint={labels.emailHint} required />
-
-            {isRegister ? (
-              <NeonField fieldType="select" label={labels.interest} name="interest" value={interest} onChange={(event) => setInterest(event.target.value)} hint={labels.interestHint} options={[...productOptions[locale]]} />
-            ) : null}
 
             <NeonField label={labels.password} name="password" type="password" autoComplete={isRegister ? 'new-password' : 'current-password'} placeholder="••••••••••••" value={password} onChange={(event) => setPassword(event.target.value)} hint={labels.passwordHint} required />
             <PasswordStrengthMeter value={password} />
