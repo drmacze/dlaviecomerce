@@ -100,13 +100,20 @@ function encrypt(session: AdminSession): string {
   return encoded;
 }
 
+function decodeCanonicalBase64Url(value: string): Buffer | null {
+  if (!/^[A-Za-z0-9_-]+$/.test(value)) return null;
+  const decoded = Buffer.from(value, 'base64url');
+  return decoded.toString('base64url') === value ? decoded : null;
+}
+
 function decrypt(encoded: string): AdminSession | null {
   try {
     const [ivValue, tagValue, ciphertextValue, extra] = encoded.split('.');
     if (!ivValue || !tagValue || !ciphertextValue || extra) return null;
-    const iv = Buffer.from(ivValue, 'base64url');
-    const tag = Buffer.from(tagValue, 'base64url');
-    const ciphertext = Buffer.from(ciphertextValue, 'base64url');
+    const iv = decodeCanonicalBase64Url(ivValue);
+    const tag = decodeCanonicalBase64Url(tagValue);
+    const ciphertext = decodeCanonicalBase64Url(ciphertextValue);
+    if (!iv || !tag || !ciphertext) return null;
     if (iv.length !== 12 || tag.length !== 16 || ciphertext.length === 0) return null;
     const decipher = createDecipheriv(algorithm, key(), iv);
     decipher.setAAD(associatedData);
