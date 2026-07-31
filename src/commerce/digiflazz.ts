@@ -57,7 +57,7 @@ async function postDigiflazz<T>(path: string, body: Record<string, unknown>): Pr
       signal: AbortSignal.timeout(20_000),
     });
   } catch (error) {
-    throw new AppError('PROVIDER_ERROR', 'Digiflazz did not respond in time.', 502, {
+    throw new AppError('CATALOG_PROVIDER_ERROR', 'Digiflazz did not respond in time.', 502, {
       cause: error instanceof Error ? error.name : 'network_error',
     });
   }
@@ -67,13 +67,16 @@ async function postDigiflazz<T>(path: string, body: Record<string, unknown>): Pr
   try {
     payload = JSON.parse(text) as T;
   } catch {
-    throw new AppError('PROVIDER_ERROR', 'Digiflazz returned an invalid response.', 502, {
-      providerStatus: response.status,
-    });
+    throw new AppError(
+      'CATALOG_PROVIDER_ERROR',
+      'Digiflazz returned an invalid response.',
+      502,
+      { providerStatus: response.status },
+    );
   }
 
   if (!response.ok) {
-    throw new AppError('PROVIDER_ERROR', 'Digiflazz rejected the request.', 502, {
+    throw new AppError('CATALOG_PROVIDER_ERROR', 'Digiflazz rejected the request.', 502, {
       providerStatus: response.status,
     });
   }
@@ -111,7 +114,11 @@ export async function requestDigiflazzTransaction(input: {
 
   const payload = await postDigiflazz<TransactionResponse>('/v1/transaction', body);
   if (!payload.data) {
-    throw new AppError('PROVIDER_ERROR', 'Digiflazz returned an incomplete transaction.', 502);
+    throw new AppError(
+      'CATALOG_PROVIDER_ERROR',
+      'Digiflazz returned an incomplete transaction.',
+      502,
+    );
   }
   return payload.data;
 }
