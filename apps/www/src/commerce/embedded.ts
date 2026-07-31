@@ -44,7 +44,9 @@ function ensureEmbeddedEnvironment(origin: string): void {
   process.env.ENABLE_AI ??= 'false';
   process.env.DATABASE_POOL_MAX ??= '1';
   process.env.DATABASE_SSL_MODE ??= 'require';
-  process.env.ADMIN_API_KEY ??= state.__dlavieEmbeddedCommerce.internalAdminKey;
+  if ((process.env.ADMIN_API_KEY?.trim().length ?? 0) < 32) {
+    process.env.ADMIN_API_KEY = state.__dlavieEmbeddedCommerce.internalAdminKey;
+  }
   process.env.API_BASE_URL ??= origin;
   process.env.STOREFRONT_URL ??= origin;
   process.env.CORS_ORIGINS ??= origin;
@@ -69,10 +71,25 @@ async function createEmbeddedApp(origin: string): Promise<FastifyInstance> {
   return app;
 }
 
+function safeErrorDetails(error: unknown): {
+  name: string;
+  message: string;
+  code?: string;
+} {
+  const name = error instanceof Error ? error.name : typeof error;
+  const message = error instanceof Error ? error.message : String(error);
+  const code =
+    typeof error === 'object' && error !== null && 'code' in error
+      ? String((error as { code?: unknown }).code)
+      : undefined;
+  return code ? { name, message, code } : { name, message };
+}
+
 async function embeddedApp(origin?: string): Promise<FastifyInstance> {
   const resolvedOrigin = deploymentOrigin(origin);
   state.__dlavieEmbeddedCommerce ??= {};
   state.__dlavieEmbeddedCommerce.app ??= createEmbeddedApp(resolvedOrigin).catch((error) => {
+    console.error('[commerce-embedded] initialization failed', safeErrorDetails(error));
     if (state.__dlavieEmbeddedCommerce) state.__dlavieEmbeddedCommerce.app = undefined;
     throw error;
   });
