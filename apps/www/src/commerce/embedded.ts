@@ -1,6 +1,6 @@
 import 'server-only';
 import crypto from 'node:crypto';
-import type { FastifyInstance, HTTPMethods } from 'fastify';
+import type { FastifyInstance, HTTPMethods, InjectOptions } from 'fastify';
 
 export class EmbeddedCommerceConfigurationError extends Error {
   constructor(message: string) {
@@ -82,13 +82,15 @@ async function embeddedApp(origin?: string): Promise<FastifyInstance> {
   return state.__dlavieEmbeddedCommerce.app;
 }
 
-function responseHeaders(source: Record<string, string | string[] | undefined>): Headers {
+function responseHeaders(
+  source: Record<string, string | string[] | number | undefined>,
+): Headers {
   const headers = new Headers();
   for (const [name, value] of Object.entries(source)) {
     if (Array.isArray(value)) {
       for (const entry of value) headers.append(name, entry);
     } else if (value !== undefined) {
-      headers.set(name, value);
+      headers.set(name, String(value));
     }
   }
   headers.set('Cache-Control', 'no-store');
@@ -105,12 +107,15 @@ export async function embeddedCommerceFetch(
   } = {},
 ): Promise<Response> {
   const app = await embeddedApp(options.origin);
-  const result = await app.inject({
+  const injectOptions: InjectOptions = {
     method: (options.method ?? 'GET') as HTTPMethods,
     url: pathname,
-    headers: options.headers ? Object.fromEntries(options.headers.entries()) : undefined,
-    payload: options.body ? Buffer.from(options.body) : undefined,
-  });
+    ...(options.headers
+      ? { headers: Object.fromEntries(options.headers.entries()) }
+      : {}),
+    ...(options.body ? { payload: Buffer.from(options.body) } : {}),
+  };
+  const result = await app.inject(injectOptions);
 
   return new Response(result.rawPayload, {
     status: result.statusCode,
