@@ -1,10 +1,4 @@
-import {
-  createCipheriv,
-  createDecipheriv,
-  createHash,
-  createHmac,
-  randomBytes,
-} from 'node:crypto';
+import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes } from 'node:crypto';
 
 const sessionVersion = 1 as const;
 const algorithm = 'aes-256-gcm';
@@ -153,12 +147,12 @@ function encryptSession(session: CommerceSession): string {
     cipher.final(),
   ]);
   const tag = cipher.getAuthTag();
-  const encoded = [iv, tag, ciphertext]
-    .map((value) => value.toString('base64url'))
-    .join('.');
+  const encoded = [iv, tag, ciphertext].map((value) => value.toString('base64url')).join('.');
 
   if (encoded.length > maximumEncodedSessionLength) {
-    throw new CommerceSessionConfigurationError('Encrypted commerce session exceeds cookie limits.');
+    throw new CommerceSessionConfigurationError(
+      'Encrypted commerce session exceeds cookie limits.',
+    );
   }
   return encoded;
 }
@@ -176,10 +170,7 @@ export function publicCommerceSession(session: CommerceSession): PublicCommerceS
   };
 }
 
-export function setCartCredential(
-  session: CommerceSession,
-  cart: CartCredential,
-): CommerceSession {
+export function setCartCredential(session: CommerceSession, cart: CartCredential): CommerceSession {
   return normalizeSession({ ...session, cart });
 }
 

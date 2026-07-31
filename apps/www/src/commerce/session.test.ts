@@ -72,9 +72,7 @@ describe('encrypted commerce session', () => {
   });
 
   it('rejects a tampered authenticated cookie', () => {
-    const original = cookiePair(
-      setOrderCredential(emptySession(), 'DLV-ORDER-2', 'o'.repeat(64)),
-    );
+    const original = cookiePair(setOrderCredential(emptySession(), 'DLV-ORDER-2', 'o'.repeat(64)));
     const lastCharacter = original.at(-1);
     const tampered = `${original.slice(0, -1)}${lastCharacter === 'a' ? 'b' : 'a'}`;
 

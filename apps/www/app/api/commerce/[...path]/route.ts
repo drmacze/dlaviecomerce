@@ -93,10 +93,7 @@ function resolveProxy(
     return { backendPath: segments, kind: 'create-cart' };
   }
 
-  if (
-    (method === 'GET' || method === 'DELETE') &&
-    samePath(segments, ['v1', 'carts', 'current'])
-  ) {
+  if ((method === 'GET' || method === 'DELETE') && samePath(segments, ['v1', 'carts', 'current'])) {
     if (!session.cart) {
       return errorResponse(401, 'CART_SESSION_REQUIRED', 'No active cart session was found.');
     }
@@ -162,7 +159,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function parseJsonBody(bytes: ArrayBuffer, contentType: string): unknown | null {
-  if (!contentType.toLowerCase().includes('application/json') || bytes.byteLength === 0) return null;
+  if (!contentType.toLowerCase().includes('application/json') || bytes.byteLength === 0)
+    return null;
   try {
     return JSON.parse(Buffer.from(bytes).toString('utf8')) as unknown;
   } catch {
@@ -301,7 +299,11 @@ async function proxy(
   if (upstream.ok && resolution.kind === 'create-cart') {
     const cart = createCartSession(payload);
     if (!cart) {
-      return errorResponse(502, 'UPSTREAM_ERROR', 'Commerce service returned an invalid cart session.');
+      return errorResponse(
+        502,
+        'UPSTREAM_ERROR',
+        'Commerce service returned an invalid cart session.',
+      );
     }
     nextSession = setCartCredential(session, cart);
     sessionChanged = true;
@@ -312,7 +314,11 @@ async function proxy(
     const idempotencyKey = resolution.idempotencyKey;
     const orderNumber = orderNumberFromPayload(payload);
     if (!idempotencyKey || !orderNumber) {
-      return errorResponse(502, 'UPSTREAM_ERROR', 'Commerce service returned an invalid order session.');
+      return errorResponse(
+        502,
+        'UPSTREAM_ERROR',
+        'Commerce service returned an invalid order session.',
+      );
     }
     nextSession = clearCartCredential(setOrderCredential(session, orderNumber, idempotencyKey));
     sessionChanged = true;
