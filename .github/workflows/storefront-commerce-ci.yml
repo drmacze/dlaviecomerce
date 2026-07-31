@@ -1,0 +1,64 @@
+name: Storefront Commerce CI
+
+on:
+  pull_request:
+    branches: [main, feat/commerce-core-production]
+  push:
+    branches: [feat/commerce-storefront]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: storefront-commerce-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  storefront:
+    name: Format, lint, test, typecheck, and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.28.2 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check commerce formatting
+        run: |
+          pnpm exec prettier --check \
+            apps/www/app/api/commerce \
+            apps/www/app/cart \
+            apps/www/app/checkout \
+            apps/www/app/orders \
+            apps/www/app/shop \
+            apps/www/src/commerce \
+            apps/www/src/components/commerce \
+            apps/www/src/styles/commerce.css \
+            apps/www/app/layout.tsx
+
+      - name: Lint storefront
+        run: pnpm --filter @dlavie/www lint
+
+      - name: Test storefront
+        run: pnpm --filter @dlavie/www exec jest --runInBand
+
+      - name: Typecheck storefront
+        run: pnpm --filter @dlavie/www typecheck
+
+      - name: Build storefront
+        run: pnpm --filter @dlavie/www build

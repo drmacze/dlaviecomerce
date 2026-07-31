@@ -176,6 +176,7 @@ export default function HomePage() {
             </a>
             <div className="dlavie-home__nav-links">
               <a href="#os">DLavie OS</a>
+              <a href="/shop">Commerce</a>
               <a href="#ecosystem">Ecosystem</a>
               <a href="#workspace">AI Workspace</a>
               <a href="/ai">Docs</a>
