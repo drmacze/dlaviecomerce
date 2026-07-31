@@ -2,11 +2,10 @@
 
 import { FormEvent, useState, useTransition } from 'react';
 import Link from 'next/link';
-import { SvgIcon } from '../ui/SvgIcon';
+import { ArrowRight, LockKeyhole, ShoppingBag, Sparkles } from 'lucide-react';
+import { DlavieBrand, DlavieMark } from '../brand/DlavieBrand';
 import { NeonField } from './NeonField';
 import { PasswordStrengthMeter } from './PasswordStrengthMeter';
-import { ShinyHeading } from './ShinyHeading';
-import { VideoWordmark } from './VideoWordmark';
 
 type AccountMode = 'login' | 'register';
 
@@ -25,7 +24,7 @@ const PRODUCT_OPTIONS = [
   { label: 'DLavie Commerce', value: 'commerce' },
   { label: 'DLavie AI', value: 'ai' },
   { label: 'Automation Ecosystem', value: 'automation' },
-  { label: 'Full DLavie Ecosystem', value: 'all' },
+  { label: 'Seluruh ekosistem DLavie', value: 'all' },
 ];
 
 export function AccountAccessPage({ mode }: AccountAccessPageProps) {
@@ -49,21 +48,31 @@ export function AccountAccessPage({ mode }: AccountAccessPageProps) {
           body: JSON.stringify({ name, email, interest, password }),
         });
 
-        const result = await response.json().catch(() => ({})) as AccountApiResponse;
+        const result = (await response.json().catch(() => ({}))) as AccountApiResponse;
 
         if (!response.ok || !result.ok) {
-          setStatus({ tone: 'error', message: result.message ?? 'Unable to process your DLavie Account request.' });
+          setStatus({
+            tone: 'error',
+            message: result.message ?? 'Permintaan akun DLavie belum dapat diproses.',
+          });
           return;
         }
 
         if (result.requiresConfirmation) {
-          setStatus({ tone: 'info', message: result.message ?? 'Account created. Please confirm your email before signing in.' });
+          setStatus({
+            tone: 'info',
+            message:
+              result.message ?? 'Akun berhasil dibuat. Konfirmasi email sebelum masuk kembali.',
+          });
           return;
         }
 
         window.location.assign(result.redirectTo ?? '/account/dashboard');
       } catch {
-        setStatus({ tone: 'error', message: 'Network error. Please check your connection and try again.' });
+        setStatus({
+          tone: 'error',
+          message: 'Koneksi bermasalah. Periksa jaringan lalu coba kembali.',
+        });
       }
     });
   };
@@ -71,45 +80,66 @@ export function AccountAccessPage({ mode }: AccountAccessPageProps) {
   return (
     <main className="account-shell">
       <section className="account-card" data-mode={mode} aria-labelledby="account-title">
-        <aside className="account-visual">
-          <Link className="account-brand" href="/" aria-label="Back to DLavie home">
-            <SvgIcon name="brand" />
-            <span>DLAVIE</span>
+        <aside className="account-visual account-visual--brand">
+          <Link className="account-brand" href="/" aria-label="Kembali ke beranda DLavie">
+            <DlavieBrand product="Account" tone="light" compact />
           </Link>
 
-          <VideoWordmark />
-
-          <div className="account-visual__copy">
-            <p>A unified identity layer for DlavieOS, DLavie AI, commerce infrastructure, and connected automation systems.</p>
+          <div className="account-visual__brand-stage" aria-hidden="true">
+            <DlavieMark className="account-visual__mark" />
+            <span className="account-visual__halo" />
           </div>
 
-          <div className="account-signal" aria-hidden="true">
-            <span><b>AI</b><em>Ready</em></span>
-            <span><b>Commerce</b><em>Secure</em></span>
-            <span><b>Automation</b><em>Online</em></span>
+          <div className="account-visual__copy">
+            <p className="account-panel__kicker">Satu identitas, seluruh ekosistem</p>
+            <h2>Akses commerce, AI, dan automation melalui satu akun aman.</h2>
+            <p>
+              Session disimpan melalui cookie HTTP-only dan kredensial tidak pernah dikirim ke
+              JavaScript browser.
+            </p>
+          </div>
+
+          <div className="account-signal" aria-label="Layanan yang tersedia">
+            <span>
+              <ShoppingBag size={16} aria-hidden="true" />
+              <b>Commerce</b>
+              <em>Ready</em>
+            </span>
+            <span>
+              <Sparkles size={16} aria-hidden="true" />
+              <b>AI</b>
+              <em>Connected</em>
+            </span>
+            <span>
+              <LockKeyhole size={16} aria-hidden="true" />
+              <b>Security</b>
+              <em>Protected</em>
+            </span>
           </div>
         </aside>
 
         <section className="account-panel">
-          <p className="account-panel__kicker">{isRegister ? 'Create access' : 'Secure access'}</p>
-          <ShinyHeading id="account-title">{isRegister ? 'Register' : 'Login'}</ShinyHeading>
+          <p className="account-panel__kicker">{isRegister ? 'Buat akses baru' : 'Akses aman'}</p>
+          <h1 className="account-heading" id="account-title">
+            {isRegister ? 'Buat akun DLavie' : 'Masuk ke DLavie'}
+          </h1>
           <p className="account-panel__copy">
             {isRegister
-              ? 'Create your DLavie Account to activate secure access across AI, Commerce, and Automation products.'
-              : 'Sign in to your DLavie Account to manage product access, workspace identity, and connected DLavie services.'}
+              ? 'Daftarkan identitas yang akan digunakan untuk belanja, mengelola layanan, dan mengakses produk DLavie.'
+              : 'Masuk untuk melihat dashboard, melanjutkan aktivitas commerce, dan mengelola akses produk.'}
           </p>
 
           <form className="account-form" onSubmit={handleSubmit}>
             {isRegister ? (
               <NeonField
-                label="Full name"
+                label="Nama lengkap"
                 name="name"
                 type="text"
                 autoComplete="name"
-                placeholder="Your name"
+                placeholder="Nama Anda"
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                hint="Use your real name for workspace identity and account recovery."
+                hint="Gunakan nama asli untuk identitas workspace dan pemulihan akun."
                 required
               />
             ) : null}
@@ -119,21 +149,21 @@ export function AccountAccessPage({ mode }: AccountAccessPageProps) {
               name="email"
               type="email"
               autoComplete="email"
-              placeholder="you@company.com"
+              placeholder="anda@perusahaan.com"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              hint="Use your primary email address for secure DLavie access."
+              hint="Gunakan alamat email utama untuk akses DLavie."
               required
             />
 
             {isRegister ? (
               <NeonField
                 fieldType="select"
-                label="Product interest"
+                label="Produk yang diminati"
                 name="interest"
                 value={interest}
                 onChange={(event) => setInterest(event.target.value)}
-                hint="Select the DLavie product path you want to activate first."
+                hint="Pilih jalur produk yang ingin diaktifkan terlebih dahulu."
                 options={PRODUCT_OPTIONS}
               />
             ) : null}
@@ -146,25 +176,34 @@ export function AccountAccessPage({ mode }: AccountAccessPageProps) {
               placeholder="••••••••••••"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              hint="Use a strong password with at least 12 characters."
+              hint="Gunakan minimal 12 karakter dengan kombinasi yang kuat."
               required
             />
             <PasswordStrengthMeter value={password} />
 
-            {status ? <p className="account-status" data-tone={status.tone}>{status.message}</p> : null}
+            {status ? (
+              <p className="account-status" data-tone={status.tone}>
+                {status.message}
+              </p>
+            ) : null}
 
             <button className="account-submit" type="submit" disabled={isPending}>
-              {isPending ? 'Processing' : isRegister ? 'Create account' : 'Continue to account'}
+              <span>
+                {isPending ? 'Memproses' : isRegister ? 'Buat akun' : 'Masuk ke akun'}
+              </span>
+              <ArrowRight size={17} aria-hidden="true" />
             </button>
           </form>
 
           <p className="account-switch">
             {isRegister ? 'Sudah punya akun? ' : 'Belum punya akun? '}
             <Link href={isRegister ? '/account/login' : '/account/register'}>
-              {isRegister ? 'Login to DLavie Account' : 'Create DLavie Account'}
+              {isRegister ? 'Masuk' : 'Daftar sekarang'}
             </Link>
           </p>
-          <p className="account-note">DLavie Account is connected to Supabase Auth with server-set session cookies.</p>
+          <p className="account-note">
+            DLavie Account memakai Supabase Auth dan session cookie yang diatur server.
+          </p>
         </section>
       </section>
     </main>
