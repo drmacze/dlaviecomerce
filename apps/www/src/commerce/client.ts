@@ -94,10 +94,7 @@ export async function getShippingMethods(): Promise<ShippingMethod[]> {
   return response.data;
 }
 
-export async function checkout(
-  idempotencyKey: string,
-  input: CheckoutInput,
-): Promise<OrderView> {
+export async function checkout(input: CheckoutInput): Promise<OrderView> {
   const body: Record<string, unknown> = {
     fullName: input.fullName,
     email: input.email,
@@ -108,7 +105,6 @@ export async function checkout(
   };
   const response = await request<{ data: OrderView }>('/v1/checkout/current', {
     method: 'POST',
-    headers: { 'Idempotency-Key': idempotencyKey },
     body,
   });
   return response.data;
