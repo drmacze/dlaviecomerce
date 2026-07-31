@@ -203,7 +203,9 @@ export function AdminSettings() {
                     {category.isActive ? 'aktif' : 'nonaktif'}
                   </span>
                   <h3>{category.name}</h3>
-                  <p>/{category.slug} · urutan {category.sortOrder}</p>
+                  <p>
+                    /{category.slug} · urutan {category.sortOrder}
+                  </p>
                 </div>
                 <button
                   className="admin-text-button"
@@ -230,12 +232,7 @@ export function AdminSettings() {
               </label>
               <label>
                 <span>Slug</span>
-                <input
-                  name="slug"
-                  pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
-                  maxLength={120}
-                  required
-                />
+                <input name="slug" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" maxLength={120} required />
               </label>
               <label>
                 <span>Deskripsi</span>
@@ -339,13 +336,7 @@ export function AdminSettings() {
               </label>
               <label>
                 <span>Gratis mulai IDR (opsional)</span>
-                <input
-                  name="freeAboveAmount"
-                  type="number"
-                  min={0}
-                  max={2000000000}
-                  step={1}
-                />
+                <input name="freeAboveAmount" type="number" min={0} max={2000000000} step={1} />
               </label>
               <label className="admin-checkbox">
                 <input name="isActive" type="checkbox" defaultChecked />

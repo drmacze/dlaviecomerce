@@ -4,7 +4,7 @@
   min-height: 100svh;
   background: #08090b;
   color: #f7f7f8;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
 }
 
 .admin-layout {
@@ -81,7 +81,7 @@
 }
 
 .admin-sidebar nav a:hover,
-.admin-sidebar nav a[aria-current="page"] {
+.admin-sidebar nav a[aria-current='page'] {
   border-color: rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.07);
   color: #fff;
@@ -330,7 +330,7 @@
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.025));
 }
 
-.admin-stat-grid article[data-warning="true"] {
+.admin-stat-grid article[data-warning='true'] {
   border-color: rgba(255, 179, 71, 0.28);
 }
 
@@ -920,8 +920,7 @@
   place-items: center;
   padding: 24px;
   background:
-    radial-gradient(circle at 20% 10%, rgba(83, 116, 255, 0.18), transparent 32%),
-    #08090b;
+    radial-gradient(circle at 20% 10%, rgba(83, 116, 255, 0.18), transparent 32%), #08090b;
 }
 
 .admin-login-card {

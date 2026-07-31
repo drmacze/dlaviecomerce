@@ -59,8 +59,6 @@ describe('admin operator session', () => {
 
   it('fails fast without a configured encryption secret', () => {
     delete process.env.ADMIN_SESSION_SECRET;
-    expect(() => readAdminSession(requestWithCookie(''))).toThrow(
-      AdminSessionConfigurationError,
-    );
+    expect(() => readAdminSession(requestWithCookie(''))).toThrow(AdminSessionConfigurationError);
   });
 });

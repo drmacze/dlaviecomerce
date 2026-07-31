@@ -135,10 +135,7 @@ export async function createShippingMethod(input: {
 export async function patchShippingMethod(
   id: string,
   input: Partial<
-    Pick<
-      AdminShippingMethod,
-      'code' | 'name' | 'flatRateAmount' | 'freeAboveAmount' | 'isActive'
-    >
+    Pick<AdminShippingMethod, 'code' | 'name' | 'flatRateAmount' | 'freeAboveAmount' | 'isActive'>
   >,
 ): Promise<AdminShippingMethod> {
   const response = await request<{ data: AdminShippingMethod }>(
@@ -148,12 +145,14 @@ export async function patchShippingMethod(
   return response.data;
 }
 
-export async function getProducts(filters: {
-  page?: number;
-  limit?: number;
-  status?: ProductStatus;
-  search?: string;
-} = {}): Promise<Paginated<AdminProductListItem>> {
+export async function getProducts(
+  filters: {
+    page?: number;
+    limit?: number;
+    status?: ProductStatus;
+    search?: string;
+  } = {},
+): Promise<Paginated<AdminProductListItem>> {
   const query = new URLSearchParams();
   if (filters.page) query.set('page', String(filters.page));
   if (filters.limit) query.set('limit', String(filters.limit));
@@ -268,11 +267,13 @@ export async function adjustInventory(
   });
 }
 
-export async function getOrders(filters: {
-  page?: number;
-  limit?: number;
-  status?: AdminOrderStatus;
-} = {}): Promise<Paginated<AdminOrderListItem>> {
+export async function getOrders(
+  filters: {
+    page?: number;
+    limit?: number;
+    status?: AdminOrderStatus;
+  } = {},
+): Promise<Paginated<AdminOrderListItem>> {
   const query = new URLSearchParams();
   if (filters.page) query.set('page', String(filters.page));
   if (filters.limit) query.set('limit', String(filters.limit));

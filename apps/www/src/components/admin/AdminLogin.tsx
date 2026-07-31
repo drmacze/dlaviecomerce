@@ -99,7 +99,11 @@ export function AdminLogin() {
               required
             />
           </label>
-          <button className="admin-button admin-button--primary" type="submit" disabled={submitting}>
+          <button
+            className="admin-button admin-button--primary"
+            type="submit"
+            disabled={submitting}
+          >
             {submitting ? 'Memverifikasi…' : 'Masuk ke dashboard'}
           </button>
         </form>

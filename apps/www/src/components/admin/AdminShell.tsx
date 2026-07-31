@@ -1,13 +1,6 @@
 'use client';
 
-import {
-  Boxes,
-  LayoutDashboard,
-  LogOut,
-  PackageSearch,
-  Settings,
-  ShoppingBag,
-} from 'lucide-react';
+import { Boxes, LayoutDashboard, LogOut, PackageSearch, Settings, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
