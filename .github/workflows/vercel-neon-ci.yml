@@ -2,9 +2,13 @@ name: Vercel Neon Commerce CI
 
 on:
   pull_request:
-    branches: [feat/commerce-admin-dashboard]
+    branches:
+      - feat/commerce-admin-dashboard
+      - feat/vercel-neon-embedded-commerce
   push:
-    branches: [feat/vercel-neon-embedded-commerce]
+    branches:
+      - feat/vercel-neon-embedded-commerce
+      - feat/commerce-professional-redesign
 
 permissions:
   contents: read
@@ -72,9 +76,12 @@ jobs:
           pnpm exec prettier --check \
             apps/www/app/api/commerce/[...path]/route.ts \
             apps/www/app/api/admin/commerce/[...path]/route.ts \
+            apps/www/app/shop/page.tsx \
+            apps/www/src/components/commerce/CommerceHeader.tsx \
             apps/www/src/commerce/backend.ts \
             apps/www/src/commerce/embedded.ts \
             apps/www/src/commerce/server.ts \
+            apps/www/src/styles/commerce.css \
             apps/www/next.config.ts \
             lib/db/src/migrate.ts \
             vercel.json

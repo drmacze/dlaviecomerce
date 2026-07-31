@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowRight, Search, SlidersHorizontal } from 'lucide-react';
+import { ArrowRight, PackageSearch, RefreshCw, Search, ShieldCheck } from 'lucide-react';
 import { CommerceHeader } from '../../src/components/commerce/CommerceHeader';
 import { formatIdr } from '../../src/commerce/format';
 import {
@@ -48,17 +48,54 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
       <div className="commerce-page">
         <CommerceHeader />
         <main className="commerce-shell">
-          <section className="commerce-hero" aria-labelledby="commerce-title">
-            <p className="commerce-eyebrow">Katalog langsung dari DLavie</p>
-            <h1 id="commerce-title">Produk nyata. Harga terkini.</h1>
-            <p>
-              Setiap produk, varian, harga, dan ketersediaan pada halaman ini dibaca langsung dari
-              sistem commerce DLavie.
-            </p>
+          <section
+            className="commerce-hero commerce-hero--catalog"
+            aria-labelledby="commerce-title"
+          >
+            <div className="commerce-hero__content">
+              <p className="commerce-eyebrow">Koleksi DLavie</p>
+              <h1 id="commerce-title">Belanja lebih mudah, tanpa distraksi.</h1>
+              <p>
+                Temukan produk DLavie melalui katalog yang jelas, harga transparan, dan informasi
+                stok yang diperbarui langsung dari sistem commerce.
+              </p>
+            </div>
+
+            <div className="commerce-hero__principles" aria-label="Keunggulan layanan commerce">
+              <div>
+                <RefreshCw size={18} aria-hidden="true" />
+                <span>
+                  <strong>Data langsung</strong>
+                  <small>Harga dan stok dibaca dari sistem.</small>
+                </span>
+              </div>
+              <div>
+                <PackageSearch size={18} aria-hidden="true" />
+                <span>
+                  <strong>Katalog terstruktur</strong>
+                  <small>Cari dan pilih kategori dengan cepat.</small>
+                </span>
+              </div>
+              <div>
+                <ShieldCheck size={18} aria-hidden="true" />
+                <span>
+                  <strong>Checkout terlindungi</strong>
+                  <small>Data transaksi diproses melalui server.</small>
+                </span>
+              </div>
+            </div>
           </section>
 
-          <section className="commerce-toolbar" aria-label="Pencarian dan filter produk">
-            <form className="commerce-search" action="/shop" method="get">
+          <section className="commerce-catalog" id="catalog" aria-labelledby="catalog-title">
+            <div className="commerce-catalog__heading">
+              <div>
+                <p className="commerce-eyebrow">Katalog</p>
+                <h2 id="catalog-title">Temukan produk yang tepat</h2>
+              </div>
+              <p>Cari berdasarkan nama atau jelajahi kategori yang tersedia.</p>
+            </div>
+
+            <form className="commerce-search" action="/shop#catalog" method="get">
               <Search size={18} aria-hidden="true" />
               <input
                 type="search"
@@ -66,123 +103,147 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
                 defaultValue={query}
                 minLength={2}
                 maxLength={100}
-                placeholder="Cari produk"
+                placeholder="Cari nama produk"
                 aria-label="Cari produk"
               />
               {category ? <input type="hidden" name="category" value={category} /> : null}
-              <button type="submit">Cari</button>
+              <button type="submit">Cari produk</button>
             </form>
 
-            <div className="commerce-filters">
-              <span className="commerce-filters__label">
-                <SlidersHorizontal size={16} aria-hidden="true" /> Kategori
-              </span>
-              <Link
-                href={pageHref({ page: 1, query })}
-                className={!category ? 'is-active' : undefined}
+            <div className="commerce-catalog-layout">
+              <aside
+                className="commerce-category-nav"
+                id="categories"
+                aria-labelledby="categories-title"
               >
-                Semua
-              </Link>
-              {categories.map((item) => (
-                <Link
-                  key={item.id}
-                  href={pageHref({ page: 1, query, category: item.slug })}
-                  className={category === item.slug ? 'is-active' : undefined}
-                >
-                  {item.name}
-                </Link>
-              ))}
+                <div className="commerce-category-nav__heading">
+                  <p id="categories-title">Kategori</p>
+                  <span>{categories.length}</span>
+                </div>
+                <nav aria-label="Kategori produk">
+                  <Link
+                    href={pageHref({ page: 1, query }) + '#catalog'}
+                    className={!category ? 'is-active' : undefined}
+                  >
+                    <span>Semua produk</span>
+                    <small>{catalog.pagination.total}</small>
+                  </Link>
+                  {categories.map((item) => (
+                    <Link
+                      key={item.id}
+                      href={pageHref({ page: 1, query, category: item.slug }) + '#catalog'}
+                      className={category === item.slug ? 'is-active' : undefined}
+                    >
+                      <span>{item.name}</span>
+                      <ArrowRight size={14} aria-hidden="true" />
+                    </Link>
+                  ))}
+                </nav>
+              </aside>
+
+              <div className="commerce-catalog-results">
+                <div className="commerce-results-meta" aria-live="polite">
+                  <p>
+                    <strong>{catalog.pagination.total}</strong> produk
+                    {query ? ` untuk “${query}”` : ''}
+                  </p>
+                  {category ? (
+                    <Link href={pageHref({ page: 1, query }) + '#catalog'}>Hapus filter</Link>
+                  ) : null}
+                </div>
+
+                {catalog.data.length > 0 ? (
+                  <section className="commerce-product-grid" aria-label="Daftar produk">
+                    {catalog.data.map((product) => {
+                      const variant = product.variants[0];
+                      const image = product.images[0];
+                      if (!variant) return null;
+
+                      return (
+                        <article className="commerce-product-card" key={product.id}>
+                          <Link
+                            className="commerce-product-card__media"
+                            href={`/shop/${encodeURIComponent(product.slug)}`}
+                            aria-label={`Lihat ${product.name}`}
+                          >
+                            {image ? (
+                              <img src={image.url} alt={image.altText} loading="lazy" />
+                            ) : (
+                              <span className="commerce-product-card__no-image">
+                                Gambar belum tersedia
+                              </span>
+                            )}
+                            {variant.availableQuantity < 1 ? (
+                              <span className="commerce-badge commerce-badge--sold">
+                                Stok habis
+                              </span>
+                            ) : null}
+                          </Link>
+                          <div className="commerce-product-card__body">
+                            <p className="commerce-product-card__category">
+                              {product.category?.name ?? 'DLavie'}
+                            </p>
+                            <h2>
+                              <Link href={`/shop/${encodeURIComponent(product.slug)}`}>
+                                {product.name}
+                              </Link>
+                            </h2>
+                            <p className="commerce-product-card__description">
+                              {product.description}
+                            </p>
+                            <div className="commerce-product-card__footer">
+                              <div>
+                                <small>Mulai dari</small>
+                                <strong>{formatIdr(variant.priceAmount)}</strong>
+                              </div>
+                              <Link
+                                className="commerce-product-card__link"
+                                href={`/shop/${encodeURIComponent(product.slug)}`}
+                              >
+                                Lihat produk <ArrowRight size={15} aria-hidden="true" />
+                              </Link>
+                            </div>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </section>
+                ) : (
+                  <section className="commerce-empty">
+                    <h2>Belum ada produk yang cocok</h2>
+                    <p>
+                      Ubah kata pencarian atau kategori. Tidak ada produk contoh yang ditampilkan.
+                    </p>
+                    <Link className="commerce-button commerce-button--secondary" href="/shop">
+                      Lihat seluruh katalog
+                    </Link>
+                  </section>
+                )}
+
+                {totalPages > 1 ? (
+                  <nav className="commerce-pagination" aria-label="Halaman katalog">
+                    {page > 1 ? (
+                      <Link href={pageHref({ page: page - 1, query, category }) + '#catalog'}>
+                        Sebelumnya
+                      </Link>
+                    ) : (
+                      <span aria-disabled="true">Sebelumnya</span>
+                    )}
+                    <strong>
+                      Halaman {page} dari {totalPages}
+                    </strong>
+                    {page < totalPages ? (
+                      <Link href={pageHref({ page: page + 1, query, category }) + '#catalog'}>
+                        Berikutnya
+                      </Link>
+                    ) : (
+                      <span aria-disabled="true">Berikutnya</span>
+                    )}
+                  </nav>
+                ) : null}
+              </div>
             </div>
           </section>
-
-          <div className="commerce-results-meta" aria-live="polite">
-            <p>
-              {catalog.pagination.total} produk
-              {query ? ` untuk “${query}”` : ''}
-            </p>
-            {category ? <Link href={pageHref({ page: 1, query })}>Hapus filter</Link> : null}
-          </div>
-
-          {catalog.data.length > 0 ? (
-            <section className="commerce-product-grid" aria-label="Daftar produk">
-              {catalog.data.map((product) => {
-                const variant = product.variants[0];
-                const image = product.images[0];
-                if (!variant) return null;
-
-                return (
-                  <article className="commerce-product-card" key={product.id}>
-                    <Link
-                      className="commerce-product-card__media"
-                      href={`/shop/${encodeURIComponent(product.slug)}`}
-                      aria-label={`Lihat ${product.name}`}
-                    >
-                      {image ? (
-                        <img src={image.url} alt={image.altText} loading="lazy" />
-                      ) : (
-                        <span className="commerce-product-card__no-image">
-                          Gambar belum tersedia
-                        </span>
-                      )}
-                      {variant.availableQuantity < 1 ? (
-                        <span className="commerce-badge commerce-badge--sold">Stok habis</span>
-                      ) : null}
-                    </Link>
-                    <div className="commerce-product-card__body">
-                      <p className="commerce-product-card__category">
-                        {product.category?.name ?? 'DLavie'}
-                      </p>
-                      <h2>
-                        <Link href={`/shop/${encodeURIComponent(product.slug)}`}>
-                          {product.name}
-                        </Link>
-                      </h2>
-                      <p className="commerce-product-card__description">{product.description}</p>
-                      <div className="commerce-product-card__footer">
-                        <div>
-                          <small>Mulai dari</small>
-                          <strong>{formatIdr(variant.priceAmount)}</strong>
-                        </div>
-                        <Link
-                          className="commerce-icon-link"
-                          href={`/shop/${encodeURIComponent(product.slug)}`}
-                          aria-label={`Pilih varian ${product.name}`}
-                        >
-                          <ArrowRight size={19} aria-hidden="true" />
-                        </Link>
-                      </div>
-                    </div>
-                  </article>
-                );
-              })}
-            </section>
-          ) : (
-            <section className="commerce-empty">
-              <h2>Belum ada produk yang cocok</h2>
-              <p>Ubah kata pencarian atau kategori. Tidak ada produk contoh yang ditampilkan.</p>
-              <Link className="commerce-button commerce-button--secondary" href="/shop">
-                Lihat seluruh katalog
-              </Link>
-            </section>
-          )}
-
-          {totalPages > 1 ? (
-            <nav className="commerce-pagination" aria-label="Halaman katalog">
-              {page > 1 ? (
-                <Link href={pageHref({ page: page - 1, query, category })}>Sebelumnya</Link>
-              ) : (
-                <span aria-disabled="true">Sebelumnya</span>
-              )}
-              <strong>
-                Halaman {page} dari {totalPages}
-              </strong>
-              {page < totalPages ? (
-                <Link href={pageHref({ page: page + 1, query, category })}>Berikutnya</Link>
-              ) : (
-                <span aria-disabled="true">Berikutnya</span>
-              )}
-            </nav>
-          ) : null}
         </main>
       </div>
     );
@@ -202,10 +263,10 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
             <p>
               {unavailable
                 ? 'Layanan commerce tidak memberikan respons yang valid. Tidak ada data lokal atau produk palsu yang digunakan sebagai pengganti.'
-                : 'Atur COMMERCE_API_URL ke backend DLavie yang sudah dimigrasikan sebelum membuka toko.'}
+                : 'Hubungkan database commerce sebelum membuka toko.'}
             </p>
             <Link className="commerce-button commerce-button--secondary" href="/">
-              Kembali ke DLavie OS
+              Kembali ke DLavie
             </Link>
           </section>
         </main>
