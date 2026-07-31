@@ -55,7 +55,7 @@ jobs:
         run: pnpm --filter @dlavie/www lint
 
       - name: Test storefront
-        run: pnpm --filter @dlavie/www test -- --runInBand
+        run: pnpm --filter @dlavie/www exec jest --runInBand
 
       - name: Typecheck storefront
         run: pnpm --filter @dlavie/www typecheck
