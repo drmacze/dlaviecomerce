@@ -50,8 +50,12 @@ export type ShippingMethod = {
 
 export type CartSession = {
   id: string;
-  token: string;
   expiresAt: string;
+};
+
+export type CommerceSessionState = {
+  cart: CartSession | null;
+  orderNumbers: string[];
 };
 
 export type CartItem = {
@@ -120,7 +124,6 @@ export type PaymentView = {
     | 'requires_review';
   amount: number;
   currency: 'IDR';
-  checkoutToken: string | null;
   checkoutUrl: string | null;
   expiresAt: string | null;
   createdAt: string;
