@@ -26,6 +26,33 @@ type CartResponse = {
     items: Array<{ purchasable: boolean; availableQuantity: number }>;
   };
 };
+type AdminOverviewResponse = {
+  data: {
+    products: { total: number; active: number };
+    inventory: { onHand: number; reserved: number; lowStockVariants: number };
+  };
+};
+type AdminCategoriesResponse = { data: Array<{ id: string; slug: string }> };
+type AdminProductsResponse = {
+  data: Array<{
+    id: string;
+    availableQuantity: number;
+    variantCount: number;
+    primaryImageUrl: string | null;
+  }>;
+  pagination: { total: number };
+};
+type AdminProductDetailResponse = {
+  data: {
+    id: string;
+    status: string;
+    variants: Array<{ id: string; availableQuantity: number; lowStockThreshold: number }>;
+    images: Array<{ isPrimary: boolean }>;
+  };
+};
+type InventoryMovementsResponse = {
+  data: Array<{ quantityDelta: number; reason: string; actor: string }>;
+};
 type ErrorResponse = { error: { code: string } };
 
 async function expectJson<T>(
@@ -53,6 +80,7 @@ try {
   assert.equal(ready.ok, true);
   assert.equal(ready.checks.database.ok, true);
 
+  await expectJson<ErrorResponse>('GET', '/v1/admin/commerce/overview', 401);
   await expectJson<ErrorResponse>('POST', '/v1/admin/commerce/products', 401, {
     payload: {
       name: `Unauthorized ${suffix}`,
@@ -134,6 +162,58 @@ try {
     headers: adminHeaders,
     payload: { status: 'active' },
   });
+
+  const overview = await expectJson<AdminOverviewResponse>(
+    'GET',
+    '/v1/admin/commerce/overview',
+    200,
+    { headers: adminHeaders },
+  );
+  assert.ok(overview.data.products.total >= 1);
+  assert.ok(overview.data.products.active >= 1);
+  assert.ok(overview.data.inventory.onHand >= 5);
+  assert.equal(overview.data.inventory.reserved, 0);
+
+  const adminCategories = await expectJson<AdminCategoriesResponse>(
+    'GET',
+    '/v1/admin/commerce/categories',
+    200,
+    { headers: adminHeaders },
+  );
+  assert.ok(adminCategories.data.some((category) => category.id === categoryId));
+
+  const adminProducts = await expectJson<AdminProductsResponse>(
+    'GET',
+    `/v1/admin/commerce/products?search=${encodeURIComponent(`CI Product ${suffix}`)}`,
+    200,
+    { headers: adminHeaders },
+  );
+  assert.equal(adminProducts.pagination.total, 1);
+  assert.equal(adminProducts.data[0]?.id, productId);
+  assert.equal(adminProducts.data[0]?.variantCount, 1);
+  assert.equal(adminProducts.data[0]?.availableQuantity, 5);
+  assert.match(adminProducts.data[0]?.primaryImageUrl ?? '', /^https:\/\//);
+
+  const adminProduct = await expectJson<AdminProductDetailResponse>(
+    'GET',
+    `/v1/admin/commerce/products/${productId}`,
+    200,
+    { headers: adminHeaders },
+  );
+  assert.equal(adminProduct.data.status, 'active');
+  assert.equal(adminProduct.data.variants[0]?.id, variantId);
+  assert.equal(adminProduct.data.variants[0]?.availableQuantity, 5);
+  assert.equal(adminProduct.data.variants[0]?.lowStockThreshold, 0);
+  assert.equal(adminProduct.data.images[0]?.isPrimary, true);
+
+  const movements = await expectJson<InventoryMovementsResponse>(
+    'GET',
+    `/v1/admin/commerce/inventory/${variantId}/movements`,
+    200,
+    { headers: adminHeaders },
+  );
+  assert.equal(movements.data[0]?.quantityDelta, 5);
+  assert.equal(movements.data[0]?.actor, 'admin-api-key');
 
   const catalog = await expectJson<CatalogResponse>(
     'GET',
