@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
+import { pool } from '../lib/db/src/index.js';
 import { buildApp } from '../src/app.js';
 
 const adminKey = process.env.ADMIN_API_KEY;
@@ -176,4 +177,5 @@ try {
   console.log('commerce API smoke test passed');
 } finally {
   await app.close();
+  await pool.end();
 }
