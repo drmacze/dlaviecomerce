@@ -14,9 +14,9 @@ import '../src/components/pwa/InstallTutorial.css';
 import '../src/styles/account.css';
 import '../src/styles/account-auth.css';
 import '../src/styles/commerce.css';
-import '../src/styles/commerce-home.css';
 import '../src/styles/brand-experience.css';
 import '../src/styles/onboarding-localization.css';
+import '../src/styles/commerce-home.css';
 
 const dlavieDisplay = Barlow_Condensed({
   subsets: ['latin'],
