@@ -1,0 +1,117 @@
+import 'server-only';
+import crypto from 'node:crypto';
+import type { FastifyInstance, InjectOptions } from 'fastify';
+
+export class EmbeddedCommerceConfigurationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'EmbeddedCommerceConfigurationError';
+  }
+}
+
+type EmbeddedState = {
+  app?: Promise<FastifyInstance>;
+  internalAdminKey?: string;
+};
+
+const state = globalThis as typeof globalThis & { __dlavieEmbeddedCommerce?: EmbeddedState };
+state.__dlavieEmbeddedCommerce ??= {};
+
+function deploymentOrigin(explicitOrigin?: string): string {
+  if (explicitOrigin) return new URL(explicitOrigin).origin;
+
+  const storefrontUrl = process.env.STOREFRONT_URL?.trim();
+  if (storefrontUrl) return new URL(storefrontUrl).origin;
+
+  const vercelUrl = process.env.VERCEL_URL?.trim();
+  if (vercelUrl) return new URL(`https://${vercelUrl}`).origin;
+
+  return 'http://localhost:3000';
+}
+
+function ensureEmbeddedEnvironment(origin: string): void {
+  if (!process.env.DATABASE_URL?.trim()) {
+    throw new EmbeddedCommerceConfigurationError(
+      'Neon is not connected. DATABASE_URL is unavailable to the Vercel project.',
+    );
+  }
+
+  state.__dlavieEmbeddedCommerce ??= {};
+  state.__dlavieEmbeddedCommerce.internalAdminKey ??= crypto.randomBytes(32).toString('hex');
+
+  process.env.ENABLE_COMMERCE = 'true';
+  process.env.ENABLE_PAYMENTS ??= 'false';
+  process.env.ENABLE_AI ??= 'false';
+  process.env.DATABASE_POOL_MAX ??= '1';
+  process.env.DATABASE_SSL_MODE ??= 'require';
+  process.env.ADMIN_API_KEY ??= state.__dlavieEmbeddedCommerce.internalAdminKey;
+  process.env.API_BASE_URL ??= origin;
+  process.env.STOREFRONT_URL ??= origin;
+  process.env.CORS_ORIGINS ??= origin;
+  process.env.TRUST_PROXY ??= 'true';
+}
+
+async function createEmbeddedApp(origin: string): Promise<FastifyInstance> {
+  ensureEmbeddedEnvironment(origin);
+
+  const [databaseModule, migrationModule, applicationModule] = await Promise.all([
+    import('../../../../dist/lib/db/src/index.js'),
+    import('../../../../dist/lib/db/src/migrate.js'),
+    import('../../../../dist/src/app.js'),
+  ]);
+
+  await migrationModule.runMigrations(databaseModule.pool, {
+    log: (message: string) => console.info(`[commerce-migration] ${message}`),
+  });
+
+  const app = (await applicationModule.buildApp()) as FastifyInstance;
+  await app.ready();
+  return app;
+}
+
+async function embeddedApp(origin?: string): Promise<FastifyInstance> {
+  const resolvedOrigin = deploymentOrigin(origin);
+  state.__dlavieEmbeddedCommerce ??= {};
+  state.__dlavieEmbeddedCommerce.app ??= createEmbeddedApp(resolvedOrigin).catch((error) => {
+    if (state.__dlavieEmbeddedCommerce) state.__dlavieEmbeddedCommerce.app = undefined;
+    throw error;
+  });
+  return state.__dlavieEmbeddedCommerce.app;
+}
+
+function responseHeaders(source: Record<string, string | string[] | number | undefined>): Headers {
+  const headers = new Headers();
+  for (const [name, value] of Object.entries(source)) {
+    if (Array.isArray(value)) {
+      for (const entry of value) headers.append(name, entry);
+    } else if (value !== undefined) {
+      headers.set(name, String(value));
+    }
+  }
+  headers.set('Cache-Control', 'no-store');
+  return headers;
+}
+
+export async function embeddedCommerceFetch(
+  pathname: string,
+  options: {
+    method?: string;
+    headers?: Headers;
+    body?: ArrayBuffer;
+    origin?: string;
+  } = {},
+): Promise<Response> {
+  const app = await embeddedApp(options.origin);
+  const injectOptions: InjectOptions = {
+    method: (options.method ?? 'GET') as NonNullable<InjectOptions['method']>,
+    url: pathname,
+    ...(options.headers ? { headers: Object.fromEntries(options.headers.entries()) } : {}),
+    ...(options.body ? { payload: Buffer.from(options.body) } : {}),
+  };
+  const result = await app.inject(injectOptions);
+
+  return new Response(result.body, {
+    status: result.statusCode,
+    headers: responseHeaders(result.headers),
+  });
+}

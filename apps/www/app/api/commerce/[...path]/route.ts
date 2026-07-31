@@ -1,4 +1,8 @@
-import { commerceApiPath, CommerceConfigurationError } from '../../../../src/commerce/config';
+import {
+  commerceBackendFetch,
+  CommerceConfigurationError,
+  EmbeddedCommerceConfigurationError,
+} from '../../../../src/commerce/backend';
 import {
   checkoutCredential,
   clearCartCredential,
@@ -252,20 +256,10 @@ async function proxy(
   const resolution = resolveProxy(request.method, path, session);
   if (resolution instanceof Response) return resolution;
 
-  let target: URL;
-  try {
-    target = commerceApiPath(
-      `/${resolution.backendPath.map((segment) => encodeURIComponent(segment)).join('/')}`,
-    );
-  } catch (error) {
-    const message =
-      error instanceof CommerceConfigurationError
-        ? error.message
-        : 'Commerce API configuration is invalid.';
-    return errorResponse(503, 'SERVICE_UNAVAILABLE', message);
-  }
+  const backendPath = `/${resolution.backendPath
+    .map((segment) => encodeURIComponent(segment))
+    .join('/')}${new URL(request.url).search}`;
 
-  target.search = new URL(request.url).search;
   const headers = new Headers();
   for (const name of forwardedRequestHeaders) {
     const value = request.headers.get(name);
@@ -278,16 +272,20 @@ async function proxy(
   const hasBody = !['GET', 'HEAD'].includes(request.method);
   let upstream: Response;
   try {
-    upstream = await fetch(target, {
+    upstream = await commerceBackendFetch(backendPath, {
       method: request.method,
       headers,
       ...(hasBody ? { body: await request.arrayBuffer() } : {}),
-      cache: 'no-store',
-      redirect: 'manual',
-      signal: AbortSignal.timeout(20_000),
+      origin: new URL(request.url).origin,
+      timeoutMs: 20_000,
     });
-  } catch {
-    return errorResponse(503, 'SERVICE_UNAVAILABLE', 'Commerce service is currently unreachable.');
+  } catch (error) {
+    const message =
+      error instanceof CommerceConfigurationError ||
+      error instanceof EmbeddedCommerceConfigurationError
+        ? error.message
+        : 'Commerce service is currently unreachable.';
+    return errorResponse(503, 'SERVICE_UNAVAILABLE', message);
   }
 
   const bytes = await upstream.arrayBuffer();

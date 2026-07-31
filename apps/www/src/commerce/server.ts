@@ -1,5 +1,9 @@
 import 'server-only';
-import { commerceApiPath, CommerceConfigurationError } from './config';
+import {
+  commerceBackendFetch,
+  CommerceConfigurationError,
+  EmbeddedCommerceConfigurationError,
+} from './backend';
 import type { ApiErrorBody, CatalogCategory, PaginatedProducts, ProductDetail } from './types';
 
 export class CommerceApiError extends Error {
@@ -23,13 +27,17 @@ async function readError(response: Response): Promise<CommerceApiError> {
 }
 
 async function commerceFetch<T>(pathname: string): Promise<T> {
-  const response = await fetch(commerceApiPath(pathname), {
+  const response = await commerceBackendFetch(pathname, {
     method: 'GET',
-    headers: { Accept: 'application/json' },
-    cache: 'no-store',
-    signal: AbortSignal.timeout(10_000),
+    headers: new Headers({ Accept: 'application/json' }),
+    timeoutMs: 10_000,
   }).catch((error: unknown) => {
-    if (error instanceof CommerceConfigurationError) throw error;
+    if (
+      error instanceof CommerceConfigurationError ||
+      error instanceof EmbeddedCommerceConfigurationError
+    ) {
+      throw error;
+    }
     throw new CommerceApiError('Commerce service is currently unreachable.', 503, 'UNREACHABLE');
   });
 

@@ -1,0 +1,156 @@
+name: Vercel Neon Commerce CI
+
+on:
+  pull_request:
+    branches: [feat/commerce-admin-dashboard]
+  push:
+    branches: [feat/vercel-neon-embedded-commerce]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vercel-neon-commerce-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  embedded-commerce:
+    name: Build and boot embedded commerce
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: dlavie
+          POSTGRES_PASSWORD: dlavie-embedded-ci-password
+          POSTGRES_DB: dlavie_embedded_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U dlavie -d dlavie_embedded_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      DATABASE_URL: postgresql://dlavie:dlavie-embedded-ci-password@127.0.0.1:5432/dlavie_embedded_ci
+      DATABASE_SSL_MODE: disable
+      DATABASE_POOL_MAX: "1"
+      COMMERCE_SESSION_SECRET: ci-commerce-session-secret-with-more-than-thirty-two-characters
+      ADMIN_SESSION_SECRET: ci-admin-session-secret-with-more-than-thirty-two-characters
+      API_BASE_URL: https://embedded-ci.example
+      STOREFRONT_URL: https://embedded-ci.example
+      CORS_ORIGINS: https://embedded-ci.example
+      ENABLE_COMMERCE: "true"
+      ENABLE_PAYMENTS: "false"
+      ENABLE_AI: "false"
+      TRUST_PROXY: "true"
+      ADMIN_API_KEY: ci-admin-key-used-only-in-disposable-actions-run-with-enough-entropy
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.28.2 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check formatting
+        run: |
+          pnpm exec prettier --check \
+            apps/www/app/api/commerce/[...path]/route.ts \
+            apps/www/app/api/admin/commerce/[...path]/route.ts \
+            apps/www/src/commerce/backend.ts \
+            apps/www/src/commerce/embedded.ts \
+            apps/www/src/commerce/server.ts \
+            apps/www/next.config.ts \
+            lib/db/src/migrate.ts \
+            vercel.json
+
+      - name: Lint source
+        run: |
+          pnpm lint
+          pnpm --filter @dlavie/www lint
+
+      - name: Typecheck source
+        run: |
+          pnpm typecheck
+          pnpm --filter @dlavie/www typecheck
+
+      - name: Run tests
+        run: |
+          ENABLE_COMMERCE=false ENABLE_PAYMENTS=false ENABLE_AI=false pnpm test
+          pnpm --filter @dlavie/www exec jest --runInBand
+
+      - name: Compile Fastify backend
+        run: pnpm build
+
+      - name: Build Next.js production application
+        run: pnpm --filter @dlavie/www build
+
+      - name: Boot Next.js and trigger automatic migration
+        run: |
+          set -euo pipefail
+          pnpm --filter @dlavie/www start > /tmp/dlavie-next.log 2>&1 &
+          server_pid=$!
+
+          cleanup() {
+            cat /tmp/dlavie-next.log || true
+            kill "$server_pid" 2>/dev/null || true
+            wait "$server_pid" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent \
+              http://127.0.0.1:3000/api/commerce/v1/catalog/categories \
+              > /tmp/categories.json; then
+              break
+            fi
+            if ! kill -0 "$server_pid" 2>/dev/null; then
+              echo "Next.js exited before becoming ready" >&2
+              exit 1
+            fi
+            sleep 1
+          done
+
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const body = JSON.parse(fs.readFileSync('/tmp/categories.json', 'utf8'));
+          if (!Array.isArray(body.data) || body.data.length !== 0) {
+            throw new Error(`Expected an empty real catalog, received: ${JSON.stringify(body)}`);
+          }
+          console.log('embedded catalog returned an empty database-backed result');
+          NODE
+
+      - name: Verify automatic migration tables
+        run: |
+          node --input-type=module <<'NODE'
+          import pg from 'pg';
+          const expected = new Set([
+            'customers', 'categories', 'products', 'product_images', 'product_variants',
+            'inventory', 'shipping_methods', 'carts', 'cart_items', 'orders',
+            'order_items', 'payments', 'payment_events', 'inventory_movements'
+          ]);
+          const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+          const { rows } = await pool.query(
+            "select table_name from information_schema.tables where table_schema = 'public'"
+          );
+          await pool.end();
+          const actual = new Set(rows.map((row) => row.table_name));
+          const missing = [...expected].filter((table) => !actual.has(table));
+          if (missing.length > 0) throw new Error(`Missing migrated tables: ${missing.join(', ')}`);
+          console.log(`verified ${expected.size} automatically migrated commerce tables`);
+          NODE
