@@ -31,7 +31,7 @@ async function expectJson<T>(
   method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
   url: string,
   expectedStatus: number,
-  options: { headers?: Record<string, string>; payload?: unknown } = {},
+  options: { headers?: Record<string, string>; payload?: Record<string, unknown> } = {},
 ): Promise<T> {
   const response = await app.inject({
     method,
