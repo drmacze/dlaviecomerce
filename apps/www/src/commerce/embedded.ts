@@ -82,9 +82,7 @@ async function embeddedApp(origin?: string): Promise<FastifyInstance> {
   return state.__dlavieEmbeddedCommerce.app;
 }
 
-function responseHeaders(
-  source: Record<string, string | string[] | number | undefined>,
-): Headers {
+function responseHeaders(source: Record<string, string | string[] | number | undefined>): Headers {
   const headers = new Headers();
   for (const [name, value] of Object.entries(source)) {
     if (Array.isArray(value)) {
@@ -110,9 +108,7 @@ export async function embeddedCommerceFetch(
   const injectOptions: InjectOptions = {
     method: (options.method ?? 'GET') as HTTPMethods,
     url: pathname,
-    ...(options.headers
-      ? { headers: Object.fromEntries(options.headers.entries()) }
-      : {}),
+    ...(options.headers ? { headers: Object.fromEntries(options.headers.entries()) } : {}),
     ...(options.body ? { payload: Buffer.from(options.body) } : {}),
   };
   const result = await app.inject(injectOptions);
