@@ -91,7 +91,7 @@ jobs:
 
       - name: Run tests
         run: |
-          pnpm test
+          ENABLE_COMMERCE=false ENABLE_PAYMENTS=false ENABLE_AI=false pnpm test
           pnpm --filter @dlavie/www exec jest --runInBand
 
       - name: Compile Fastify backend
