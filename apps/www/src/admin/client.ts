@@ -178,8 +178,8 @@ export async function createProduct(input: {
   requiresShipping: boolean;
   seoTitle?: string;
   seoDescription?: string;
-}): Promise<AdminProductDetail> {
-  const response = await request<{ data: AdminProductDetail }>(adminPath('/products'), {
+}): Promise<{ id: string }> {
+  const response = await request<{ data: { id: string } }>(adminPath('/products'), {
     method: 'POST',
     body: { ...input, status: 'draft' },
   });
@@ -189,7 +189,7 @@ export async function createProduct(input: {
 export async function patchProduct(
   id: string,
   input: Partial<{
-    categoryId: string;
+    categoryId: string | null;
     name: string;
     slug: string;
     description: string;

@@ -238,7 +238,7 @@ export function AdminOrderDetail({ orderId }: { orderId: string }) {
                   </div>
                   <div>
                     <dt>Dibayar</dt>
-                    <dd>{formatDateTime(payment.paidAt)}</dd>
+                    <dd>{formatDateTime(payment.terminalProcessedAt)}</dd>
                   </div>
                 </dl>
               ))

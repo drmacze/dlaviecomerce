@@ -104,7 +104,7 @@ export function AdminProductEditor({ productId }: { productId: string }) {
         description: string(form, 'description'),
         status: string(form, 'status') as ProductStatus,
         requiresShipping: form.get('requiresShipping') === 'on',
-        ...(categoryId ? { categoryId } : {}),
+        categoryId: categoryId || null,
         ...(seoTitle ? { seoTitle } : {}),
         ...(seoDescription ? { seoDescription } : {}),
       });
