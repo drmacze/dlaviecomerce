@@ -131,9 +131,6 @@ export function getEnv(
     }
     if (!env.API_BASE_URL.startsWith('https://')) missing.push('API_BASE_URL(https required)');
     if (!env.STOREFRONT_URL.startsWith('https://')) missing.push('STOREFRONT_URL(https required)');
-    if (env.ENABLE_PAYMENTS && !env.MIDTRANS_IS_PRODUCTION) {
-      missing.push('MIDTRANS_IS_PRODUCTION(true required when payments are enabled in production)');
-    }
   }
 
   if (missing.length > 0) {
