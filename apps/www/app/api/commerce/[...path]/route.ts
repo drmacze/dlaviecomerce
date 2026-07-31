@@ -1,5 +1,6 @@
 import { commerceApiPath, CommerceConfigurationError } from '../../../../src/commerce/config';
 import {
+  checkoutCredential,
   clearCartCredential,
   commerceSessionCookie,
   CommerceSessionConfigurationError,
@@ -14,7 +15,7 @@ import {
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const forwardedRequestHeaders = ['accept', 'content-type', 'idempotency-key'] as const;
+const forwardedRequestHeaders = ['accept', 'content-type'] as const;
 
 type ProxyKind = 'catalog' | 'create-cart' | 'cart' | 'checkout' | 'order';
 
@@ -23,6 +24,7 @@ type ProxyResolution = {
   kind: ProxyKind;
   cartToken?: string;
   orderToken?: string;
+  idempotencyKey?: string;
 };
 
 function errorResponse(status: number, code: string, message: string): Response {
@@ -124,10 +126,15 @@ function resolveProxy(
     if (!session.cart) {
       return errorResponse(401, 'CART_SESSION_REQUIRED', 'No active cart session was found.');
     }
+    const idempotencyKey = checkoutCredential(session);
+    if (!idempotencyKey) {
+      return errorResponse(401, 'CART_SESSION_REQUIRED', 'No active cart session was found.');
+    }
     return {
       backendPath: ['v1', 'checkout', session.cart.id],
       kind: 'checkout',
       cartToken: session.cart.token,
+      idempotencyKey,
     };
   }
 
@@ -268,6 +275,7 @@ async function proxy(
   }
   if (resolution.cartToken) headers.set('X-Cart-Token', resolution.cartToken);
   if (resolution.orderToken) headers.set('X-Order-Token', resolution.orderToken);
+  if (resolution.idempotencyKey) headers.set('Idempotency-Key', resolution.idempotencyKey);
 
   const hasBody = !['GET', 'HEAD'].includes(request.method);
   let upstream: Response;
@@ -301,9 +309,9 @@ async function proxy(
   }
 
   if (upstream.ok && resolution.kind === 'checkout') {
-    const idempotencyKey = request.headers.get('idempotency-key');
+    const idempotencyKey = resolution.idempotencyKey;
     const orderNumber = orderNumberFromPayload(payload);
-    if (!idempotencyKey || idempotencyKey.length < 32 || !orderNumber) {
+    if (!idempotencyKey || !orderNumber) {
       return errorResponse(502, 'UPSTREAM_ERROR', 'Commerce service returned an invalid order session.');
     }
     nextSession = clearCartCredential(setOrderCredential(session, orderNumber, idempotencyKey));
