@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "test": "jest --passWithNoTests",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "pnpm --dir ../.. exec tsc -p tsconfig.json && tsc --noEmit"
   },
   "dependencies": {
     "@dlavie/animations": "workspace:*",
