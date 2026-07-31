@@ -5,38 +5,27 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { CommerceClientError, getCart, removeCartItem, setCartItem } from '../../commerce/client';
 import { formatIdr } from '../../commerce/format';
-import { clearCartSession, readCartSession } from '../../commerce/storage';
-import type { CartSession, CartView } from '../../commerce/types';
+import { notifyCartUpdated } from '../../commerce/storage';
+import type { CartView } from '../../commerce/types';
 
 export function CartClient() {
-  const [session, setSession] = useState<CartSession | null>(null);
   const [cart, setCart] = useState<CartView | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'empty' | 'error'>('loading');
   const [error, setError] = useState<string | null>(null);
   const [pendingVariant, setPendingVariant] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const currentSession = readCartSession();
-    if (!currentSession) {
-      setSession(null);
-      setCart(null);
-      setStatus('empty');
-      return;
-    }
-
-    setSession(currentSession);
     setStatus('loading');
     setError(null);
     try {
-      const currentCart = await getCart(currentSession);
+      const currentCart = await getCart();
       setCart(currentCart);
       setStatus(currentCart.items.length > 0 ? 'ready' : 'empty');
     } catch (requestError) {
       if (requestError instanceof CommerceClientError && requestError.status === 401) {
-        clearCartSession();
-        setSession(null);
         setCart(null);
         setStatus('empty');
+        notifyCartUpdated();
         return;
       }
       setStatus('error');
@@ -53,13 +42,14 @@ export function CartClient() {
   }, [load]);
 
   async function updateQuantity(variantId: string, quantity: number): Promise<void> {
-    if (!session || quantity < 1 || quantity > 99) return;
+    if (quantity < 1 || quantity > 99) return;
     setPendingVariant(variantId);
     setError(null);
     try {
-      const updated = await setCartItem(session, variantId, quantity);
+      const updated = await setCartItem(variantId, quantity);
       setCart(updated);
       setStatus(updated.items.length > 0 ? 'ready' : 'empty');
+      notifyCartUpdated();
     } catch (requestError) {
       setError(
         requestError instanceof CommerceClientError
@@ -72,13 +62,13 @@ export function CartClient() {
   }
 
   async function remove(variantId: string): Promise<void> {
-    if (!session) return;
     setPendingVariant(variantId);
     setError(null);
     try {
-      const updated = await removeCartItem(session, variantId);
+      const updated = await removeCartItem(variantId);
       setCart(updated);
       setStatus(updated.items.length > 0 ? 'ready' : 'empty');
+      notifyCartUpdated();
     } catch (requestError) {
       setError(
         requestError instanceof CommerceClientError
