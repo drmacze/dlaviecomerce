@@ -11,9 +11,14 @@ import {
   productVariantsTable,
   sql,
 } from '../../lib/db/src/index.js';
+import { cartItemTargetsTable } from '../../lib/db/src/schema/commerce-v2.js';
 import { env } from '../config/env.js';
+import {
+  cartItemMutationSchema,
+  normalizeCustomerReference,
+} from '../commerce/customerReference.js';
 import { generateOpaqueToken, hashSecret } from '../commerce/security.js';
-import { cartItemQuantitySchema, uuidSchema } from '../commerce/validation.js';
+import { uuidSchema } from '../commerce/validation.js';
 import { AppError } from '../lib/errors.js';
 
 function headerValue(request: FastifyRequest, name: string): string {
@@ -61,6 +66,8 @@ async function buildCartView(cartId: string) {
     .select({
       variantId: cartItemsTable.variantId,
       quantity: cartItemsTable.quantity,
+      customerReferenceKind: cartItemTargetsTable.kind,
+      customerReferenceValue: cartItemTargetsTable.value,
       sku: productVariantsTable.sku,
       variantName: productVariantsTable.name,
       priceAmount: productVariantsTable.priceAmount,
@@ -85,6 +92,13 @@ async function buildCartView(cartId: string) {
     .innerJoin(productVariantsTable, eq(productVariantsTable.id, cartItemsTable.variantId))
     .innerJoin(productsTable, eq(productsTable.id, productVariantsTable.productId))
     .leftJoin(inventoryTable, eq(inventoryTable.variantId, productVariantsTable.id))
+    .leftJoin(
+      cartItemTargetsTable,
+      and(
+        eq(cartItemTargetsTable.cartId, cartItemsTable.cartId),
+        eq(cartItemTargetsTable.variantId, cartItemsTable.variantId),
+      ),
+    )
     .where(eq(cartItemsTable.cartId, cartId));
 
   let subtotalAmount = 0;
@@ -97,9 +111,19 @@ async function buildCartView(cartId: string) {
     if (!Number.isSafeInteger(subtotalAmount)) {
       throw new AppError('DATABASE_ERROR', 'Cart total exceeds the supported range.', 500);
     }
+
+    const customerReference =
+      item.customerReferenceKind && item.customerReferenceValue
+        ? {
+            kind: item.customerReferenceKind,
+            value: item.customerReferenceValue,
+          }
+        : null;
+
     return {
       variantId: item.variantId,
       quantity: item.quantity,
+      customerReference,
       sku: item.sku,
       variantName: item.variantName,
       attributes: item.attributes,
@@ -164,7 +188,10 @@ export async function commerceCartRoutes(app: FastifyInstance): Promise<void> {
     const params = request.params as { cartId: string; variantId: string };
     const cartId = uuidSchema.parse(params.cartId);
     const variantId = uuidSchema.parse(params.variantId);
-    const { quantity } = cartItemQuantitySchema.parse(request.body);
+    const input = cartItemMutationSchema.parse(request.body);
+    const customerReference = input.customerReference
+      ? normalizeCustomerReference(input.customerReference)
+      : undefined;
     const token = headerValue(request, 'x-cart-token');
     await requireActiveCart(cartId, token);
 
@@ -186,7 +213,7 @@ export async function commerceCartRoutes(app: FastifyInstance): Promise<void> {
       .limit(1);
 
     if (!variant) throw new AppError('NOT_FOUND', 'Purchasable variant was not found.', 404);
-    if (variant.availableQuantity < quantity) {
+    if (variant.availableQuantity < input.quantity) {
       throw new AppError('CONFLICT', 'Requested quantity exceeds available stock.', 409, {
         availableQuantity: variant.availableQuantity,
       });
@@ -195,11 +222,31 @@ export async function commerceCartRoutes(app: FastifyInstance): Promise<void> {
     await db.transaction(async (tx) => {
       await tx
         .insert(cartItemsTable)
-        .values({ cartId, variantId, quantity })
+        .values({ cartId, variantId, quantity: input.quantity })
         .onConflictDoUpdate({
           target: [cartItemsTable.cartId, cartItemsTable.variantId],
-          set: { quantity, updatedAt: new Date() },
+          set: { quantity: input.quantity, updatedAt: new Date() },
         });
+
+      if (customerReference) {
+        await tx
+          .insert(cartItemTargetsTable)
+          .values({
+            cartId,
+            variantId,
+            kind: customerReference.kind,
+            value: customerReference.value,
+          })
+          .onConflictDoUpdate({
+            target: [cartItemTargetsTable.cartId, cartItemTargetsTable.variantId],
+            set: {
+              kind: customerReference.kind,
+              value: customerReference.value,
+              updatedAt: new Date(),
+            },
+          });
+      }
+
       await tx.update(cartsTable).set({ updatedAt: new Date() }).where(eq(cartsTable.id, cartId));
     });
 
