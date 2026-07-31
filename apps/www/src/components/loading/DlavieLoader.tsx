@@ -25,10 +25,10 @@ export function DlavieLoader({ isLeaving, onExited }: DlavieLoaderProps) {
       <div className="dlavie-loader__content">
         <div className="dlavie-loader__mark" aria-hidden="true">
           <DlavieMark className="dlavie-loader__brand-mark" />
-          <span className="dlavie-loader__orbit" />
+          <span className="dlavie-loader__frame" />
         </div>
-        <p className="dlavie-loader__eyebrow">Commerce · AI · Automation</p>
         <p className="dlavie-loader__wordmark">DLAVIE</p>
+        <p className="dlavie-loader__eyebrow">Commerce · AI · Automation</p>
         <span className="dlavie-loader__progress" aria-hidden="true">
           <span />
         </span>
