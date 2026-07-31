@@ -1,8 +1,8 @@
 import type { FastifyRequest } from 'fastify';
 import { env } from '../config/env.js';
+import { AppError } from '../lib/errors.js';
 import { getBearerToken } from '../lib/http.js';
 import { getSupabaseAdmin, getSupabaseAnon } from '../lib/supabase.js';
-import { AppError } from '../lib/errors.js';
 import type { AuthUser } from '../types/auth.js';
 import { safeEqual } from '../utils/crypto.js';
 
@@ -27,7 +27,7 @@ async function requireAdminUser(request: FastifyRequest): Promise<void> {
       throw new AppError('UNAUTHORIZED', 'The admin session is invalid or expired.', 401);
     }
 
-    const { data: profile, error: profileError } = await getSupabaseAdmin()
+    const { data: profile, error: profileError } = await (getSupabaseAdmin() as any)
       .from('profiles')
       .select('role')
       .eq('id', data.user.id)
