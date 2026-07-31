@@ -18,7 +18,12 @@
     radial-gradient(circle at 15% 0%, rgba(110, 125, 255, 0.14), transparent 35rem),
     radial-gradient(circle at 100% 22%, rgba(183, 102, 255, 0.1), transparent 34rem),
     var(--commerce-bg);
-  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:
+    var(--font-sans),
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
 }
 
 .commerce-page *,
@@ -73,8 +78,7 @@
   border: 1px solid var(--commerce-border-strong);
   border-radius: 11px;
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.035)),
-    #111319;
+    linear-gradient(145deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.035)), #111319;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.18),
     0 8px 24px rgba(0, 0, 0, 0.32);
@@ -369,8 +373,7 @@
   aspect-ratio: 4 / 3;
   overflow: hidden;
   background:
-    radial-gradient(circle at 50% 20%, rgba(255, 255, 255, 0.13), transparent 55%),
-    #101218;
+    radial-gradient(circle at 50% 20%, rgba(255, 255, 255, 0.13), transparent 55%), #101218;
 }
 
 .commerce-product-card__media img,
@@ -1283,10 +1286,10 @@
   background: rgba(245, 186, 88, 0.07);
 }
 
-.commerce-order-status-card__icon[data-status="paid"],
-.commerce-order-status-card__icon[data-status="processing"],
-.commerce-order-status-card__icon[data-status="shipped"],
-.commerce-order-status-card__icon[data-status="completed"] {
+.commerce-order-status-card__icon[data-status='paid'],
+.commerce-order-status-card__icon[data-status='processing'],
+.commerce-order-status-card__icon[data-status='shipped'],
+.commerce-order-status-card__icon[data-status='completed'] {
   color: var(--commerce-success);
   background: rgba(83, 216, 155, 0.07);
 }

@@ -8,11 +8,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function OrderPage({
-  params,
-}: {
-  params: Promise<{ orderNumber: string }>;
-}) {
+export default async function OrderPage({ params }: { params: Promise<{ orderNumber: string }> }) {
   const { orderNumber } = await params;
 
   return (

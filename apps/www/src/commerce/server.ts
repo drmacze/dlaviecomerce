@@ -1,11 +1,6 @@
 import 'server-only';
 import { commerceApiPath, CommerceConfigurationError } from './config';
-import type {
-  ApiErrorBody,
-  CatalogCategory,
-  PaginatedProducts,
-  ProductDetail,
-} from './types';
+import type { ApiErrorBody, CatalogCategory, PaginatedProducts, ProductDetail } from './types';
 
 export class CommerceApiError extends Error {
   constructor(

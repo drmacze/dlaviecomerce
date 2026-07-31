@@ -90,7 +90,11 @@ export function OrderStatusClient({ orderNumber }: { orderNumber: string }) {
         <p className="commerce-eyebrow">Pesanan belum dapat dibuka</p>
         <h1>Status tidak tersedia</h1>
         <p>{error}</p>
-        <button className="commerce-button commerce-button--secondary" type="button" onClick={() => load()}>
+        <button
+          className="commerce-button commerce-button--secondary"
+          type="button"
+          onClick={() => load()}
+        >
           Coba lagi
         </button>
       </section>
@@ -130,7 +134,11 @@ export function OrderStatusClient({ orderNumber }: { orderNumber: string }) {
           disabled={refreshing}
           aria-label="Perbarui status pesanan"
         >
-          <RefreshCw className={refreshing ? 'commerce-spin' : undefined} size={19} aria-hidden="true" />
+          <RefreshCw
+            className={refreshing ? 'commerce-spin' : undefined}
+            size={19}
+            aria-hidden="true"
+          />
         </button>
       </section>
 

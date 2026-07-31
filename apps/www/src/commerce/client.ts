@@ -59,9 +59,12 @@ export async function createCart(): Promise<CartSession> {
 }
 
 export async function getCart(session: CartSession): Promise<CartView> {
-  const response = await request<{ data: CartView }>(`/v1/carts/${encodeURIComponent(session.id)}`, {
-    headers: { 'X-Cart-Token': session.token },
-  });
+  const response = await request<{ data: CartView }>(
+    `/v1/carts/${encodeURIComponent(session.id)}`,
+    {
+      headers: { 'X-Cart-Token': session.token },
+    },
+  );
   return response.data;
 }
 
@@ -81,10 +84,7 @@ export async function setCartItem(
   return response.data;
 }
 
-export async function removeCartItem(
-  session: CartSession,
-  variantId: string,
-): Promise<CartView> {
+export async function removeCartItem(session: CartSession, variantId: string): Promise<CartView> {
   const response = await request<{ data: CartView }>(
     `/v1/carts/${encodeURIComponent(session.id)}/items/${encodeURIComponent(variantId)}`,
     {

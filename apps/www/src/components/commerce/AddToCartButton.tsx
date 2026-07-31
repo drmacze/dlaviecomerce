@@ -4,11 +4,7 @@ import { Minus, Plus, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { CommerceClientError, createCart, setCartItem } from '../../commerce/client';
-import {
-  clearCartSession,
-  readCartSession,
-  writeCartSession,
-} from '../../commerce/storage';
+import { clearCartSession, readCartSession, writeCartSession } from '../../commerce/storage';
 
 export function AddToCartButton({
   variantId,

@@ -40,7 +40,11 @@ export default function ShopError({
             setelah layanan commerce kembali sehat.
           </p>
           <div className="commerce-add">
-            <button className="commerce-button commerce-button--primary" type="button" onClick={reset}>
+            <button
+              className="commerce-button commerce-button--primary"
+              type="button"
+              onClick={reset}
+            >
               <RefreshCw size={16} aria-hidden="true" /> Coba lagi
             </button>
             <Link className="commerce-button commerce-button--secondary" href="/">

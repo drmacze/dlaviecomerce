@@ -3,12 +3,7 @@
 import { Minus, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import {
-  CommerceClientError,
-  getCart,
-  removeCartItem,
-  setCartItem,
-} from '../../commerce/client';
+import { CommerceClientError, getCart, removeCartItem, setCartItem } from '../../commerce/client';
 import { formatIdr } from '../../commerce/format';
 import { clearCartSession, readCartSession } from '../../commerce/storage';
 import type { CartSession, CartView } from '../../commerce/types';
@@ -213,9 +208,7 @@ export function CartClient() {
                       <button
                         type="button"
                         aria-label="Tambah jumlah"
-                        disabled={
-                          busy || item.quantity >= Math.min(item.availableQuantity, 99)
-                        }
+                        disabled={busy || item.quantity >= Math.min(item.availableQuantity, 99)}
                         onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
                       >
                         <Plus size={15} aria-hidden="true" />
@@ -255,7 +248,10 @@ export function CartClient() {
           </div>
         </dl>
         {canCheckout ? (
-          <Link className="commerce-button commerce-button--primary commerce-button--wide" href="/checkout">
+          <Link
+            className="commerce-button commerce-button--primary commerce-button--wide"
+            href="/checkout"
+          >
             Lanjut ke checkout
           </Link>
         ) : (

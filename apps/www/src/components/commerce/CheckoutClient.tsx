@@ -3,18 +3,9 @@
 import { ArrowLeft, LockKeyhole, RefreshCw, ShieldCheck, Truck } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
-import {
-  checkout,
-  CommerceClientError,
-  getCart,
-  getShippingMethods,
-} from '../../commerce/client';
+import { checkout, CommerceClientError, getCart, getShippingMethods } from '../../commerce/client';
 import { formatIdr } from '../../commerce/format';
-import {
-  clearCartSession,
-  readCartSession,
-  writeOrderAccess,
-} from '../../commerce/storage';
+import { clearCartSession, readCartSession, writeOrderAccess } from '../../commerce/storage';
 import type { CartSession, CartView, CheckoutInput, ShippingMethod } from '../../commerce/types';
 
 function createIdempotencyKey(): string {

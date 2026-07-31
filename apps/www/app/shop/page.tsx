@@ -30,11 +30,7 @@ function pageHref(input: { page: number; query?: string; category?: string }): s
   return value ? `/shop?${value}` : '/shop';
 }
 
-export default async function ShopPage({
-  searchParams,
-}: {
-  searchParams: Promise<SearchParams>;
-}) {
+export default async function ShopPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const resolved = await searchParams;
   const query = single(resolved.q)?.trim().slice(0, 100);
   const category = single(resolved.category)?.trim().slice(0, 120);
@@ -124,7 +120,9 @@ export default async function ShopPage({
                       {image ? (
                         <img src={image.url} alt={image.altText} loading="lazy" />
                       ) : (
-                        <span className="commerce-product-card__no-image">Gambar belum tersedia</span>
+                        <span className="commerce-product-card__no-image">
+                          Gambar belum tersedia
+                        </span>
                       )}
                       {variant.availableQuantity < 1 ? (
                         <span className="commerce-badge commerce-badge--sold">Stok habis</span>
@@ -135,7 +133,9 @@ export default async function ShopPage({
                         {product.category?.name ?? 'DLavie'}
                       </p>
                       <h2>
-                        <Link href={`/shop/${encodeURIComponent(product.slug)}`}>{product.name}</Link>
+                        <Link href={`/shop/${encodeURIComponent(product.slug)}`}>
+                          {product.name}
+                        </Link>
                       </h2>
                       <p className="commerce-product-card__description">{product.description}</p>
                       <div className="commerce-product-card__footer">
@@ -196,7 +196,9 @@ export default async function ShopPage({
         <main className="commerce-shell">
           <section className="commerce-service-state" role="alert">
             <p className="commerce-eyebrow">Commerce belum tersedia</p>
-            <h1>{configured ? 'Katalog sedang tidak dapat diakses' : 'Backend belum dikonfigurasi'}</h1>
+            <h1>
+              {configured ? 'Katalog sedang tidak dapat diakses' : 'Backend belum dikonfigurasi'}
+            </h1>
             <p>
               {unavailable
                 ? 'Layanan commerce tidak memberikan respons yang valid. Tidak ada data lokal atau produk palsu yang digunakan sebagai pengganti.'
