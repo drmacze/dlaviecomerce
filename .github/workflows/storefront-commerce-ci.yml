@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   storefront:
-    name: Format, lint, typecheck, and build
+    name: Format, lint, test, typecheck, and build
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
@@ -53,6 +53,9 @@ jobs:
 
       - name: Lint storefront
         run: pnpm --filter @dlavie/www lint
+
+      - name: Test storefront
+        run: pnpm --filter @dlavie/www test -- --runInBand
 
       - name: Typecheck storefront
         run: pnpm --filter @dlavie/www typecheck
