@@ -11,6 +11,7 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     '/*': ['../../dist/**/*', '../../lib/db/drizzle/*.sql'],
   },
+  serverExternalPackages: ['drizzle-orm', 'pg'],
   turbopack: {
     root: monorepoRoot,
   },
