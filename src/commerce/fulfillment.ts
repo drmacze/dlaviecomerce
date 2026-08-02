@@ -6,9 +6,10 @@ import {
 import { env } from '../config/env.js';
 import { requestDigiflazzTransaction, type DigiflazzTransactionData } from './digiflazz.js';
 
-const activeStatuses = ['pending', 'retrying'] as const;
+const activeStatuses = ['pending', 'processing', 'retrying'] as const;
 const terminalStatuses = ['succeeded', 'failed', 'requires_review', 'cancelled'] as const;
 const maxAttempts = 6;
+const processingLeaseMilliseconds = 2 * 60_000;
 
 type FulfillmentStatus =
   | 'waiting_payment'
@@ -63,6 +64,10 @@ function classifyProviderResult(
 function nextRetry(attempts: number): Date {
   const delayMinutes = Math.min(60, 2 ** Math.min(Math.max(attempts, 1), 6));
   return new Date(Date.now() + delayMinutes * 60_000);
+}
+
+function processingLease(): Date {
+  return new Date(Date.now() + processingLeaseMilliseconds);
 }
 
 async function recordEvent(
@@ -193,7 +198,7 @@ export async function processOrderFulfillments(
       .set({
         status: 'processing',
         attempts: sql`${providerFulfillmentsTable.attempts} + 1`,
-        nextAttemptAt: null,
+        nextAttemptAt: processingLease(),
         updatedAt: new Date(),
       })
       .where(
@@ -223,7 +228,9 @@ export async function processOrderFulfillments(
         customerNumber: row.customerReferenceValue,
         referenceId: row.providerReference,
       });
-      const nextStatus = classifyProviderResult(response);
+      const classifiedStatus = classifyProviderResult(response);
+      const exhausted = classifiedStatus === 'retrying' && claimed.attempts >= maxAttempts;
+      const nextStatus = exhausted ? 'requires_review' : classifiedStatus;
       const retrying = nextStatus === 'retrying';
       const completed = nextStatus === 'succeeded' || nextStatus === 'failed';
 
@@ -288,7 +295,12 @@ export async function retryOrderFulfillments(orderId: string): Promise<Fulfillme
     .where(
       and(
         eq(providerFulfillmentsTable.orderId, orderId),
-        inArray(providerFulfillmentsTable.status, ['failed', 'requires_review', 'retrying']),
+        inArray(providerFulfillmentsTable.status, [
+          'failed',
+          'processing',
+          'requires_review',
+          'retrying',
+        ]),
       ),
     );
   return processOrderFulfillments(orderId, 'admin-retry');
