@@ -70,6 +70,7 @@ export async function buildApp(): Promise<FastifyInstance> {
       v2Checkout,
       v2Webhook,
       v2Fulfillment,
+      v2Readiness,
     ] = await Promise.all([
       import('./routes/commerce.catalog.routes.js'),
       import('./routes/commerce.admin.routes.js'),
@@ -81,6 +82,7 @@ export async function buildApp(): Promise<FastifyInstance> {
       import('./routes/commerce.v2.checkout.routes.js'),
       import('./routes/commerce.v2.webhook.routes.js'),
       import('./routes/commerce.v2.fulfillment.routes.js'),
+      import('./routes/commerce.v2.readiness.routes.js'),
     ]);
     await app.register(catalog.commerceCatalogRoutes);
     await app.register(adminRead.commerceAdminReadRoutes);
@@ -90,6 +92,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     await app.register(checkout.commerceCheckoutRoutes);
     await app.register(v2Checkout.commerceV2CheckoutRoutes);
     await app.register(v2Fulfillment.commerceV2FulfillmentRoutes);
+    await app.register(v2Readiness.commerceV2ReadinessRoutes);
     if (env.ENABLE_PAYMENTS) {
       await app.register(webhook.commerceWebhookRoutes);
       await app.register(v2Webhook.commerceV2WebhookRoutes);
