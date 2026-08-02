@@ -290,6 +290,15 @@ export async function commerceV2CheckoutRoutes(app: FastifyInstance): Promise<vo
 
         const paymentItems: MidtransItem[] = [];
         for (const item of items) {
+          const providerSku = item.attributes.providerSku;
+          if (!providerSku || !item.customerReferenceKind || !item.customerReferenceValue) {
+            throw new AppError(
+              'BAD_REQUEST',
+              'Order item is missing provider or destination data.',
+              400,
+            );
+          }
+
           const [orderItem] = await tx
             .insert(orderItemsTable)
             .values({
@@ -305,7 +314,7 @@ export async function commerceV2CheckoutRoutes(app: FastifyInstance): Promise<vo
               lineTotalAmount: safeMultiply(item.priceAmount, item.quantity),
             })
             .returning({ id: orderItemsTable.id });
-          if (!orderItem || !item.customerReferenceKind || !item.customerReferenceValue) {
+          if (!orderItem) {
             throw new AppError('DATABASE_ERROR', 'Order item snapshot could not be created.', 500);
           }
 
@@ -321,7 +330,7 @@ export async function commerceV2CheckoutRoutes(app: FastifyInstance): Promise<vo
             orderItemId: orderItem.id,
             provider: 'digiflazz',
             providerReference,
-            providerSku: item.attributes.providerSku,
+            providerSku,
             customerReferenceKind: item.customerReferenceKind,
             customerReferenceValue: item.customerReferenceValue,
             status: 'waiting_payment',
