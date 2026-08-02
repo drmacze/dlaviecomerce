@@ -185,6 +185,13 @@ export function checkoutCredential(session: CommerceSession): string | null {
     .digest('hex');
 }
 
+export function orderAccessCredential(session: CommerceSession): string | null {
+  if (!session.cart) return null;
+  return createHmac('sha256', encryptionKey())
+    .update(`order-access:${session.cart.id}:${session.cart.token}`, 'utf8')
+    .digest('hex');
+}
+
 export function setOrderCredential(
   session: CommerceSession,
   orderNumber: string,
