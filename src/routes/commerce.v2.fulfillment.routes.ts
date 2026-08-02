@@ -8,7 +8,7 @@ import { AppError } from '../lib/errors.js';
 import { requireCommerceAdmin } from '../middleware/commerceAdmin.js';
 
 const processDueSchema = z.object({
-  limit: z.number().int().min(1).max(100).default(25),
+  limit: z.number().int().min(1).max(20).default(5),
 });
 
 export async function commerceV2FulfillmentRoutes(app: FastifyInstance): Promise<void> {
@@ -42,7 +42,7 @@ export async function commerceV2FulfillmentRoutes(app: FastifyInstance): Promise
         .from(providerFulfillmentsTable)
         .where(
           and(
-            inArray(providerFulfillmentsTable.status, ['pending', 'retrying']),
+            inArray(providerFulfillmentsTable.status, ['pending', 'processing', 'retrying']),
             sql`(${providerFulfillmentsTable.nextAttemptAt} is null or ${providerFulfillmentsTable.nextAttemptAt} <= now())`,
           ),
         )
