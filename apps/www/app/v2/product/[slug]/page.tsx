@@ -9,7 +9,6 @@ import { ProductPurchasePanel } from '../../../../src/v2/ProductPurchasePanel';
 import styles from '../../../../src/v2/product.module.css';
 
 type Params = Promise<{ slug: string }>;
-
 type Locale = 'id' | 'en';
 
 const copy = {
@@ -101,7 +100,7 @@ export default async function CommerceV2ProductPage({ params }: { params: Params
             <Link href="/account/login">
               <UserRound size={17} aria-hidden="true" /> <span>{t.signIn}</span>
             </Link>
-            <Link href="/cart">
+            <Link href="/v2/cart">
               <ShoppingBag size={17} aria-hidden="true" /> <span>{t.cart}</span>
             </Link>
           </div>
@@ -148,7 +147,11 @@ export default async function CommerceV2ProductPage({ params }: { params: Params
                 </div>
                 <div>
                   <small>Status</small>
-                  <strong>{product.variants.some((variant) => variant.availableQuantity > 0) ? 'Ready' : 'Unavailable'}</strong>
+                  <strong>
+                    {product.variants.some((variant) => variant.availableQuantity > 0)
+                      ? 'Ready'
+                      : 'Unavailable'}
+                  </strong>
                 </div>
               </div>
             </section>
