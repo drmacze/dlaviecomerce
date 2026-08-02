@@ -125,7 +125,7 @@ function initial(value: string): string {
 }
 
 function productHref(slug: string): string {
-  return `/shop/${encodeURIComponent(slug)}`;
+  return `/v2/product/${encodeURIComponent(slug)}`;
 }
 
 export function StorefrontV2({
@@ -157,14 +157,14 @@ export function StorefrontV2({
           <nav className={styles.navigation} aria-label="Storefront navigation">
             <a href="#catalog">{t.navProducts}</a>
             <a href="#categories">{t.navCategories}</a>
-            <Link href="/orders">{t.navOrders}</Link>
+            <Link href="/v2/orders">{t.navOrders}</Link>
           </nav>
 
           <div className={styles.headerActions}>
             <Link className={styles.signIn} href="/account/login">
               {t.signIn}
             </Link>
-            <Link className={styles.cartButton} href="/cart" aria-label={t.cart}>
+            <Link className={styles.cartButton} href="/v2/cart" aria-label={t.cart}>
               <ShoppingBag size={18} aria-hidden="true" />
               <span>{t.cart}</span>
             </Link>
@@ -348,7 +348,10 @@ export function StorefrontV2({
                               <small>{t.from}</small>
                               <strong>{variant ? formatIdr(variant.priceAmount) : '—'}</strong>
                             </span>
-                            <Link href={productHref(product.slug)} aria-label={`${t.openProduct}: ${product.name}`}>
+                            <Link
+                              href={productHref(product.slug)}
+                              aria-label={`${t.openProduct}: ${product.name}`}
+                            >
                               <ArrowRight size={17} aria-hidden="true" />
                             </Link>
                           </div>
