@@ -2,6 +2,7 @@ import {
   checkoutCredential,
   commerceSessionCookie,
   CommerceSessionConfigurationError,
+  orderAccessCredential,
   publicCommerceSession,
   readCommerceSession,
   setCartCredential,
@@ -69,6 +70,23 @@ describe('encrypted commerce session', () => {
     expect(credential).toBe(checkoutCredential(session));
     expect(credential).not.toContain(session.cart?.token ?? '');
     expect(checkoutCredential(emptySession())).toBeNull();
+  });
+
+  it('derives separate stable credentials for checkout idempotency and order access', () => {
+    const session = setCartCredential(emptySession(), {
+      id: 'cart-id',
+      token: 'c'.repeat(64),
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+    });
+
+    const checkout = checkoutCredential(session);
+    const access = orderAccessCredential(session);
+    expect(checkout).toHaveLength(64);
+    expect(access).toHaveLength(64);
+    expect(checkout).not.toBe(access);
+    expect(checkout).toBe(checkoutCredential(session));
+    expect(access).toBe(orderAccessCredential(session));
+    expect(orderAccessCredential(emptySession())).toBeNull();
   });
 
   it('rejects a tampered authenticated cookie', () => {
