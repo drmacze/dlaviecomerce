@@ -130,7 +130,9 @@ export function StorefrontCatalogV2({
       <header className={styles.header}>
         <div className={styles.headerInner}>
           <Link className={styles.brand} href="/v2" aria-label="DLavie Commerce">
-            <span className={styles.brandMark} aria-hidden="true">DL</span>
+            <span className={styles.brandMark} aria-hidden="true">
+              DL
+            </span>
             <span className={styles.brandCopy}>
               <strong>DLavie</strong>
               <small>Commerce v2</small>
@@ -140,12 +142,14 @@ export function StorefrontCatalogV2({
           <nav className={styles.navigation} aria-label="Storefront navigation">
             <a href="#catalog">{t.products}</a>
             <a href="#categories">{t.categories}</a>
-            <Link href="/orders">{t.orders}</Link>
+            <Link href="/v2/orders">{t.orders}</Link>
           </nav>
 
           <div className={styles.headerActions}>
-            <Link className={styles.signIn} href="/account/login">{t.signIn}</Link>
-            <Link className={styles.cartButton} href="/cart" aria-label={t.cart}>
+            <Link className={styles.signIn} href="/account/login">
+              {t.signIn}
+            </Link>
+            <Link className={styles.cartButton} href="/v2/cart" aria-label={t.cart}>
               <ShoppingBag size={18} aria-hidden="true" />
               <span>{t.cart}</span>
             </Link>
@@ -175,9 +179,15 @@ export function StorefrontCatalogV2({
             </form>
 
             <div className={styles.heroProof}>
-              <span><Check size={15} aria-hidden="true" /> {t.proofCatalog}</span>
-              <span><Check size={15} aria-hidden="true" /> {t.proofPayment}</span>
-              <span><Check size={15} aria-hidden="true" /> {t.proofCurrency}</span>
+              <span>
+                <Check size={15} aria-hidden="true" /> {t.proofCatalog}
+              </span>
+              <span>
+                <Check size={15} aria-hidden="true" /> {t.proofPayment}
+              </span>
+              <span>
+                <Check size={15} aria-hidden="true" /> {t.proofCurrency}
+              </span>
             </div>
           </div>
 
@@ -204,7 +214,9 @@ export function StorefrontCatalogV2({
                   </Link>
                 );
               })}
-              {products.length === 0 ? <div className={styles.heroPanelEmpty}>{t.emptyCopy}</div> : null}
+              {products.length === 0 ? (
+                <div className={styles.heroPanelEmpty}>{t.emptyCopy}</div>
+              ) : null}
             </div>
           </div>
         </section>
@@ -215,7 +227,9 @@ export function StorefrontCatalogV2({
               <p>{t.popular}</p>
               <h2 id="v2-categories-title">{t.categories}</h2>
             </div>
-            <a href="#catalog">{t.viewAll} <ArrowRight size={16} aria-hidden="true" /></a>
+            <a href="#catalog">
+              {t.viewAll} <ArrowRight size={16} aria-hidden="true" />
+            </a>
           </div>
 
           <div className={styles.categoryGrid}>
@@ -223,7 +237,9 @@ export function StorefrontCatalogV2({
               const Icon = categoryIcons[index % categoryIcons.length] ?? ShoppingBag;
               return (
                 <Link key={item.id} href={`/v2?category=${encodeURIComponent(item.slug)}#catalog`}>
-                  <span className={styles.categoryIcon}><Icon size={22} aria-hidden="true" /></span>
+                  <span className={styles.categoryIcon}>
+                    <Icon size={22} aria-hidden="true" />
+                  </span>
                   <span className={styles.categoryCopy}>
                     <strong>{item.name}</strong>
                     <small>{item.description ?? 'DLavie Commerce'}</small>
@@ -233,29 +249,40 @@ export function StorefrontCatalogV2({
               );
             })}
             {featuredCategories.length === 0
-              ? ['Pulsa & data', 'Voucher digital', 'Tagihan', 'Layanan lainnya'].map((label, index) => {
-                  const Icon = categoryIcons[index % categoryIcons.length] ?? ShoppingBag;
-                  return (
-                    <div key={label} className={styles.categoryPlaceholder}>
-                      <span className={styles.categoryIcon}><Icon size={22} aria-hidden="true" /></span>
-                      <span className={styles.categoryCopy}><strong>{label}</strong><small>{t.emptyTitle}</small></span>
-                    </div>
-                  );
-                })
+              ? ['Pulsa & data', 'Voucher digital', 'Tagihan', 'Layanan lainnya'].map(
+                  (label, index) => {
+                    const Icon = categoryIcons[index % categoryIcons.length] ?? ShoppingBag;
+                    return (
+                      <div key={label} className={styles.categoryPlaceholder}>
+                        <span className={styles.categoryIcon}>
+                          <Icon size={22} aria-hidden="true" />
+                        </span>
+                        <span className={styles.categoryCopy}>
+                          <strong>{label}</strong>
+                          <small>{t.emptyTitle}</small>
+                        </span>
+                      </div>
+                    );
+                  },
+                )
               : null}
           </div>
         </section>
 
         <section className={styles.catalog} id="catalog" aria-labelledby="v2-catalog-title">
           <div className={styles.catalogHeading}>
-            <div><p>{t.liveCatalog}</p><h2 id="v2-catalog-title">{t.catalogTitle}</h2></div>
+            <div>
+              <p>{t.liveCatalog}</p>
+              <h2 id="v2-catalog-title">{t.catalogTitle}</h2>
+            </div>
             <span>{t.catalogCopy}</span>
           </div>
 
           <div className={styles.catalogLayout}>
             <aside className={styles.filters} aria-label={t.categories}>
               <Link className={!category ? styles.activeFilter : undefined} href="/v2#catalog">
-                {t.all}<small>{totalProducts}</small>
+                {t.all}
+                <small>{totalProducts}</small>
               </Link>
               {categories.map((item) => (
                 <Link
@@ -263,7 +290,8 @@ export function StorefrontCatalogV2({
                   className={category === item.slug ? styles.activeFilter : undefined}
                   href={`/v2?category=${encodeURIComponent(item.slug)}#catalog`}
                 >
-                  {item.name}<ChevronRight size={15} aria-hidden="true" />
+                  {item.name}
+                  <ChevronRight size={15} aria-hidden="true" />
                 </Link>
               ))}
             </aside>
@@ -272,12 +300,14 @@ export function StorefrontCatalogV2({
               {serviceUnavailable ? (
                 <div className={styles.emptyState}>
                   <ShieldCheck size={28} aria-hidden="true" />
-                  <h3>{t.serviceTitle}</h3><p>{t.serviceCopy}</p>
+                  <h3>{t.serviceTitle}</h3>
+                  <p>{t.serviceCopy}</p>
                 </div>
               ) : products.length === 0 ? (
                 <div className={styles.emptyState}>
                   <PackageCheck size={28} aria-hidden="true" />
-                  <h3>{t.emptyTitle}</h3><p>{t.emptyCopy}</p>
+                  <h3>{t.emptyTitle}</h3>
+                  <p>{t.emptyCopy}</p>
                 </div>
               ) : (
                 <div className={styles.productGrid}>
@@ -294,10 +324,15 @@ export function StorefrontCatalogV2({
                           <div className={styles.productStatus} data-available={available}>
                             <i /> {available ? t.available : t.unavailable}
                           </div>
-                          <h3><Link href={productHref(product.slug)}>{product.name}</Link></h3>
+                          <h3>
+                            <Link href={productHref(product.slug)}>{product.name}</Link>
+                          </h3>
                           <p>{product.description}</p>
                           <div className={styles.productFooter}>
-                            <span><small>{t.from}</small><strong>{variant ? formatIdr(variant.priceAmount) : '—'}</strong></span>
+                            <span>
+                              <small>{t.from}</small>
+                              <strong>{variant ? formatIdr(variant.priceAmount) : '—'}</strong>
+                            </span>
                             <Link href={productHref(product.slug)} aria-label={product.name}>
                               <ArrowRight size={17} aria-hidden="true" />
                             </Link>
@@ -313,17 +348,41 @@ export function StorefrontCatalogV2({
         </section>
 
         <section className={styles.trustBar} aria-label="Commerce safeguards">
-          <div><PackageCheck size={21} aria-hidden="true" /><span>{t.trustCatalog}</span></div>
-          <div><CreditCard size={21} aria-hidden="true" /><span>{t.trustPayment}</span></div>
-          <div><ShieldCheck size={21} aria-hidden="true" /><span>{t.trustServer}</span></div>
+          <div>
+            <PackageCheck size={21} aria-hidden="true" />
+            <span>{t.trustCatalog}</span>
+          </div>
+          <div>
+            <CreditCard size={21} aria-hidden="true" />
+            <span>{t.trustPayment}</span>
+          </div>
+          <div>
+            <ShieldCheck size={21} aria-hidden="true" />
+            <span>{t.trustServer}</span>
+          </div>
         </section>
 
         <section className={styles.process} aria-labelledby="v2-process-title">
-          <div className={styles.processIntro}><p>DLavie Commerce v2</p><h2 id="v2-process-title">{t.processTitle}</h2></div>
+          <div className={styles.processIntro}>
+            <p>DLavie Commerce v2</p>
+            <h2 id="v2-process-title">{t.processTitle}</h2>
+          </div>
           <div className={styles.processGrid}>
-            <article><span>01</span><Smartphone size={24} aria-hidden="true" /><h3>{t.stepOne}</h3></article>
-            <article><span>02</span><Wifi size={24} aria-hidden="true" /><h3>{t.stepTwo}</h3></article>
-            <article><span>03</span><CreditCard size={24} aria-hidden="true" /><h3>{t.stepThree}</h3></article>
+            <article>
+              <span>01</span>
+              <Smartphone size={24} aria-hidden="true" />
+              <h3>{t.stepOne}</h3>
+            </article>
+            <article>
+              <span>02</span>
+              <Wifi size={24} aria-hidden="true" />
+              <h3>{t.stepTwo}</h3>
+            </article>
+            <article>
+              <span>03</span>
+              <CreditCard size={24} aria-hidden="true" />
+              <h3>{t.stepThree}</h3>
+            </article>
           </div>
         </section>
       </main>
