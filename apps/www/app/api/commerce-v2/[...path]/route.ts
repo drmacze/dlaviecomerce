@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import {
   commerceBackendFetch,
   CommerceConfigurationError,
@@ -8,6 +9,7 @@ import {
   clearCartCredential,
   commerceSessionCookie,
   CommerceSessionConfigurationError,
+  orderAccessCredential,
   orderCredential,
   readCommerceSession,
   setOrderCredential,
@@ -17,10 +19,21 @@ import {
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+const maximumCheckoutBodyBytes = 4_096;
+const checkoutBodySchema = z
+  .object({
+    fullName: z.string().trim().min(2).max(120),
+    email: z.string().trim().toLowerCase().email().max(254),
+    phone: z.string().trim().min(6).max(30).optional(),
+    customerNote: z.string().trim().max(500).optional(),
+  })
+  .strict();
+
 type Resolution = {
   backendPath: string;
   cartToken?: string;
   orderToken?: string;
+  orderAccessToken?: string;
   idempotencyKey?: string;
   checkout?: boolean;
 };
@@ -35,7 +48,7 @@ function errorResponse(status: number, code: string, message: string): Response 
 function isAllowedOrigin(request: Request): boolean {
   if (request.method === 'GET' || request.method === 'HEAD') return true;
   const origin = request.headers.get('origin');
-  return !origin || origin === new URL(request.url).origin;
+  return Boolean(origin && origin === new URL(request.url).origin);
 }
 
 function validSegment(value: string): boolean {
@@ -63,13 +76,15 @@ function resolve(
       return errorResponse(401, 'CART_SESSION_REQUIRED', 'No active cart session was found.');
     }
     const idempotencyKey = checkoutCredential(session);
-    if (!idempotencyKey) {
+    const orderAccessToken = orderAccessCredential(session);
+    if (!idempotencyKey || !orderAccessToken) {
       return errorResponse(401, 'CART_SESSION_REQUIRED', 'No active cart session was found.');
     }
     return {
       backendPath: `/v2/checkout/${encodeURIComponent(session.cart.id)}`,
       cartToken: session.cart.token,
       idempotencyKey,
+      orderAccessToken,
       checkout: true,
     };
   }
@@ -101,6 +116,40 @@ function orderNumberFromPayload(payload: unknown): string | null {
   return typeof payload.data.orderNumber === 'string' ? payload.data.orderNumber : null;
 }
 
+async function validatedCheckoutBody(request: Request): Promise<Uint8Array | Response> {
+  const contentType = request.headers.get('content-type')?.toLowerCase() ?? '';
+  if (!contentType.includes('application/json')) {
+    return errorResponse(415, 'UNSUPPORTED_MEDIA_TYPE', 'Checkout requires application/json.');
+  }
+
+  const contentLengthValue = request.headers.get('content-length');
+  const contentLength = contentLengthValue ? Number(contentLengthValue) : Number.NaN;
+  if (!Number.isSafeInteger(contentLength) || contentLength < 1) {
+    return errorResponse(411, 'LENGTH_REQUIRED', 'A valid Content-Length header is required.');
+  }
+  if (contentLength > maximumCheckoutBodyBytes) {
+    return errorResponse(413, 'PAYLOAD_TOO_LARGE', 'Checkout payload is too large.');
+  }
+
+  const bytes = new Uint8Array(await request.arrayBuffer());
+  if (bytes.byteLength < 1 || bytes.byteLength > maximumCheckoutBodyBytes) {
+    return errorResponse(413, 'PAYLOAD_TOO_LARGE', 'Checkout payload is too large.');
+  }
+
+  let candidate: unknown;
+  try {
+    candidate = JSON.parse(Buffer.from(bytes).toString('utf8')) as unknown;
+  } catch {
+    return errorResponse(400, 'INVALID_JSON', 'Checkout payload must contain valid JSON.');
+  }
+
+  const parsed = checkoutBodySchema.safeParse(candidate);
+  if (!parsed.success) {
+    return errorResponse(400, 'VALIDATION_ERROR', 'Checkout payload is invalid.');
+  }
+  return Buffer.from(JSON.stringify(parsed.data), 'utf8');
+}
+
 async function proxy(
   request: Request,
   context: { params: Promise<{ path: string[] }> },
@@ -125,18 +174,27 @@ async function proxy(
   if (resolution instanceof Response) return resolution;
 
   const headers = new Headers({ Accept: 'application/json' });
-  const contentType = request.headers.get('content-type');
-  if (contentType) headers.set('Content-Type', contentType);
   if (resolution.cartToken) headers.set('X-Cart-Token', resolution.cartToken);
   if (resolution.orderToken) headers.set('X-Order-Token', resolution.orderToken);
+  if (resolution.orderAccessToken) {
+    headers.set('X-Order-Access-Token', resolution.orderAccessToken);
+  }
   if (resolution.idempotencyKey) headers.set('Idempotency-Key', resolution.idempotencyKey);
+
+  let body: Uint8Array | undefined;
+  if (resolution.checkout) {
+    const validatedBody = await validatedCheckoutBody(request);
+    if (validatedBody instanceof Response) return validatedBody;
+    body = validatedBody;
+    headers.set('Content-Type', 'application/json');
+  }
 
   let upstream: Response;
   try {
     upstream = await commerceBackendFetch(resolution.backendPath, {
       method: request.method,
       headers,
-      ...(request.method === 'POST' ? { body: await request.arrayBuffer() } : {}),
+      ...(body ? { body } : {}),
       origin: new URL(request.url).origin,
       timeoutMs: 25_000,
     });
@@ -155,14 +213,19 @@ async function proxy(
     'Content-Type': upstream.headers.get('content-type') ?? 'application/json; charset=utf-8',
   });
 
-  if (upstream.ok && resolution.checkout && resolution.idempotencyKey) {
-    const payload = JSON.parse(Buffer.from(bytes).toString('utf8')) as unknown;
+  if (upstream.ok && resolution.checkout && resolution.orderAccessToken) {
+    let payload: unknown;
+    try {
+      payload = JSON.parse(Buffer.from(bytes).toString('utf8')) as unknown;
+    } catch {
+      return errorResponse(502, 'UPSTREAM_ERROR', 'Commerce service returned an invalid order.');
+    }
     const orderNumber = orderNumberFromPayload(payload);
     if (!orderNumber) {
       return errorResponse(502, 'UPSTREAM_ERROR', 'Commerce service returned an invalid order.');
     }
     const nextSession = clearCartCredential(
-      setOrderCredential(session, orderNumber, resolution.idempotencyKey),
+      setOrderCredential(session, orderNumber, resolution.orderAccessToken),
     );
     responseHeaders.set('Set-Cookie', commerceSessionCookie(nextSession));
   }
