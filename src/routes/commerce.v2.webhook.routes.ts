@@ -4,6 +4,7 @@ import {
   db,
   eq,
   gte,
+  inArray,
   inventoryMovementsTable,
   inventoryTable,
   orderItemsTable,
@@ -25,6 +26,12 @@ import { midtransWebhookSchema } from '../commerce/validation.js';
 import { AppError } from '../lib/errors.js';
 
 const paidOrderStates = new Set(['paid', 'processing', 'shipped', 'completed']);
+const cancellableFulfillmentStatuses = [
+  'waiting_payment',
+  'pending',
+  'processing',
+  'retrying',
+] as const;
 
 export async function commerceV2WebhookRoutes(app: FastifyInstance): Promise<void> {
   app.post('/v2/webhooks/midtrans', async (request, reply) => {
@@ -56,8 +63,9 @@ export async function commerceV2WebhookRoutes(app: FastifyInstance): Promise<voi
       )
       .limit(1);
 
-    if (!paymentSnapshot)
+    if (!paymentSnapshot) {
       throw new AppError('NOT_FOUND', 'Payment transaction was not found.', 404);
+    }
     if (paymentSnapshot.amount !== grossAmount) {
       await db
         .update(paymentsTable)
@@ -260,10 +268,58 @@ export async function commerceV2WebhookRoutes(app: FastifyInstance): Promise<voi
         await tx
           .update(providerFulfillmentsTable)
           .set({ status: 'cancelled', nextAttemptAt: null, updatedAt: new Date() })
-          .where(eq(providerFulfillmentsTable.orderId, payment.orderId));
+          .where(
+            and(
+              eq(providerFulfillmentsTable.orderId, payment.orderId),
+              inArray(providerFulfillmentsTable.status, [...cancellableFulfillmentStatuses]),
+            ),
+          );
       }
 
-      if (nextStatus === 'refunded') {
+      if (nextStatus === 'refunded' && order.status !== 'refunded') {
+        if (payment.terminalProcessedAt && paidOrderStates.has(order.status)) {
+          const refundItems = await tx
+            .select({
+              variantId: orderItemsTable.variantId,
+              quantity: orderItemsTable.quantity,
+              fulfillmentStatus: providerFulfillmentsTable.status,
+            })
+            .from(orderItemsTable)
+            .leftJoin(
+              providerFulfillmentsTable,
+              eq(providerFulfillmentsTable.orderItemId, orderItemsTable.id),
+            )
+            .where(eq(orderItemsTable.orderId, payment.orderId));
+
+          for (const item of refundItems) {
+            if (!item.variantId || item.fulfillmentStatus === 'succeeded') continue;
+            await tx
+              .update(inventoryTable)
+              .set({
+                onHand: sql`${inventoryTable.onHand} + ${item.quantity}`,
+                updatedAt: new Date(),
+              })
+              .where(eq(inventoryTable.variantId, item.variantId));
+            await tx.insert(inventoryMovementsTable).values({
+              variantId: item.variantId,
+              orderId: payment.orderId,
+              type: 'return',
+              quantityDelta: item.quantity,
+              reason: 'Refund restored an undelivered digital item.',
+              actor: 'midtrans-v2-webhook',
+            });
+          }
+        }
+
+        await tx
+          .update(providerFulfillmentsTable)
+          .set({ status: 'cancelled', nextAttemptAt: null, updatedAt: new Date() })
+          .where(
+            and(
+              eq(providerFulfillmentsTable.orderId, payment.orderId),
+              sql`${providerFulfillmentsTable.status} <> 'succeeded'`,
+            ),
+          );
         await tx
           .update(ordersTable)
           .set({ status: 'refunded', updatedAt: new Date() })
