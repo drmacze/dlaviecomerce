@@ -116,7 +116,7 @@ function orderNumberFromPayload(payload: unknown): string | null {
   return typeof payload.data.orderNumber === 'string' ? payload.data.orderNumber : null;
 }
 
-async function validatedCheckoutBody(request: Request): Promise<Uint8Array | Response> {
+async function validatedCheckoutBody(request: Request): Promise<ArrayBuffer | Response> {
   const contentType = request.headers.get('content-type')?.toLowerCase() ?? '';
   if (!contentType.includes('application/json')) {
     return errorResponse(415, 'UNSUPPORTED_MEDIA_TYPE', 'Checkout requires application/json.');
@@ -147,7 +147,12 @@ async function validatedCheckoutBody(request: Request): Promise<Uint8Array | Res
   if (!parsed.success) {
     return errorResponse(400, 'VALIDATION_ERROR', 'Checkout payload is invalid.');
   }
-  return Buffer.from(JSON.stringify(parsed.data), 'utf8');
+
+  const serialized = Buffer.from(JSON.stringify(parsed.data), 'utf8');
+  return serialized.buffer.slice(
+    serialized.byteOffset,
+    serialized.byteOffset + serialized.byteLength,
+  ) as ArrayBuffer;
 }
 
 async function proxy(
@@ -181,7 +186,7 @@ async function proxy(
   }
   if (resolution.idempotencyKey) headers.set('Idempotency-Key', resolution.idempotencyKey);
 
-  let body: Uint8Array | undefined;
+  let body: ArrayBuffer | undefined;
   if (resolution.checkout) {
     const validatedBody = await validatedCheckoutBody(request);
     if (validatedBody instanceof Response) return validatedBody;
