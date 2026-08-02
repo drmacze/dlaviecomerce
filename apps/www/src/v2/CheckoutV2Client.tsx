@@ -9,6 +9,7 @@ import {
   LoaderCircle,
   LockKeyhole,
   PackageCheck,
+  RefreshCw,
   ShieldCheck,
 } from 'lucide-react';
 import {
@@ -50,6 +51,7 @@ const copy = {
     provider: 'Produk akan diproses oleh Digiflazz hanya setelah pembayaran terkonfirmasi.',
     empty: 'Keranjang tidak ditemukan atau sudah diproses.',
     browse: 'Kembali ke katalog',
+    retry: 'Coba lagi',
     unavailable: 'Checkout belum dapat digunakan.',
   },
   en: {
@@ -75,6 +77,7 @@ const copy = {
     provider: 'Digiflazz processes the product only after payment is confirmed.',
     empty: 'The cart was not found or has already been processed.',
     browse: 'Return to catalog',
+    retry: 'Try again',
     unavailable: 'Checkout is currently unavailable.',
   },
 } as const;
@@ -121,12 +124,15 @@ export function CheckoutV2Client({ locale }: { locale: Locale }) {
     setSubmitting(true);
     setError(null);
     try {
-      const order = await checkoutV2({
-        fullName,
-        email,
-        ...(phone.trim() ? { phone: phone.trim() } : {}),
-        ...(note.trim() ? { customerNote: note.trim() } : {}),
-      });
+      const order = await checkoutV2(
+        {
+          fullName,
+          email,
+          ...(phone.trim() ? { phone: phone.trim() } : {}),
+          ...(note.trim() ? { customerNote: note.trim() } : {}),
+        },
+        t.unavailable,
+      );
       if (order.payment?.checkoutUrl) {
         window.location.assign(order.payment.checkoutUrl);
         return;
@@ -147,6 +153,20 @@ export function CheckoutV2Client({ locale }: { locale: Locale }) {
       <main className={styles.state}>
         <LoaderCircle className={styles.spin} size={28} aria-hidden="true" />
         <p>{t.processing}</p>
+      </main>
+    );
+  }
+
+  if (!cart && error) {
+    return (
+      <main className={styles.state}>
+        <RefreshCw size={30} aria-hidden="true" />
+        <h1>{t.unavailable}</h1>
+        <p>{error}</p>
+        <button type="button" onClick={() => window.location.reload()}>
+          {t.retry}
+        </button>
+        <Link href="/v2/cart">{t.back}</Link>
       </main>
     );
   }
@@ -173,7 +193,11 @@ export function CheckoutV2Client({ locale }: { locale: Locale }) {
         <span>{t.subtitle}</span>
       </header>
 
-      {error ? <div className={styles.error} role="alert">{error}</div> : null}
+      {error ? (
+        <div className={styles.error} role="alert">
+          {error}
+        </div>
+      ) : null}
 
       <form className={styles.layout} onSubmit={submit}>
         <section className={styles.formCard}>
@@ -247,7 +271,9 @@ export function CheckoutV2Client({ locale }: { locale: Locale }) {
                   <strong>{item.variantName}</strong>
                   <small>{item.sku}</small>
                   {item.customerReference ? (
-                    <span>{t.destination}: {item.customerReference.value}</span>
+                    <span>
+                      {t.destination}: {item.customerReference.value}
+                    </span>
                   ) : null}
                 </div>
                 <b>{formatIdr(item.lineTotalAmount)}</b>
