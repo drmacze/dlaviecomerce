@@ -13,6 +13,7 @@ import {
   ShieldAlert,
 } from 'lucide-react';
 import { formatIdr } from '../commerce/format';
+import type { PaymentView } from '../commerce/types';
 import { CommerceV2ClientError, getOrderV2 } from './client';
 import type { FulfillmentView, OrderViewV2 } from './types';
 import styles from './order.module.css';
@@ -41,6 +42,15 @@ const copy = {
     cancelled: 'Pesanan dibatalkan',
     refunded: 'Pembayaran dikembalikan',
     paid: 'Pembayaran terkonfirmasi',
+    paymentPending: 'Menunggu pembayaran',
+    paymentAuthorized: 'Pembayaran diotorisasi',
+    paymentPaid: 'Pembayaran berhasil',
+    paymentFailed: 'Pembayaran gagal',
+    paymentExpired: 'Pembayaran kedaluwarsa',
+    paymentCancelled: 'Pembayaran dibatalkan',
+    paymentRefunded: 'Pembayaran dikembalikan',
+    paymentPartiallyRefunded: 'Dikembalikan sebagian',
+    paymentReview: 'Perlu pemeriksaan',
     waitingProvider: 'Menunggu pembayaran',
     providerPending: 'Dalam antrean provider',
     providerProcessing: 'Sedang diproses provider',
@@ -71,6 +81,15 @@ const copy = {
     cancelled: 'Order cancelled',
     refunded: 'Payment refunded',
     paid: 'Payment confirmed',
+    paymentPending: 'Waiting for payment',
+    paymentAuthorized: 'Payment authorized',
+    paymentPaid: 'Payment successful',
+    paymentFailed: 'Payment failed',
+    paymentExpired: 'Payment expired',
+    paymentCancelled: 'Payment cancelled',
+    paymentRefunded: 'Payment refunded',
+    paymentPartiallyRefunded: 'Partially refunded',
+    paymentReview: 'Review required',
     waitingProvider: 'Waiting for payment',
     providerPending: 'Queued with provider',
     providerProcessing: 'Provider is processing',
@@ -111,13 +130,24 @@ function orderLabel(locale: Locale, status: OrderViewV2['status']): string {
   return labels[status];
 }
 
+function paymentLabel(locale: Locale, status: PaymentView['status']): string {
+  const t = copy[locale];
+  const labels: Record<PaymentView['status'], string> = {
+    pending: t.paymentPending,
+    authorized: t.paymentAuthorized,
+    paid: t.paymentPaid,
+    failed: t.paymentFailed,
+    expired: t.paymentExpired,
+    cancelled: t.paymentCancelled,
+    refunded: t.paymentRefunded,
+    partially_refunded: t.paymentPartiallyRefunded,
+    requires_review: t.paymentReview,
+  };
+  return labels[status];
+}
+
 function terminal(order: OrderViewV2): boolean {
-  if (['completed', 'cancelled', 'refunded'].includes(order.status)) return true;
-  return order.items.every((item) =>
-    item.fulfillment
-      ? ['succeeded', 'failed', 'requires_review', 'cancelled'].includes(item.fulfillment.status)
-      : false,
-  );
+  return ['completed', 'cancelled', 'refunded'].includes(order.status);
 }
 
 export function OrderV2Client({ locale, orderNumber }: { locale: Locale; orderNumber: string }) {
@@ -131,7 +161,7 @@ export function OrderV2Client({ locale, orderNumber }: { locale: Locale; orderNu
     if (background) setRefreshing(true);
     else setLoading(true);
     try {
-      setOrder(await getOrderV2(orderNumber));
+      setOrder(await getOrderV2(orderNumber, t.unavailable));
       setError(null);
     } catch (cause) {
       setError(cause instanceof CommerceV2ClientError ? cause.message : t.unavailable);
@@ -175,7 +205,9 @@ export function OrderV2Client({ locale, orderNumber }: { locale: Locale; orderNu
         <ShieldAlert size={30} aria-hidden="true" />
         <h1>{t.unavailable}</h1>
         <p>{error}</p>
-        <button type="button" onClick={() => void load()}>{t.retry}</button>
+        <button type="button" onClick={() => void load()}>
+          {t.retry}
+        </button>
       </main>
     );
   }
@@ -193,13 +225,19 @@ export function OrderV2Client({ locale, orderNumber }: { locale: Locale; orderNu
             <h1>{t.title}</h1>
           </div>
           <span className={styles.live}>
-            {refreshing ? <LoaderCircle className={styles.spin} size={14} /> : <RefreshCw size={14} />}
+            {refreshing ? (
+              <LoaderCircle className={styles.spin} size={14} />
+            ) : (
+              <RefreshCw size={14} />
+            )}
             {t.updated}
           </span>
         </div>
 
         <section className={styles.statusCard} data-status={order.status}>
-          <div className={styles.statusIcon}><StatusIcon size={26} aria-hidden="true" /></div>
+          <div className={styles.statusIcon}>
+            <StatusIcon size={26} aria-hidden="true" />
+          </div>
           <div>
             <span>{t.order}</span>
             <strong>{order.orderNumber}</strong>
@@ -215,7 +253,11 @@ export function OrderV2Client({ locale, orderNumber }: { locale: Locale; orderNu
         </section>
       </header>
 
-      {error ? <div className={styles.error} role="alert">{error}</div> : null}
+      {error ? (
+        <div className={styles.error} role="alert">
+          {error}
+        </div>
+      ) : null}
 
       <div className={styles.layout}>
         <section className={styles.items}>
@@ -231,7 +273,9 @@ export function OrderV2Client({ locale, orderNumber }: { locale: Locale; orderNu
                 <small>{item.sku}</small>
                 <h3>{item.variantName}</h3>
                 {item.customerReference ? (
-                  <p>{t.destination}: <strong>{item.customerReference.value}</strong></p>
+                  <p>
+                    {t.destination}: <strong>{item.customerReference.value}</strong>
+                  </p>
                 ) : null}
                 {item.fulfillment?.serialNumber ? (
                   <div className={styles.serial}>
@@ -240,12 +284,19 @@ export function OrderV2Client({ locale, orderNumber }: { locale: Locale; orderNu
                   </div>
                 ) : null}
               </div>
-              <div className={styles.fulfillment} data-status={item.fulfillment?.status ?? 'none'}>
+              <div
+                className={styles.fulfillment}
+                data-status={item.fulfillment?.status ?? 'none'}
+              >
                 <i />
                 <span>
-                  {item.fulfillment ? fulfillmentLabel(locale, item.fulfillment.status) : t.waitingProvider}
+                  {item.fulfillment
+                    ? fulfillmentLabel(locale, item.fulfillment.status)
+                    : t.waitingProvider}
                 </span>
-                {item.fulfillment?.providerMessage ? <small>{item.fulfillment.providerMessage}</small> : null}
+                {item.fulfillment?.providerMessage ? (
+                  <small>{item.fulfillment.providerMessage}</small>
+                ) : null}
               </div>
             </article>
           ))}
@@ -257,16 +308,27 @@ export function OrderV2Client({ locale, orderNumber }: { locale: Locale; orderNu
             <h2>{t.payment}</h2>
           </div>
           <dl>
-            <div><dt>Provider</dt><dd>Midtrans</dd></div>
-            <div><dt>Status</dt><dd>{order.payment?.status ?? '—'}</dd></div>
-            <div><dt>{t.total}</dt><dd>{formatIdr(order.totalAmount)}</dd></div>
+            <div>
+              <dt>Provider</dt>
+              <dd>Midtrans</dd>
+            </div>
+            <div>
+              <dt>Status</dt>
+              <dd>{order.payment ? paymentLabel(locale, order.payment.status) : '—'}</dd>
+            </div>
+            <div>
+              <dt>{t.total}</dt>
+              <dd>{formatIdr(order.totalAmount)}</dd>
+            </div>
           </dl>
           {order.status === 'pending_payment' && order.payment?.checkoutUrl ? (
             <a className={styles.payButton} href={order.payment.checkoutUrl}>
               {t.resumePayment} <ArrowRight size={16} aria-hidden="true" />
             </a>
           ) : null}
-          <Link className={styles.catalog} href="/v2">{t.catalog}</Link>
+          <Link className={styles.catalog} href="/v2">
+            {t.catalog}
+          </Link>
         </aside>
       </div>
     </main>
