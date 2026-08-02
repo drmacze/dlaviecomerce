@@ -8,6 +8,7 @@ import {
   eq,
   gt,
   gte,
+  inArray,
   inventoryMovementsTable,
   inventoryTable,
   orderItemsTable,
@@ -106,8 +107,18 @@ async function releaseRejectedCheckout(orderId: string, paymentId: string): Prom
 
     await tx
       .update(providerFulfillmentsTable)
-      .set({ status: 'cancelled', updatedAt: new Date() })
-      .where(eq(providerFulfillmentsTable.orderId, orderId));
+      .set({ status: 'cancelled', nextAttemptAt: null, updatedAt: new Date() })
+      .where(
+        and(
+          eq(providerFulfillmentsTable.orderId, orderId),
+          inArray(providerFulfillmentsTable.status, [
+            'waiting_payment',
+            'pending',
+            'processing',
+            'retrying',
+          ]),
+        ),
+      );
     await tx
       .update(paymentsTable)
       .set({ status: 'failed', terminalProcessedAt: new Date(), updatedAt: new Date() })
@@ -146,9 +157,13 @@ export async function commerceV2CheckoutRoutes(app: FastifyInstance): Promise<vo
       const cartId = uuidSchema.parse((request.params as { cartId: string }).cartId);
       const cartToken = requiredHeader(request, 'x-cart-token');
       const idempotencyKey = idempotencyKeySchema.parse(requiredHeader(request, 'idempotency-key'));
+      const orderAccessToken = idempotencyKeySchema.parse(
+        requiredHeader(request, 'x-order-access-token'),
+      );
       const input = checkoutInputSchema.parse(request.body);
       const cartTokenHash = hashSecret(cartToken);
       const idempotencyHash = hashSecret(idempotencyKey);
+      const orderAccessHash = hashSecret(orderAccessToken);
 
       const [existing] = await db
         .select({ orderNumber: ordersTable.orderNumber })
@@ -157,251 +172,273 @@ export async function commerceV2CheckoutRoutes(app: FastifyInstance): Promise<vo
         .limit(1);
       if (existing) {
         reply.header('Cache-Control', 'no-store');
-        return { data: await getOrderViewV2(existing.orderNumber, idempotencyKey) };
+        return { data: await getOrderViewV2(existing.orderNumber, orderAccessToken) };
       }
 
-      const checkout = await db.transaction(async (tx) => {
-        const [cart] = await tx
-          .select({ id: cartsTable.id })
-          .from(cartsTable)
-          .where(
-            and(
-              eq(cartsTable.id, cartId),
-              eq(cartsTable.sessionTokenHash, cartTokenHash),
-              eq(cartsTable.status, 'active'),
-              gt(cartsTable.expiresAt, new Date()),
-            ),
-          )
-          .limit(1);
-        if (!cart) {
-          throw new AppError('UNAUTHORIZED', 'Cart credentials are invalid or expired.', 401);
-        }
+      const checkoutResult = await db
+        .transaction(async (tx) => {
+          const [cart] = await tx
+            .select({ id: cartsTable.id })
+            .from(cartsTable)
+            .where(
+              and(
+                eq(cartsTable.id, cartId),
+                eq(cartsTable.sessionTokenHash, cartTokenHash),
+                eq(cartsTable.status, 'active'),
+                gt(cartsTable.expiresAt, new Date()),
+              ),
+            )
+            .limit(1);
+          if (!cart) {
+            throw new AppError('UNAUTHORIZED', 'Cart credentials are invalid or expired.', 401);
+          }
 
-        const items = await tx
-          .select({
-            variantId: productVariantsTable.id,
-            productId: productsTable.id,
-            sku: productVariantsTable.sku,
-            productName: productsTable.name,
-            variantName: productVariantsTable.name,
-            attributes: productVariantsTable.attributes,
-            priceAmount: productVariantsTable.priceAmount,
-            currency: productVariantsTable.currency,
-            quantity: cartItemsTable.quantity,
-            requiresShipping: productsTable.requiresShipping,
-            variantActive: productVariantsTable.isActive,
-            productStatus: productsTable.status,
-            customerReferenceKind: cartItemTargetsTable.kind,
-            customerReferenceValue: cartItemTargetsTable.value,
-          })
-          .from(cartItemsTable)
-          .innerJoin(productVariantsTable, eq(productVariantsTable.id, cartItemsTable.variantId))
-          .innerJoin(productsTable, eq(productsTable.id, productVariantsTable.productId))
-          .leftJoin(
-            cartItemTargetsTable,
-            and(
-              eq(cartItemTargetsTable.cartId, cartItemsTable.cartId),
-              eq(cartItemTargetsTable.variantId, cartItemsTable.variantId),
-            ),
-          )
-          .where(eq(cartItemsTable.cartId, cartId));
+          const items = await tx
+            .select({
+              variantId: productVariantsTable.id,
+              productId: productsTable.id,
+              sku: productVariantsTable.sku,
+              productName: productsTable.name,
+              variantName: productVariantsTable.name,
+              attributes: productVariantsTable.attributes,
+              priceAmount: productVariantsTable.priceAmount,
+              currency: productVariantsTable.currency,
+              quantity: cartItemsTable.quantity,
+              requiresShipping: productsTable.requiresShipping,
+              variantActive: productVariantsTable.isActive,
+              productStatus: productsTable.status,
+              customerReferenceKind: cartItemTargetsTable.kind,
+              customerReferenceValue: cartItemTargetsTable.value,
+            })
+            .from(cartItemsTable)
+            .innerJoin(productVariantsTable, eq(productVariantsTable.id, cartItemsTable.variantId))
+            .innerJoin(productsTable, eq(productsTable.id, productVariantsTable.productId))
+            .leftJoin(
+              cartItemTargetsTable,
+              and(
+                eq(cartItemTargetsTable.cartId, cartItemsTable.cartId),
+                eq(cartItemTargetsTable.variantId, cartItemsTable.variantId),
+              ),
+            )
+            .where(eq(cartItemsTable.cartId, cartId));
 
-        if (items.length === 0) throw new AppError('BAD_REQUEST', 'Cart is empty.', 400);
-        if (items.some((item) => !item.variantActive || item.productStatus !== 'active')) {
-          throw new AppError('CONFLICT', 'Cart contains an unavailable product.', 409);
-        }
-        if (items.some((item) => item.currency !== 'IDR')) {
-          throw new AppError('CONFLICT', 'All cart items must use IDR.', 409);
-        }
-        if (items.some((item) => item.requiresShipping)) {
-          throw new AppError(
-            'BAD_REQUEST',
-            'Commerce v2 currently accepts digital products only.',
-            400,
-          );
-        }
-        if (items.some((item) => item.quantity !== 1)) {
-          throw new AppError(
-            'BAD_REQUEST',
-            'Digital provider products must be purchased one at a time.',
-            400,
-          );
-        }
-        if (
-          items.some(
-            (item) =>
-              item.attributes.provider !== 'digiflazz' ||
-              !item.attributes.providerSku ||
-              !item.customerReferenceKind ||
-              !item.customerReferenceValue,
-          )
-        ) {
-          throw new AppError(
-            'BAD_REQUEST',
-            'Every product requires a valid Digiflazz SKU and destination reference.',
-            400,
-          );
-        }
-
-        let subtotalAmount = 0;
-        for (const item of items) {
-          subtotalAmount = safeAdd(subtotalAmount, safeMultiply(item.priceAmount, item.quantity));
-        }
-        if (subtotalAmount < 1) {
-          throw new AppError('BAD_REQUEST', 'Paid checkout requires a positive amount.', 400);
-        }
-
-        const [claimedCart] = await tx
-          .update(cartsTable)
-          .set({ status: 'converted', updatedAt: new Date() })
-          .where(and(eq(cartsTable.id, cartId), eq(cartsTable.status, 'active')))
-          .returning({ id: cartsTable.id });
-        if (!claimedCart) throw new AppError('CONFLICT', 'Cart has already been checked out.', 409);
-
-        const [customer] = await tx
-          .insert(customersTable)
-          .values({
-            email: input.email,
-            fullName: input.fullName,
-            ...(input.phone ? { phone: input.phone } : {}),
-          })
-          .onConflictDoUpdate({
-            target: customersTable.email,
-            set: {
-              fullName: input.fullName,
-              ...(input.phone ? { phone: input.phone } : {}),
-              updatedAt: new Date(),
-            },
-          })
-          .returning({ id: customersTable.id });
-        if (!customer) throw new AppError('DATABASE_ERROR', 'Customer could not be saved.', 500);
-
-        const orderNumber = createOrderNumber(env.ORDER_PREFIX);
-        const [order] = await tx
-          .insert(ordersTable)
-          .values({
-            orderNumber,
-            accessTokenHash: idempotencyHash,
-            checkoutIdempotencyKey: idempotencyHash,
-            cartId,
-            customerId: customer.id,
-            email: input.email,
-            ...(input.phone ? { phone: input.phone } : {}),
-            subtotalAmount,
-            shippingAmount: 0,
-            discountAmount: 0,
-            totalAmount: subtotalAmount,
-            ...(input.customerNote ? { customerNote: input.customerNote } : {}),
-          })
-          .returning({ id: ordersTable.id, orderNumber: ordersTable.orderNumber });
-        if (!order) throw new AppError('DATABASE_ERROR', 'Order could not be created.', 500);
-
-        const paymentItems: MidtransItem[] = [];
-        for (const item of items) {
-          const providerSku = item.attributes.providerSku;
-          if (!providerSku || !item.customerReferenceKind || !item.customerReferenceValue) {
+          if (items.length === 0) throw new AppError('BAD_REQUEST', 'Cart is empty.', 400);
+          if (items.some((item) => !item.variantActive || item.productStatus !== 'active')) {
+            throw new AppError('CONFLICT', 'Cart contains an unavailable product.', 409);
+          }
+          if (items.some((item) => item.currency !== 'IDR')) {
+            throw new AppError('CONFLICT', 'All cart items must use IDR.', 409);
+          }
+          if (items.some((item) => item.requiresShipping)) {
             throw new AppError(
               'BAD_REQUEST',
-              'Order item is missing provider or destination data.',
+              'Commerce v2 currently accepts digital products only.',
+              400,
+            );
+          }
+          if (items.some((item) => item.quantity !== 1)) {
+            throw new AppError(
+              'BAD_REQUEST',
+              'Digital provider products must be purchased one at a time.',
+              400,
+            );
+          }
+          if (
+            items.some(
+              (item) =>
+                item.attributes.provider !== 'digiflazz' ||
+                !item.attributes.providerSku ||
+                !item.customerReferenceKind ||
+                !item.customerReferenceValue,
+            )
+          ) {
+            throw new AppError(
+              'BAD_REQUEST',
+              'Every product requires a valid Digiflazz SKU and destination reference.',
               400,
             );
           }
 
-          const [orderItem] = await tx
-            .insert(orderItemsTable)
+          let subtotalAmount = 0;
+          for (const item of items) {
+            subtotalAmount = safeAdd(subtotalAmount, safeMultiply(item.priceAmount, item.quantity));
+          }
+          if (subtotalAmount < 1) {
+            throw new AppError('BAD_REQUEST', 'Paid checkout requires a positive amount.', 400);
+          }
+
+          const [claimedCart] = await tx
+            .update(cartsTable)
+            .set({ status: 'converted', updatedAt: new Date() })
+            .where(and(eq(cartsTable.id, cartId), eq(cartsTable.status, 'active')))
+            .returning({ id: cartsTable.id });
+          if (!claimedCart) {
+            throw new AppError('CONFLICT', 'Cart has already been checked out.', 409);
+          }
+
+          const [customer] = await tx
+            .insert(customersTable)
+            .values({
+              email: input.email,
+              fullName: input.fullName,
+              ...(input.phone ? { phone: input.phone } : {}),
+            })
+            .onConflictDoUpdate({
+              target: customersTable.email,
+              set: {
+                fullName: input.fullName,
+                ...(input.phone ? { phone: input.phone } : {}),
+                updatedAt: new Date(),
+              },
+            })
+            .returning({ id: customersTable.id });
+          if (!customer) {
+            throw new AppError('DATABASE_ERROR', 'Customer could not be saved.', 500);
+          }
+
+          const orderNumber = createOrderNumber(env.ORDER_PREFIX);
+          const [order] = await tx
+            .insert(ordersTable)
+            .values({
+              orderNumber,
+              accessTokenHash: orderAccessHash,
+              checkoutIdempotencyKey: idempotencyHash,
+              cartId,
+              customerId: customer.id,
+              email: input.email,
+              ...(input.phone ? { phone: input.phone } : {}),
+              subtotalAmount,
+              shippingAmount: 0,
+              discountAmount: 0,
+              totalAmount: subtotalAmount,
+              ...(input.customerNote ? { customerNote: input.customerNote } : {}),
+            })
+            .returning({ id: ordersTable.id, orderNumber: ordersTable.orderNumber });
+          if (!order) throw new AppError('DATABASE_ERROR', 'Order could not be created.', 500);
+
+          const paymentItems: MidtransItem[] = [];
+          for (const item of items) {
+            const providerSku = item.attributes.providerSku;
+            if (!providerSku || !item.customerReferenceKind || !item.customerReferenceValue) {
+              throw new AppError(
+                'BAD_REQUEST',
+                'Order item is missing provider or destination data.',
+                400,
+              );
+            }
+
+            const [orderItem] = await tx
+              .insert(orderItemsTable)
+              .values({
+                orderId: order.id,
+                productId: item.productId,
+                variantId: item.variantId,
+                sku: item.sku,
+                productName: item.productName,
+                variantName: item.variantName,
+                attributes: item.attributes,
+                quantity: item.quantity,
+                unitPriceAmount: item.priceAmount,
+                lineTotalAmount: safeMultiply(item.priceAmount, item.quantity),
+              })
+              .returning({ id: orderItemsTable.id });
+            if (!orderItem) {
+              throw new AppError('DATABASE_ERROR', 'Order item snapshot could not be created.', 500);
+            }
+
+            await tx.insert(orderItemTargetsTable).values({
+              orderItemId: orderItem.id,
+              kind: item.customerReferenceKind,
+              value: item.customerReferenceValue,
+            });
+
+            const providerReference = `${order.orderNumber}-${orderItem.id.replaceAll('-', '').slice(0, 12)}`;
+            await tx.insert(providerFulfillmentsTable).values({
+              orderId: order.id,
+              orderItemId: orderItem.id,
+              provider: 'digiflazz',
+              providerReference,
+              providerSku,
+              customerReferenceKind: item.customerReferenceKind,
+              customerReferenceValue: item.customerReferenceValue,
+              status: 'waiting_payment',
+            });
+
+            paymentItems.push({
+              id: item.sku,
+              price: item.priceAmount,
+              quantity: item.quantity,
+              name: `${item.productName} - ${item.variantName}`,
+            });
+          }
+
+          for (const item of items) {
+            const [reserved] = await tx
+              .update(inventoryTable)
+              .set({
+                reserved: sql`${inventoryTable.reserved} + ${item.quantity}`,
+                updatedAt: new Date(),
+              })
+              .where(
+                and(
+                  eq(inventoryTable.variantId, item.variantId),
+                  gte(sql`${inventoryTable.onHand} - ${inventoryTable.reserved}`, item.quantity),
+                ),
+              )
+              .returning({ variantId: inventoryTable.variantId });
+            if (!reserved) {
+              throw new AppError('CONFLICT', `Insufficient stock for SKU ${item.sku}.`, 409);
+            }
+            await tx.insert(inventoryMovementsTable).values({
+              variantId: item.variantId,
+              orderId: order.id,
+              type: 'reserve',
+              quantityDelta: -item.quantity,
+              reason: 'Stock reserved for pending v2 payment.',
+              actor: 'v2-checkout',
+            });
+          }
+
+          const expiresAt = new Date(Date.now() + env.PAYMENT_EXPIRY_MINUTES * 60_000);
+          const [payment] = await tx
+            .insert(paymentsTable)
             .values({
               orderId: order.id,
-              productId: item.productId,
-              variantId: item.variantId,
-              sku: item.sku,
-              productName: item.productName,
-              variantName: item.variantName,
-              attributes: item.attributes,
-              quantity: item.quantity,
-              unitPriceAmount: item.priceAmount,
-              lineTotalAmount: safeMultiply(item.priceAmount, item.quantity),
+              provider: 'midtrans',
+              providerOrderId: order.orderNumber,
+              status: 'pending',
+              amount: subtotalAmount,
+              expiresAt,
             })
-            .returning({ id: orderItemsTable.id });
-          if (!orderItem) {
-            throw new AppError('DATABASE_ERROR', 'Order item snapshot could not be created.', 500);
-          }
+            .returning({ id: paymentsTable.id });
+          if (!payment) throw new AppError('DATABASE_ERROR', 'Payment could not be created.', 500);
 
-          await tx.insert(orderItemTargetsTable).values({
-            orderItemId: orderItem.id,
-            kind: item.customerReferenceKind,
-            value: item.customerReferenceValue,
-          });
-
-          const providerReference = `${order.orderNumber}-${orderItem.id.replaceAll('-', '').slice(0, 12)}`;
-          await tx.insert(providerFulfillmentsTable).values({
+          return {
             orderId: order.id,
-            orderItemId: orderItem.id,
-            provider: 'digiflazz',
-            providerReference,
-            providerSku,
-            customerReferenceKind: item.customerReferenceKind,
-            customerReferenceValue: item.customerReferenceValue,
-            status: 'waiting_payment',
-          });
-
-          paymentItems.push({
-            id: item.sku,
-            price: item.priceAmount,
-            quantity: item.quantity,
-            name: `${item.productName} - ${item.variantName}`,
-          });
-        }
-
-        for (const item of items) {
-          const [reserved] = await tx
-            .update(inventoryTable)
-            .set({
-              reserved: sql`${inventoryTable.reserved} + ${item.quantity}`,
-              updatedAt: new Date(),
-            })
-            .where(
-              and(
-                eq(inventoryTable.variantId, item.variantId),
-                gte(sql`${inventoryTable.onHand} - ${inventoryTable.reserved}`, item.quantity),
-              ),
-            )
-            .returning({ variantId: inventoryTable.variantId });
-          if (!reserved) {
-            throw new AppError('CONFLICT', `Insufficient stock for SKU ${item.sku}.`, 409);
-          }
-          await tx.insert(inventoryMovementsTable).values({
-            variantId: item.variantId,
-            orderId: order.id,
-            type: 'reserve',
-            quantityDelta: -item.quantity,
-            reason: 'Stock reserved for pending v2 payment.',
-            actor: 'v2-checkout',
-          });
-        }
-
-        const expiresAt = new Date(Date.now() + env.PAYMENT_EXPIRY_MINUTES * 60_000);
-        const [payment] = await tx
-          .insert(paymentsTable)
-          .values({
-            orderId: order.id,
-            provider: 'midtrans',
-            providerOrderId: order.orderNumber,
-            status: 'pending',
-            amount: subtotalAmount,
+            orderNumber: order.orderNumber,
+            paymentId: payment.id,
+            totalAmount: subtotalAmount,
+            paymentItems,
             expiresAt,
-          })
-          .returning({ id: paymentsTable.id });
-        if (!payment) throw new AppError('DATABASE_ERROR', 'Payment could not be created.', 500);
+          };
+        })
+        .catch(async (error: unknown) => {
+          const [replayed] = await db
+            .select({ orderNumber: ordersTable.orderNumber })
+            .from(ordersTable)
+            .where(eq(ordersTable.checkoutIdempotencyKey, idempotencyHash))
+            .limit(1);
+          if (!replayed) throw error;
+          return { replayedOrderNumber: replayed.orderNumber } as const;
+        });
 
+      if ('replayedOrderNumber' in checkoutResult) {
+        reply.header('Cache-Control', 'no-store');
         return {
-          orderId: order.id,
-          orderNumber: order.orderNumber,
-          paymentId: payment.id,
-          totalAmount: subtotalAmount,
-          paymentItems,
-          expiresAt,
+          data: await getOrderViewV2(checkoutResult.replayedOrderNumber, orderAccessToken),
         };
-      });
+      }
+      const checkout = checkoutResult;
 
       try {
         const snap = await createSnapTransaction({
@@ -440,17 +477,25 @@ export async function commerceV2CheckoutRoutes(app: FastifyInstance): Promise<vo
 
       reply.header('Cache-Control', 'no-store');
       return reply.status(201).send({
-        data: await getOrderViewV2(checkout.orderNumber, idempotencyKey),
+        data: await getOrderViewV2(checkout.orderNumber, orderAccessToken),
       });
     },
   );
 
-  app.get('/v2/orders/:orderNumber', async (request, reply) => {
-    const orderNumber = orderNumberSchema.parse(
-      (request.params as { orderNumber: string }).orderNumber,
-    );
-    const accessToken = idempotencyKeySchema.parse(requiredHeader(request, 'x-order-token'));
-    reply.header('Cache-Control', 'no-store');
-    return { data: await getOrderViewV2(orderNumber, accessToken) };
-  });
+  app.get(
+    '/v2/orders/:orderNumber',
+    {
+      config: {
+        rateLimit: { max: env.CHECKOUT_RATE_LIMIT_MAX, timeWindow: '1 minute' },
+      },
+    },
+    async (request, reply) => {
+      const orderNumber = orderNumberSchema.parse(
+        (request.params as { orderNumber: string }).orderNumber,
+      );
+      const accessToken = idempotencyKeySchema.parse(requiredHeader(request, 'x-order-token'));
+      reply.header('Cache-Control', 'no-store');
+      return { data: await getOrderViewV2(orderNumber, accessToken) };
+    },
+  );
 }
