@@ -343,7 +343,11 @@ export async function commerceV2CheckoutRoutes(app: FastifyInstance): Promise<vo
               })
               .returning({ id: orderItemsTable.id });
             if (!orderItem) {
-              throw new AppError('DATABASE_ERROR', 'Order item snapshot could not be created.', 500);
+              throw new AppError(
+                'DATABASE_ERROR',
+                'Order item snapshot could not be created.',
+                500,
+              );
             }
 
             await tx.insert(orderItemTargetsTable).values({
