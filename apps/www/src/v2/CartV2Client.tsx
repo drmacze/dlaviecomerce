@@ -20,15 +20,10 @@ import {
 } from '../commerce/client';
 import { formatIdr } from '../commerce/format';
 import type { CartItem, CartView } from '../commerce/types';
+import type { CustomerReference } from './types';
 import styles from './cart.module.css';
 
 type Locale = 'id' | 'en';
-
-type CustomerReference = {
-  kind: 'phone' | 'meter_number' | 'customer_id' | 'game_id' | 'account_id';
-  value: string;
-};
-
 type V2CartItem = CartItem & { customerReference: CustomerReference | null };
 type V2Cart = Omit<CartView, 'items'> & { items: V2CartItem[] };
 
@@ -45,8 +40,8 @@ const copy = {
     remove: 'Hapus',
     subtotal: 'Subtotal',
     protected: 'Data tujuan tersimpan di server commerce dan tidak diletakkan di URL.',
-    checkout: 'Checkout v2 sedang disiapkan',
-    checkoutCopy: 'Pembayaran belum diaktifkan sampai alur Midtrans sandbox dan webhook selesai diuji.',
+    checkout: 'Lanjut ke checkout',
+    checkoutCopy: 'Pembayaran dibuka melalui Midtrans dan produk diproses setelah konfirmasi pembayaran.',
     retry: 'Coba lagi',
     unavailable: 'Keranjang belum dapat diakses.',
   },
@@ -62,8 +57,8 @@ const copy = {
     remove: 'Remove',
     subtotal: 'Subtotal',
     protected: 'Destination details are stored on the commerce server and are not placed in the URL.',
-    checkout: 'Commerce v2 checkout is being prepared',
-    checkoutCopy: 'Payments remain disabled until Midtrans sandbox and webhook flows pass testing.',
+    checkout: 'Continue to checkout',
+    checkoutCopy: 'Payment opens through Midtrans and the product is processed after confirmation.',
     retry: 'Try again',
     unavailable: 'The cart is currently unavailable.',
   },
@@ -155,6 +150,8 @@ export function CartV2Client({ locale }: { locale: Locale }) {
     );
   }
 
+  const checkoutReady = cart.items.every((item) => item.purchasable && item.customerReference);
+
   return (
     <main className={styles.shell}>
       <Link className={styles.back} href="/v2">
@@ -222,7 +219,12 @@ export function CartV2Client({ locale }: { locale: Locale }) {
             <LockKeyhole size={18} aria-hidden="true" />
             <p>{t.protected}</p>
           </div>
-          <button className={styles.checkout} type="button" disabled>
+          <button
+            className={styles.checkout}
+            type="button"
+            disabled={!checkoutReady}
+            onClick={() => window.location.assign('/v2/checkout')}
+          >
             {t.checkout}
           </button>
           <p className={styles.checkoutCopy}>{t.checkoutCopy}</p>

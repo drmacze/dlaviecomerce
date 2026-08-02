@@ -24,6 +24,7 @@ export type SnapTransactionInput = {
   amount: number;
   items: MidtransItem[];
   customer: MidtransCustomer;
+  finishPath?: string;
 };
 
 export type SnapTransaction = {
@@ -50,6 +51,15 @@ function snapEndpoint(): string {
 
 function truncate(value: string, maxLength: number): string {
   return value.length <= maxLength ? value : value.slice(0, maxLength);
+}
+
+function finishUrl(input: SnapTransactionInput): string {
+  const base = env.STOREFRONT_URL.replace(/\/$/, '');
+  if (input.finishPath) {
+    const path = input.finishPath.startsWith('/') ? input.finishPath : `/${input.finishPath}`;
+    return `${base}${path}`;
+  }
+  return `${base}/orders/${encodeURIComponent(input.orderNumber)}`;
 }
 
 export async function createSnapTransaction(input: SnapTransactionInput): Promise<SnapTransaction> {
@@ -90,7 +100,7 @@ export async function createSnapTransaction(input: SnapTransactionInput): Promis
         : {}),
     },
     callbacks: {
-      finish: `${env.STOREFRONT_URL.replace(/\/$/, '')}/orders/${encodeURIComponent(input.orderNumber)}`,
+      finish: finishUrl(input),
     },
     expiry: {
       duration: env.PAYMENT_EXPIRY_MINUTES,
