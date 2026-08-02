@@ -18,6 +18,7 @@ export async function buildApp(): Promise<FastifyInstance> {
         'req.headers.x-cart-token',
         'req.headers.idempotency-key',
         'req.headers.x-order-token',
+        'req.headers.x-order-access-token',
       ],
     },
     bodyLimit: 1_000_000,
@@ -41,6 +42,7 @@ export async function buildApp(): Promise<FastifyInstance> {
       'X-Admin-Api-Key',
       'X-Cart-Token',
       'X-Order-Token',
+      'X-Order-Access-Token',
     ],
     maxAge: 600,
   });
