@@ -4,6 +4,7 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import { parseCorsOrigins } from './config/cors.js';
 import { env } from './config/env.js';
 import { AppError, sendError } from './lib/errors.js';
+import { registerProviderEnvironmentGuard } from './middleware/providerEnvironmentGuard.js';
 import { registerRateLimit } from './middleware/rateLimit.js';
 import { registerRequestContext } from './middleware/requestContext.js';
 import { healthRoutes } from './routes/health.routes.js';
@@ -48,6 +49,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   });
   await registerRequestContext(app);
   await registerRateLimit(app);
+  await registerProviderEnvironmentGuard(app);
 
   app.setErrorHandler((error, request, reply) => {
     if (!(error instanceof AppError) || error.statusCode >= 500) {
