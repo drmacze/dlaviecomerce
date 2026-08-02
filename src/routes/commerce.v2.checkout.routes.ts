@@ -214,10 +214,18 @@ export async function commerceV2CheckoutRoutes(app: FastifyInstance): Promise<vo
           throw new AppError('CONFLICT', 'All cart items must use IDR.', 409);
         }
         if (items.some((item) => item.requiresShipping)) {
-          throw new AppError('BAD_REQUEST', 'Commerce v2 currently accepts digital products only.', 400);
+          throw new AppError(
+            'BAD_REQUEST',
+            'Commerce v2 currently accepts digital products only.',
+            400,
+          );
         }
         if (items.some((item) => item.quantity !== 1)) {
-          throw new AppError('BAD_REQUEST', 'Digital provider products must be purchased one at a time.', 400);
+          throw new AppError(
+            'BAD_REQUEST',
+            'Digital provider products must be purchased one at a time.',
+            400,
+          );
         }
         if (
           items.some(

@@ -111,5 +111,7 @@ export const providerFulfillmentEventsTable = pgTable(
     payload: jsonb('payload').$type<Record<string, unknown>>().default({}).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
-  (table) => [index('provider_fulfillment_events_fulfillment_idx').on(table.fulfillmentId, table.createdAt)],
+  (table) => [
+    index('provider_fulfillment_events_fulfillment_idx').on(table.fulfillmentId, table.createdAt),
+  ],
 );

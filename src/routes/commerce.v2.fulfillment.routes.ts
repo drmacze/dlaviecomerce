@@ -2,10 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { and, db, eq, inArray, ordersTable, sql } from '../../lib/db/src/index.js';
 import { providerFulfillmentsTable } from '../../lib/db/src/schema/commerce-v2.js';
-import {
-  processOrderFulfillments,
-  retryOrderFulfillments,
-} from '../commerce/fulfillment.js';
+import { processOrderFulfillments, retryOrderFulfillments } from '../commerce/fulfillment.js';
 import { orderNumberSchema } from '../commerce/validation.js';
 import { AppError } from '../lib/errors.js';
 import { requireCommerceAdmin } from '../middleware/commerceAdmin.js';

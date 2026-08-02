@@ -1,12 +1,4 @@
-import {
-  and,
-  db,
-  eq,
-  inArray,
-  orderItemsTable,
-  ordersTable,
-  sql,
-} from '../../lib/db/src/index.js';
+import { and, db, eq, inArray, orderItemsTable, ordersTable, sql } from '../../lib/db/src/index.js';
 import {
   providerFulfillmentEventsTable,
   providerFulfillmentsTable,
@@ -127,12 +119,7 @@ async function refreshOrderStatus(orderId: string): Promise<FulfillmentSummary> 
     await db
       .update(ordersTable)
       .set({ status: 'completed', updatedAt: new Date() })
-      .where(
-        and(
-          eq(ordersTable.id, orderId),
-          inArray(ordersTable.status, ['paid', 'processing']),
-        ),
-      );
+      .where(and(eq(ordersTable.id, orderId), inArray(ordersTable.status, ['paid', 'processing'])));
   } else if (summary.total > 0) {
     await db
       .update(ordersTable)
@@ -216,7 +203,10 @@ export async function processOrderFulfillments(
           sql`(${providerFulfillmentsTable.nextAttemptAt} is null or ${providerFulfillmentsTable.nextAttemptAt} <= now())`,
         ),
       )
-      .returning({ id: providerFulfillmentsTable.id, attempts: providerFulfillmentsTable.attempts });
+      .returning({
+        id: providerFulfillmentsTable.id,
+        attempts: providerFulfillmentsTable.attempts,
+      });
 
     if (!claimed) continue;
 
@@ -271,11 +261,15 @@ export async function processOrderFulfillments(
         })
         .where(eq(providerFulfillmentsTable.id, row.id));
 
-      await recordEvent(row.id, exhausted ? 'provider_requires_review' : 'provider_retry_scheduled', {
-        actor,
-        attempt: claimed.attempts,
-        error: message.slice(0, 500),
-      });
+      await recordEvent(
+        row.id,
+        exhausted ? 'provider_requires_review' : 'provider_retry_scheduled',
+        {
+          actor,
+          attempt: claimed.attempts,
+          error: message.slice(0, 500),
+        },
+      );
     }
   }
 

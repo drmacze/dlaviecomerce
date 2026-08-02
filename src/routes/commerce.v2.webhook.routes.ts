@@ -56,7 +56,8 @@ export async function commerceV2WebhookRoutes(app: FastifyInstance): Promise<voi
       )
       .limit(1);
 
-    if (!paymentSnapshot) throw new AppError('NOT_FOUND', 'Payment transaction was not found.', 404);
+    if (!paymentSnapshot)
+      throw new AppError('NOT_FOUND', 'Payment transaction was not found.', 404);
     if (paymentSnapshot.amount !== grossAmount) {
       await db
         .update(paymentsTable)
